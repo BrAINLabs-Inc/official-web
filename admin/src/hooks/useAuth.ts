@@ -1,18 +1,26 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// useAuth.ts — Global auth store.
+// ALL authentication goes through the Ballerina backend. No direct Supabase SDK.
+// ─────────────────────────────────────────────────────────────────────────────
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
+const BASE_URL = import.meta.env.VITE_API_URL ?? "";
 
 export interface AuthUser {
   name: string;
   email: string;
   avatar?: string;
+  slug?: string;
 }
 
 interface AuthState {
   user: AuthUser | null;
   role: "super_admin" | "researcher" | null;
+  status: "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | null;
   token: string | null;
-  login: () => void;
-  setSession: (token: string, role: "super_admin" | "researcher", user: AuthUser) => void;
+  loginWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
+  setSession: (token: string, role: "super_admin" | "researcher" | null, user: AuthUser, status: any) => void;
   logout: () => void;
   isAdmin: () => boolean;
   isResearcher: () => boolean;
@@ -23,22 +31,64 @@ export const useAuth = create<AuthState>()(
     (set, get) => ({
       user: null,
       role: null,
+      status: null,
       token: null,
 
-      // Redirects to Ballerina Google OAuth endpoint
-      login: () => {
-        const apiUrl = import.meta.env.VITE_API_URL ?? "https://api.brainlabsinc.org";
-        window.location.href = `${apiUrl}/auth/google`;
+      /**
+       * Authenticate via the Ballerina /auth/login endpoint.
+       * The backend calls Supabase Auth and returns a JWT + member profile.
+       */
+      loginWithEmail: async (email: string, password: string) => {
+        try {
+          const res = await fetch(`${BASE_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({ message: "Login failed" }));
+            return { error: err.message ?? "Invalid credentials" };
+          }
+
+          const data = await res.json() as {
+            token: string;
+            member: {
+              name: string;
+              contact_email?: string;
+              image_url?: string;
+              slug: string;
+              role: string;
+              status: string;
+            };
+          };
+
+          const role = data.member.role === "super_admin" ? "super_admin" : "researcher";
+
+          set({
+            token: data.token,
+            role,
+            status: data.member.status as any,
+            user: {
+              name: data.member.name,
+              email: data.member.contact_email ?? email,
+              avatar: data.member.image_url ?? "",
+              slug: data.member.slug,
+            },
+          });
+
+          return { error: null };
+        } catch (err: any) {
+          return { error: err.message ?? "Network error. Please try again." };
+        }
       },
 
-
-      // Called from /auth/callback after Google OAuth completes
-      setSession: (token, role, user) => {
-        set({ token, role, user });
+      setSession: (token, role, user, status) => {
+        set({ token, role, user, status });
       },
 
       logout: () => {
-        set({ user: null, role: null, token: null });
+        set({ user: null, role: null, token: null, status: null });
       },
 
       isAdmin: () => get().role === "super_admin",
@@ -46,11 +96,11 @@ export const useAuth = create<AuthState>()(
     }),
     {
       name: "bl_admin_session",
-      // Only persist token + role — user object is fetched fresh on callback
       partialize: (state) => ({
         token: state.token,
         role: state.role,
         user: state.user,
+        status: state.status,
       }),
     }
   )

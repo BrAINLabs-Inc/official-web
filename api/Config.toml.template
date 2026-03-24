@@ -4,30 +4,25 @@
 # NEVER commit Config.toml to git — it is in .gitignore.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# ── Root module variables ────────────────────────────────────────────────────
+# ── Root module variables ─────────────────────────────────────────────────────
 
 # Server
 port = 8080
 
-# Google OAuth2
-googleClientId      = "your-google-client-id.apps.googleusercontent.com"
-googleClientSecret  = "your-google-client-secret"
-googleRedirectUri  = "http://localhost:8080/auth/google/callback"
+# Supabase JWT Secret (from Project Settings → API → JWT Secret)
+jwtSecret = "your-supabase-jwt-secret"
 
-# Domain restriction — only this domain may log in
-allowedEmailDomain  = "brainlabsinc.org"
+# HuggingFace API token (optional — enables AI summarize features)
+hfToken = ""
 
-# Where Ballerina redirects after OAuth completes
-adminRedirectUri    = "http://localhost:5174/auth/callback"
+# Super Admin IDs — comma-separated Supabase auth_user_id (UUID) values.
+# These users will receive the 'super_admin' role at login.
+# The 'role' field is NOT stored in the DB — it is resolved at runtime.
+# Find your auth_user_id in the Supabase Dashboard → Authentication → Users.
+# Example: superAdminIds = "uuid-1,uuid-2"
+superAdminIds = ""
 
-# JWT signing secret (any strong random string, at least 32 chars)
-jwtSecret           = "change-me-to-a-strong-random-secret"
-
-# HuggingFace API token (from huggingface.co/settings/tokens)
-# Leave empty to disable AI features
-hfToken             = ""
-
-# ── Database module (modules/db) ─────────────────────────────────────────────
+# ── Database module (modules/db) ──────────────────────────────────────────────
 [brainlabs.backend.db]
-supabaseUrl         = "https://xxxx.supabase.co"
-supabaseServiceKey  = "your-service-role-key"
+supabaseUrl        = "https://xxxx.supabase.co"
+supabaseServiceKey = "your-service-role-key"

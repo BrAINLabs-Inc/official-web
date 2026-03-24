@@ -12,8 +12,8 @@ import {
   X,
   Brain,
 } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
-import { cn } from "../lib/utils";
+import { useAuth } from "../../hooks/useAuth";
+import { cn } from "../../lib/utils";
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "researcher"] },

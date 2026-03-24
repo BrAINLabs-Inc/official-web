@@ -1,40 +1,49 @@
 import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Star, Sparkles, X, ChevronDown } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
-import { api, type Publication } from "../lib/api";
+import { useAuth } from "../../hooks/useAuth";
+import { api, type ResearchPublication } from "../../lib/api";
 
 function StatusPill({ status }: { status: string }) {
+  const isPublished = status === "PUBLISHED";
+  const isPending = status === "PENDING_REVIEW";
+  
   return (
-    <span className={`status-pill ${status === "published" ? "status-published" : "status-draft"}`}>
-      {status === "published" ? "Published" : "Draft"}
+    <span className={`status-pill ${isPublished ? "status-published" : isPending ? "bg-amber-100 text-amber-700" : "status-draft"}`}>
+      {status.charAt(0) + status.slice(1).toLowerCase().replace("_", " ")}
     </span>
   );
 }
 
-const EMPTY: Partial<Publication> = {
+const EMPTY: Partial<ResearchPublication> = {
   title: "",
-  authors: [],
+  authors: "",
   abstract: "",
   doi: "",
-  year: new Date().getFullYear(),
-  tags: [],
+  publication_year: new Date().getFullYear(),
+  link: "",
   venue: "",
-  status: "draft",
+  status: "DRAFT",
 };
 
 export default function Publications() {
-  const { token } = useAuth();
+  const { token, role } = useAuth();
+  const isAdmin = role === "super_admin";
   const t = token ?? "";
-  const [items, setItems] = useState<Publication[]>([]);
+  const [items, setItems] = useState<ResearchPublication[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Partial<Publication> | null>(null);
+  const [editing, setEditing] = useState<Partial<ResearchPublication> | null>(null);
   const [saving, setSaving] = useState(false);
   const [aiSummary, setAiSummary] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    api.publications.list(t).then((data) => { setItems(data); setLoading(false); });
+    if (t) {
+      api.publications.list(t).then((data) => { setItems(data); setLoading(false); }).catch(err => {
+        console.error("Failed to fetch publications", err);
+        setLoading(false);
+      });
+    }
   }, [t]);
 
   const handleSave = async () => {
@@ -50,31 +59,48 @@ export default function Publications() {
       }
       setEditing(null);
       setAiSummary("");
+    } catch (err) {
+      console.error("Save failed", err);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleTogglePublish = async (pub: Publication) => {
-    const updated = await api.publications.update(t, pub.id, {
-      status: pub.status === "published" ? "draft" : "published",
-    });
-    setItems((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+  const handleTogglePublish = async (pub: ResearchPublication) => {
+    try {
+      const updated = await api.publications.update(t, pub.id!, {
+        status: pub.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED",
+      });
+      setItems((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    } catch (err) {
+      console.error("Toggle publish failed", err);
+    }
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this publication?")) return;
     setDeletingId(id);
-    await api.publications.delete(t, id);
-    setItems((prev) => prev.filter((p) => p.id !== id));
-    setDeletingId(null);
+    try {
+      await api.publications.delete(t, id);
+      setItems((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error("Delete failed", err);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleAISummarize = async () => {
     if (!editing?.abstract) return;
     setAiLoading(true);
-    const { summary } = await api.publications.summarize(t, editing.abstract);
-    setAiSummary(summary);
-    setAiLoading(false);
+    try {
+      const { summary } = await api.publications.summarize(t, editing.abstract);
+      setAiSummary(summary);
+    } catch (err) {
+      console.error("AI summarization failed", err);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   return (
@@ -117,20 +143,22 @@ export default function Publications() {
                 <tr key={pub.id} className="hover:bg-zinc-50 transition-colors">
                   <td className="px-5 py-4">
                     <p className="font-medium text-zinc-900 line-clamp-1">{pub.title}</p>
-                    <p className="text-xs text-zinc-400 mt-0.5">{pub.authors.join(", ")}</p>
+                    <p className="text-xs text-zinc-400 mt-0.5">{pub.authors}</p>
                   </td>
                   <td className="px-5 py-4 text-zinc-500 hidden md:table-cell">{pub.venue ?? "—"}</td>
-                  <td className="px-5 py-4 text-zinc-500 hidden lg:table-cell">{pub.year}</td>
+                  <td className="px-5 py-4 text-zinc-500 hidden lg:table-cell">{pub.publication_year}</td>
                   <td className="px-5 py-4"><StatusPill status={pub.status} /></td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => handleTogglePublish(pub)}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
-                        title={pub.status === "published" ? "Unpublish" : "Publish"}
-                      >
-                        <Star size={14} fill={pub.status === "published" ? "currentColor" : "none"} />
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleTogglePublish(pub)}
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                          title={pub.status === "PUBLISHED" ? "Unpublish" : "Publish"}
+                        >
+                          <Star size={14} fill={pub.status === "PUBLISHED" ? "currentColor" : "none"} />
+                        </button>
+                      )}
                       <button
                         onClick={() => { setEditing(pub); setAiSummary(""); }}
                         className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
@@ -138,7 +166,7 @@ export default function Publications() {
                         <Pencil size={14} />
                       </button>
                       <button
-                        onClick={() => handleDelete(pub.id)}
+                        onClick={() => handleDelete(pub.id!)}
                         disabled={deletingId === pub.id}
                         className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40"
                       >
@@ -174,17 +202,17 @@ export default function Publications() {
                   placeholder="Publication title"
                 />
               </Field>
-              <Field label="Authors (comma-separated)">
+              <Field label="Authors">
                 <input
                   className="field-input"
-                  value={(editing.authors ?? []).join(", ")}
-                  onChange={(e) => setEditing((p) => ({ ...p, authors: e.target.value.split(",").map((a) => a.trim()) }))}
+                  value={editing.authors ?? ""}
+                  onChange={(e) => setEditing((p) => ({ ...p, authors: e.target.value }))}
                   placeholder="Dr. A. Silva, Dr. R. Perera"
                 />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Year">
-                  <input type="number" className="field-input" value={editing.year ?? ""} onChange={(e) => setEditing((p) => ({ ...p, year: +e.target.value }))} />
+                  <input type="number" className="field-input" value={editing.publication_year ?? ""} onChange={(e) => setEditing((p) => ({ ...p, publication_year: +e.target.value }))} />
                 </Field>
                 <Field label="Venue">
                   <input className="field-input" value={editing.venue ?? ""} onChange={(e) => setEditing((p) => ({ ...p, venue: e.target.value }))} placeholder="NeurIPS 2025" />
@@ -192,9 +220,6 @@ export default function Publications() {
               </div>
               <Field label="DOI">
                 <input className="field-input" value={editing.doi ?? ""} onChange={(e) => setEditing((p) => ({ ...p, doi: e.target.value }))} placeholder="10.1145/…" />
-              </Field>
-              <Field label="Tags (comma-separated)">
-                <input className="field-input" value={(editing.tags ?? []).join(", ")} onChange={(e) => setEditing((p) => ({ ...p, tags: e.target.value.split(",").map((t) => t.trim()) }))} placeholder="SNN, Neuromorphic" />
               </Field>
               <Field label="Abstract">
                 <textarea
@@ -218,18 +243,19 @@ export default function Publications() {
                   </div>
                 )}
               </Field>
-              <Field label="PDF URL">
-                <input className="field-input" value={editing.pdf_url ?? ""} onChange={(e) => setEditing((p) => ({ ...p, pdf_url: e.target.value }))} placeholder="https://…" />
+              <Field label="Link">
+                <input className="field-input" value={editing.link ?? ""} onChange={(e) => setEditing((p) => ({ ...p, link: e.target.value }))} placeholder="https://…" />
               </Field>
               <Field label="Status">
                 <div className="relative">
                   <select
                     className="field-input appearance-none pr-8"
-                    value={editing.status ?? "draft"}
-                    onChange={(e) => setEditing((p) => ({ ...p, status: e.target.value as "draft" | "published" }))}
+                    value={editing.status ?? "DRAFT"}
+                    onChange={(e) => setEditing((p) => ({ ...p, status: e.target.value as any }))}
                   >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
+                    <option value="DRAFT">Draft</option>
+                    <option value="PENDING_REVIEW">Pending Review</option>
+                    {isAdmin && <option value="PUBLISHED">Published</option>}
                   </select>
                   <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
                 </div>

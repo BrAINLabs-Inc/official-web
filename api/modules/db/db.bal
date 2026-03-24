@@ -1,28 +1,28 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // db.bal — Supabase REST API helpers.
 // Sub-module: import brainlabs/backend.db;
-// Has its own configurable block — Config.toml section: [brainlabs.backend.db]
 // ─────────────────────────────────────────────────────────────────────────────
 import ballerina/http;
 import ballerina/log;
 import brainlabs/backend.types;
 
-// ─── Configuration (populated from [brainlabs.backend.db] in Config.toml) ───
+// ─── Configuration ───────────────────────────────────────────────────────────
 configurable string supabaseUrl        = ?;
 configurable string supabaseServiceKey = ?;
+// Role mapping: comma-separated list of auth_user_ids that are super_admins
+// e.g. "uuid1,uuid2"
+// [DEPRECATED] Moved to DB-stored role column.
+// configurable string superAdminIds = "";
 
-// Supabase HTTP client — initialised once at module load
+// Supabase HTTP client
 final http:Client supabaseClient = check new (supabaseUrl);
 
 // ─── Header helpers ──────────────────────────────────────────────────────────
-
-// Read-only request headers
 isolated function rh() returns map<string|string[]> => {
     "apikey": supabaseServiceKey,
     "Authorization": "Bearer " + supabaseServiceKey
 };
 
-// Write headers — instructs Supabase to return the affected row(s)
 isolated function wh() returns map<string|string[]> => {
     "apikey": supabaseServiceKey,
     "Authorization": "Bearer " + supabaseServiceKey,
@@ -30,7 +30,7 @@ isolated function wh() returns map<string|string[]> => {
     "Prefer": "return=representation"
 };
 
-// ─── JSON clean — strip null/() fields before sending to Supabase ────────────
+// ─── JSON cleaner — strip null fields before sending to Supabase ──────────────
 isolated function cleanJson(json payload) returns json {
     if payload !is map<json> {
         return payload;
@@ -44,7 +44,7 @@ isolated function cleanJson(json payload) returns json {
     return cleaned;
 }
 
-// ─── Core Supabase operations ────────────────────────────────────────────────
+// ─── Core Supabase operations ─────────────────────────────────────────────────
 
 public function sbGet(string path) returns json|error {
     http:Response resp = check supabaseClient->get(path, rh());
@@ -85,28 +85,74 @@ public function sbDelete(string path) returns error? {
     }
 }
 
-// ─── Profile upsert (called after Google OAuth) ──────────────────────────────
-public function upsertProfile(string uid, string email, string name, string avatar)
-        returns string|error {
-
-    json payload = {id: uid, email: email, full_name: name, avatar_url: avatar};
-    map<string|string[]> headers = {
-        "apikey": supabaseServiceKey,
-        "Authorization": "Bearer " + supabaseServiceKey,
-        "Content-Type": "application/json",
-        "Prefer": "return=representation,resolution=merge-duplicates"
-    };
+// ─── Supabase Auth — password login (used by /auth/login endpoint) ────────────
+// Calls Supabase Auth REST API on behalf of the user.
+public function supabaseLogin(string email, string password) returns types:LoginResponse|error {
+    // Use the Supabase Auth endpoint with anon key for user-facing auth
     http:Response resp = check supabaseClient->post(
-        "/rest/v1/profiles?on_conflict=id", payload, headers
+        "/auth/v1/token?grant_type=password",
+        {email: email, password: password},
+        {
+            "apikey": supabaseServiceKey,
+            "Content-Type": "application/json"
+        }
     );
+    
     if resp.statusCode >= 400 {
-        log:printWarn("Profile upsert failed, defaulting to researcher role");
-        return "researcher";
+        json|error body = resp.getJsonPayload();
+        string bodyStr = body is json ? body.toJsonString() : "[No JSON Body]";
+        log:printWarn("Supabase Auth rejection", statusCode = resp.statusCode, body = bodyStr);
+        
+        // If it's a 4xx from Supabase, try to wrap it in a LoginResponse for the caller
+        if body is json {
+            var lr = body.cloneWithType(types:LoginResponse);
+            if lr is types:LoginResponse {
+                return lr;
+            }
+        }
+        return error("Supabase Auth failed [" + resp.statusCode.toString() + "]: " + bodyStr);
     }
-    json result = check resp.getJsonPayload();
-    if result is json[] && result.length() > 0 {
-        types:Profile p = check result[0].cloneWithType(types:Profile);
-        return p.role;
-    }
-    return "researcher";
+
+    json body = check resp.getJsonPayload();
+    return body.cloneWithType(types:LoginResponse);
 }
+
+// ─── Member operations ────────────────────────────────────────────────────────
+
+public function getMemberByAuthId(string authUserId) returns types:Member|error {
+    json result = check sbGet("/rest/v1/members?auth_user_id=eq." + authUserId + "&select=*");
+    if result is json[] && result.length() > 0 {
+        return result[0].cloneWithType(types:Member);
+    }
+    return error("Member not found for auth_user_id: " + authUserId);
+}
+
+// Ensures a member record exists in the public.members table.
+// Called during login to auto-provision new members.
+public function ensureMemberExists(string authUserId, string email, string name) returns types:Member|error {
+    var existing = getMemberByAuthId(authUserId);
+    if existing is types:Member {
+        return existing;
+    }
+
+    // Create new skeleton member
+    string localPart = email.substring(0, email.indexOf("@") ?: email.length());
+    types:Member newMember = {
+        auth_user_id: authUserId,
+        slug: localPart + "-" + authUserId.substring(0, 4), // avoid collisions
+        name: name != "" ? name : localPart,
+        contact_email: email,
+        status: "DRAFT", // New members start as Draft until profile completed
+        role: "researcher" // Default role
+    };
+
+    json created = check sbPost("/rest/v1/members", newMember.toJson());
+    if created is json[] && created.length() > 0 {
+        return created[0].cloneWithType(types:Member);
+    }
+    return error("Failed to create member record");
+}
+
+// ─── Role resolution ──────────────────────────────────────────────────────────
+// Roles are now stored directly in the public.members table.
+public function getMemberRole(types:Member member) returns string => member.role;

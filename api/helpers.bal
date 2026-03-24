@@ -1,13 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// helpers.bal — HTTP response helpers, auth middleware, and type converters.
-// Root module file — shares configurable vars from config.bal.
+// helpers.bal — Response helpers, auth middleware, and type converters.
 // ─────────────────────────────────────────────────────────────────────────────
 import ballerina/http;
-import ballerina/log;
-import brainlabs/backend.auth;
 import brainlabs/backend.types;
+import brainlabs/backend.db;
 
-// ─── HTTP response helpers ──────────────────────────────────────────────────
+// ─── HTTP response helpers ────────────────────────────────────────────────────
 isolated function unauthorized(string msg = "Unauthorized") returns http:Response {
     http:Response res = new;
     res.statusCode = 401;
@@ -29,36 +27,60 @@ isolated function badRequest(string msg) returns http:Response {
     return res;
 }
 
-// ─── Auth middleware ────────────────────────────────────────────────────────
-// Returns [uid, role, email] or an http:Response (401) if token is invalid.
-function requireAuth(http:Request req)
-        returns [string, string, string]|http:Response {
-
-    string|http:HeaderNotFoundError hdr = req.getHeader("Authorization");
-    if hdr is http:HeaderNotFoundError {
-        return unauthorized("Missing Authorization header");
+// ─── Simple session token validation ─────────────────────────────────────────
+// Token format after login: "uid|email"
+// Used only by protected admin endpoints to identify the caller.
+function validateToken(string token) returns [string, string, string]|error {
+    string[] parts = re`\|`.split(token);
+    if parts.length() < 2 {
+        return error("Invalid session token format. Expected uid|email.");
     }
-    [string, string, string]|error result = auth:validateToken(hdr, jwtSecret);
+    return [parts[0], "authenticated", parts[1]];
+}
+
+// ─── Auth middleware for HTTP requests ────────────────────────────────────────
+function requireAuth(http:Request req) returns [string, string, string]|http:Response {
+    string|http:HeaderNotFoundError authHeader = req.getHeader("Authorization");
+    if authHeader is http:HeaderNotFoundError || !authHeader.startsWith("Bearer ") {
+        return unauthorized("Missing or invalid Authorization header");
+    }
+
+    string token = authHeader.substring(7);
+    var result = validateToken(token);
     if result is error {
-        log:printWarn("JWT rejected", reason = result.message());
-        return unauthorized("Invalid or expired token");
+        return unauthorized("Invalid or expired session. Please log in again.");
     }
     return result;
 }
 
-// ─── Supabase response converters ───────────────────────────────────────────
-// Avoid cloneWithType(Type[]) parse ambiguity — return type inferred from LHS.
-isolated function toPublications(json data) returns types:Publication[]|error =>
+function requireAdminForPublish(string uid, string status) returns http:Response?|error {
+    if status == "PUBLISHED" {
+        types:Member caller = check db:getMemberByAuthId(uid);
+        if db:getMemberRole(caller) != "super_admin" {
+            return forbidden("Only super admins can publish content.");
+        }
+    }
+    return ();
+}
+
+// ─── Type converters ──────────────────────────────────────────────────────────
+isolated function toResearchPublications(json data) returns types:ResearchPublication[]|error =>
     check data.cloneWithType();
 
-isolated function toBlogPosts(json data) returns types:BlogPost[]|error =>
-    check data.cloneWithType();
-
-isolated function toResearchArticles(json data) returns types:ResearchArticle[]|error =>
+isolated function toBlogs(json data) returns types:Blog[]|error =>
     check data.cloneWithType();
 
 isolated function toEvents(json data) returns types:Event[]|error =>
     check data.cloneWithType();
 
-isolated function toProfiles(json data) returns types:Profile[]|error =>
+isolated function toGrants(json data) returns types:Grant[]|error =>
     check data.cloneWithType();
+
+isolated function toMembers(json data) returns types:Member[]|error =>
+    check data.cloneWithType();
+
+isolated function toProjects(json data) returns types:Project[]|error => check data.cloneWithType();
+isolated function toProjectItems(json data) returns types:ProjectItem[]|error => check data.cloneWithType();
+isolated function toTutorialSeries(json data) returns types:TutorialSeries[]|error => check data.cloneWithType();
+isolated function toTutorialPages(json data) returns types:TutorialPage[]|error => check data.cloneWithType();
+

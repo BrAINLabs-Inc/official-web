@@ -1,94 +1,127 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// types.bal — Shared record types matching the Supabase SQL schema.
-// This is a sub-module so every other module can import it:
-//     import brainlabs/backend.types;
+// types.bal — Shared record types matching schema.sql exactly.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── profiles ──────────────────────────────────────────────────────────────────
-public type Profile record {
+// ── members ──────────────────────────────────────────────────────────────────
+public type Member record {
     string? id = ();
-    string? full_name = ();
-    string? email = ();
-    string? avatar_url = ();
-    string role = "researcher";
-    string institution = "BrAIN Labs";
-    string? created_at = ();
-};
-
-// ── publications ──────────────────────────────────────────────────────────────
-public type Publication record {
-    string? id = ();
-    string title;
-    string[] authors = [];
-    string? 'abstract = ();
-    string? doi = ();
-    int? year = ();
-    string[] tags = [];
-    string? pdf_url = ();
-    string? venue = ();
-    string status = "draft";
-    string? created_by = ();
-    string? created_at = ();
-    string? updated_at = ();
-};
-
-// ── blog_posts ────────────────────────────────────────────────────────────────
-public type BlogPost record {
-    string? id = ();
-    string title;
+    string? auth_user_id = ();
     string slug;
-    string? content = ();
-    string? excerpt = ();
-    string? cover_url = ();
-    string[] tags = [];
-    string status = "draft";
-    string? published_at = ();
-    string? created_by = ();
+    string name;
+    string? position = ();
+    string? university = ();
+    string? country = ();
+    string? contact_email = ();
+    string? linkedin_url = ();
+    string? image_url = ();
+    string? summary = ();
+    string status = "DRAFT";
+    string role = "researcher";
     string? created_at = ();
     string? updated_at = ();
 };
 
-// ── research_articles ─────────────────────────────────────────────────────────
-public type ResearchArticle record {
+// ── research_publications ─────────────────────────────────────────────────────
+public type ResearchPublication record {
     string? id = ();
+    string? member_id = ();
     string title;
-    string[] authors = [];
+    string authors;
+    string? venue = ();
+    int? publication_year = ();
+    string? doi = ();
+    string? link = ();
     string? 'abstract = ();
-    string? content = ();
-    string? pdf_url = ();
+    string status = "DRAFT";
+    string? created_at = ();
+    string? updated_at = ();
+};
+
+// ── blogs ─────────────────────────────────────────────────────────────────────
+public type Blog record {
+    string? id = ();
+    string? member_id = ();
+    string slug;
+    string title;
+    string? excerpt = ();
+    string? author_name = ();
+    string? published_date = ();
+    string? image_url = ();
     string[] tags = [];
-    string? research_area = ();
-    string status = "draft";
-    string? created_by = ();
+    string content;
+    string status = "DRAFT";
     string? created_at = ();
     string? updated_at = ();
 };
 
 // ── events ────────────────────────────────────────────────────────────────────
-// Note: `type` is a reserved keyword — escape with leading single-quote.
-// Ballerina serialises `'type` → "type" in JSON, matching the column name.
 public type Event record {
     string? id = ();
+    string? member_id = ();
     string title;
-    string? description = ();
+    string? event_type = ();
     string? event_date = ();
-    string? location = ();
-    string? 'type = ();
-    string[] tags = [];
-    string? banner_url = ();
-    int max_capacity = 100;
-    string status = "draft";
-    string? created_by = ();
+    string? description = ();
+    string? link = ();
+    string status = "DRAFT";
     string? created_at = ();
 };
 
-// ── registrations ─────────────────────────────────────────────────────────────
-public type Registration record {
+// ── grants ────────────────────────────────────────────────────────────────────
+public type Grant record {
     string? id = ();
-    string event_id;
-    string name;
-    string email;
-    string? registered_at = ();
+    string? member_id = ();
+    string title;
+    string agency;
+    string? award_year = ();
+    string? description = ();
+    string status = "DRAFT";
+    string? created_at = ();
+};
+
+// ── projects ──────────────────────────────────────────────────────────────────
+public type Project record {
+    string? id = ();
+    string? member_id = ();
+    string category;
+    string? icon_name = ();
+    string? description = ();
+    string status = "DRAFT";
+    string? created_at = ();
+    string? updated_at = ();
+};
+
+public type ProjectItem record {
+    string? id = ();
+    string project_id;
+    string title;
+    string description;
+    int display_order = 0;
+};
+
+// ── tutorial_series ───────────────────────────────────────────────────────────
+public type TutorialSeries record {
+    string? id = ();
+    string? member_id = ();
+    string slug;
+    string title;
+    string? description = ();
+    string status = "DRAFT";
+    string? created_at = ();
+    string? updated_at = ();
+};
+
+// ── tutorial_pages ────────────────────────────────────────────────────────────
+public type TutorialPage record {
+    string? id = ();
+    string series_id;
+    string? parent_id = ();
+    string slug;
+    string title;
+    string? content = ();
+    int display_order = 0;
+    string? created_at = ();
+    string? updated_at = ();
 };
 
 // ── Shared response shapes ────────────────────────────────────────────────────
@@ -100,14 +133,34 @@ public type SummarizeResponse record {|
     string summary;
 |};
 
-public type ClassifyResponse record {|
-    string area;
+// ── Auth response (returned by /auth/login) ───────────────────────────────────
+public type SupabaseUserDetails record {
+    string id;
+    string email;
+};
+
+public type LoginResponse record {
+    string access_token;
+    string token_type;
+    int expires_in;
+    SupabaseUserDetails? user = ();
+    string? 'error = ();
+    string? error_description = ();
+};
+
+public type AuthLoginPayload record {|
+    string email;
+    string password;
 |};
 
-// ── Google OAuth user ─────────────────────────────────────────────────────────
-public type GoogleUser record {|
-    string sub;
-    string email;
+public type MeResponse record {
+    string? id = ();
+    string? auth_user_id = ();
+    string slug;
     string name;
-    string picture;
-|};
+    string? position = ();
+    string? contact_email = ();
+    string? image_url = ();
+    string status;
+    string role;
+};

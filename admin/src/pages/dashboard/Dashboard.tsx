@@ -10,8 +10,8 @@ import {
   TrendingUp,
   Brain,
 } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
-import { api } from "../lib/api";
+import { useAuth } from "../../hooks/useAuth";
+import { api } from "../../lib/api";
 
 interface StatCardProps {
   label: string;
@@ -45,24 +45,26 @@ function StatCard({ label, value, icon: Icon, href, sub }: StatCardProps) {
 export default function Dashboard() {
   const { user, role } = useAuth();
   const token = useAuth((s) => s.token) ?? "";
-  const [stats, setStats] = useState({ publications: 0, blog: 0, research: 0, events: 0, users: 0 });
+  const [stats, setStats] = useState({ publications: 0, blog: 0, events: 0, projects: 0, grants: 0, users: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const [pubs, blog, research, events] = await Promise.all([
+        const [pubs, blog, events, projs, grants] = await Promise.all([
           api.publications.list(token),
           api.blog.list(token),
-          api.research.list(token),
           api.events.list(token),
+          api.projects.list(token),
+          api.grants.list(token),
         ]);
-        const users = role === "super_admin" ? await api.users.list(token) : [];
+        const users = role === "super_admin" ? await api.members.list(token) : [];
         setStats({
           publications: pubs.length,
           blog: blog.length,
-          research: research.length,
           events: events.length,
+          projects: projs.length,
+          grants: grants.length,
           users: users.length,
         });
       } finally {
@@ -74,15 +76,16 @@ export default function Dashboard() {
   const modules = [
     { label: "Publications", icon: BookOpen, href: "/publications", roles: ["super_admin", "researcher"] },
     { label: "Blog Posts", icon: FileText, href: "/blog", roles: ["super_admin", "researcher"] },
-    { label: "Research", icon: FlaskConical, href: "/research", roles: ["super_admin", "researcher"] },
+    { label: "Projects", icon: FlaskConical, href: "/projects", roles: ["super_admin", "researcher"] },
     { label: "Events", icon: CalendarDays, href: "/events", roles: ["super_admin", "researcher"] },
+    { label: "Grants", icon: BookOpen, href: "/grants", roles: ["super_admin", "researcher"] },
     { label: "Users", icon: Users, href: "/users", roles: ["super_admin"] },
   ].filter((m) => m.roles.includes(role ?? ""));
 
   const statItems = [
     { label: "Publications", value: loading ? "—" : stats.publications, icon: BookOpen, href: "/publications", sub: "Total entries" },
     { label: "Blog Posts", value: loading ? "—" : stats.blog, icon: FileText, href: "/blog", sub: "Total posts" },
-    { label: "Research Articles", value: loading ? "—" : stats.research, icon: FlaskConical, href: "/research", sub: "Total articles" },
+    { label: "Projects", value: loading ? "—" : stats.projects, icon: FlaskConical, href: "/projects", sub: "Total projects" },
     { label: "Events", value: loading ? "—" : stats.events, icon: CalendarDays, href: "/events", sub: "Total events" },
     ...(role === "super_admin"
       ? [{ label: "Users", value: loading ? "—" : stats.users, icon: Users, href: "/users", sub: "Active accounts" }]
@@ -92,49 +95,74 @@ export default function Dashboard() {
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-1">
+      <div className="mb-8 flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
             <Brain size={16} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-zinc-900">
+            <h1 className="text-xl font-bold text-zinc-900 leading-none">
               Welcome back, {user?.name?.split(" ")[0] ?? "User"}
             </h1>
+            <p className="text-xs text-zinc-400 mt-1.5 flex items-center gap-2">
+              {user?.email} &bull; 
+              <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${role === "super_admin" ? "bg-black text-white" : "bg-zinc-100 text-zinc-600"}`}>
+                {role === "super_admin" ? "Super Admin" : "Researcher"}
+              </span>
+            </p>
           </div>
         </div>
-        <p className="text-sm text-zinc-500 ml-11">
-          {user?.email} &middot;{" "}
-          <span className={`role-badge-${role}`}>
-            {role === "super_admin" ? "Super Admin" : "Researcher"}
-          </span>
-        </p>
       </div>
 
       {/* Stats grid */}
-      <div className="mb-8">
+      <div className="mb-10">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp size={14} className="text-zinc-400" />
-          <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Overview</h2>
+          <h2 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Overview</h2>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {statItems.slice(0, 4).map((s) => (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {statItems.map((s) => (
             <StatCard key={s.label} {...s} />
           ))}
         </div>
-        {role === "super_admin" && (
-          <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatCard {...statItems[4]} />
-          </div>
-        )}
       </div>
+
+      {/* Admin — Pending Approval Section */}
+      {role === "super_admin" ? (
+        <div className="mb-10 p-6 bg-zinc-900 border border-zinc-800 rounded-2xl text-white">
+          <div className="flex items-center justify-between mb-4">
+             <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Approval Queue</h2>
+             </div>
+             <span className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded-full text-zinc-400">Restricted to Admin</span>
+          </div>
+          <div className="text-sm text-zinc-500 py-4 border-t border-zinc-800">
+             No pending approvals at this time.
+             <p className="text-[10px] mt-1">Review research publications and blog posts submitted by members here.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-10 p-6 bg-zinc-50 border border-zinc-100 rounded-2xl">
+          <div className="flex items-center justify-between mb-4">
+             <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-zinc-400" />
+                <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Your Role: Researcher</h2>
+             </div>
+          </div>
+          <div className="text-sm text-zinc-600 py-4 border-t border-zinc-200">
+             Welcome to the BrAIN Labs console.
+             <p className="text-xs text-zinc-500 mt-2">You can create and manage your research content, blog posts, and projects. You can save your work as Draft or mark it as Pending Review. A Super Admin will review and publish your submissions.</p>
+          </div>
+        </div>
+      )}
 
       {/* Quick access */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Quick Access</h2>
+          <h2 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Quick Access</h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
           {modules.map((m) => (
             <Link
               key={m.href}
@@ -144,7 +172,7 @@ export default function Dashboard() {
               <div className="w-9 h-9 bg-zinc-100 rounded-lg flex items-center justify-center group-hover:bg-black transition-colors">
                 <m.icon size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
               </div>
-              <span className="text-xs font-medium text-zinc-700">{m.label}</span>
+              <span className="text-[10px] font-bold uppercase text-zinc-500 group-hover:text-zinc-900 transition-colors tracking-tight">{m.label}</span>
             </Link>
           ))}
         </div>

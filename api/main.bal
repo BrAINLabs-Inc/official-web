@@ -1,19 +1,5 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// main.bal — BrAIN Labs API entry point.
-// Defines the HTTP listener, CORS config, and all resource function handlers.
-//
-// Project structure:
-//   config.bal       — configurable variables
-//   helpers.bal      — HTTP response helpers, auth middleware, type converters
-//   modules/types/   — shared record types
-//   modules/auth/    — Google OAuth 2.0 + JWT
-//   modules/ai/      — HuggingFace inference helpers
-//   modules/db/      — Supabase REST client + CRUD
-// ─────────────────────────────────────────────────────────────────────────────
 import ballerina/http;
 import ballerina/log;
-import brainlabs/backend.auth;
-import brainlabs/backend.ai;
 import brainlabs/backend.db;
 import brainlabs/backend.types;
 
@@ -41,73 +27,87 @@ service / on new http:Listener(port) {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // AUTH — Google OAuth 2.0
+    // AUTH — Email/password login via Supabase Auth REST
+    // Returns JWT + member profile. Frontend never calls Supabase directly.
     // ════════════════════════════════════════════════════════════════════════
 
-    resource function get auth/google() returns http:Response {
-        string url = auth:buildGoogleAuthUrl(googleClientId, googleRedirectUri);
-        http:Response res = new;
-        res.setHeader("Location", url);
-        res.statusCode = 302;
-        return res;
-    }
-
-    resource function get auth/google/callback(string code)
-            returns http:Response|error {
-
-        types:GoogleUser|error userResult = auth:exchangeCode(
-            code, googleClientId, googleClientSecret, googleRedirectUri
-        );
-        if userResult is error {
-            log:printError("OAuth exchange failed", reason = userResult.message());
-            http:Response res = new;
-            res.statusCode = 502;
-            res.setPayload({message: "OAuth failed: " + userResult.message()});
-            return res;
+    resource function post auth/login(@http:Payload types:AuthLoginPayload body)
+            returns record {|string token; types:MeResponse member;|}|http:Response|error {
+        
+        // 1. Domain Validation
+        string email = body.email.toLowerAscii();
+        boolean isValidDomain = email.endsWith("@sliit.lk") || 
+                                email.endsWith("@my.sliit.lk") || 
+                                email.endsWith("@gmail.com") ||
+                                email.endsWith("@brainlabsinc.org");
+        
+        if !isValidDomain {
+            log:printWarn("Domain validation failed", email = email);
+            return unauthorized("Only @sliit.lk, @my.sliit.lk, @gmail.com or @brainlabsinc.org emails are allowed.");
         }
-        types:GoogleUser user = userResult;
 
-        string role = check db:upsertProfile(user.sub, user.email, user.name, user.picture);
-        string token = check auth:issueJwt(
-            user.email, user.sub, role, user.name, user.picture, jwtSecret
-        );
-        log:printInfo("Login", email = user.email, role = role);
+        // 2. Call Supabase Auth password grant
+        types:LoginResponse|error loginResult = db:supabaseLogin(body.email, body.password);
+        if loginResult is error {
+            log:printError("Supabase login error", 'error = loginResult);
+            return unauthorized("Invalid email or password");
+        }
+        if loginResult.'error != () {
+            log:printWarn("Supabase login failed", reason = loginResult.error_description);
+            return unauthorized(loginResult.error_description ?: "Login failed");
+        }
 
-        string redirect = adminRedirectUri
-            + "?token=" + token
-            + "&role=" + role
-            + "&name=" + user.name
-            + "&email=" + user.email
-            + "&avatar=" + user.picture;
+        // 3. Extract UID directly from Supabase user object — no JWT parsing needed
+        types:SupabaseUserDetails? userDetails = loginResult.user;
+        if userDetails is () {
+            log:printError("Supabase login returned no user object");
+            return unauthorized("Authentication failed: no user data returned");
+        }
+        string uid = userDetails.id;
+        string capturedEmail = userDetails.email;
 
-        http:Response res = new;
-        res.setHeader("Location", redirect);
-        res.statusCode = 302;
-        return res;
+        // 4. Ensure member profile exists (auto-provision if first login)
+        string name = capturedEmail.substring(0, capturedEmail.indexOf("@") ?: capturedEmail.length());
+        types:Member member = check db:ensureMemberExists(uid, capturedEmail, name);
+
+        // 5. Build response — role comes from the members.role column in DB
+        string memberRole = db:getMemberRole(member);
+        types:MeResponse me = {
+            id: member.id,
+            auth_user_id: member.auth_user_id,
+            slug: member.slug,
+            name: member.name,
+            position: member.position,
+            contact_email: member.contact_email ?: capturedEmail,
+            image_url: member.image_url,
+            status: member.status,
+            role: memberRole
+        };
+
+        // 6. Issue a simple uid|email session token (no JWT)
+        string token = uid + "|" + (member.contact_email ?: capturedEmail);
+        return {token: token, member: me};
     }
+
+
 
     // ════════════════════════════════════════════════════════════════════════
     // PUBLIC — brainlabsinc.org reads published content (no auth)
     // ════════════════════════════════════════════════════════════════════════
 
-    resource function get publications() returns types:Publication[]|error {
-        json raw = check db:sbGet("/rest/v1/publications?status=eq.published&order=year.desc,created_at.desc&select=*");
-        return check toPublications(raw);
+    resource function get publications() returns types:ResearchPublication[]|error {
+        json raw = check db:sbGet("/rest/v1/research_publications?status=eq.PUBLISHED&order=publication_year.desc,created_at.desc&select=*");
+        return toResearchPublications(raw);
     }
 
-    resource function get blog() returns types:BlogPost[]|error {
-        json raw = check db:sbGet("/rest/v1/blog_posts?status=eq.published&order=published_at.desc&select=*");
-        return check toBlogPosts(raw);
-    }
-
-    resource function get research() returns types:ResearchArticle[]|error {
-        json raw = check db:sbGet("/rest/v1/research_articles?status=eq.published&order=created_at.desc&select=*");
-        return check toResearchArticles(raw);
+    resource function get blog() returns types:Blog[]|error {
+        json raw = check db:sbGet("/rest/v1/blogs?status=eq.PUBLISHED&order=published_date.desc&select=*");
+        return toBlogs(raw);
     }
 
     resource function get events() returns types:Event[]|error {
-        json raw = check db:sbGet("/rest/v1/events?status=eq.published&order=event_date.asc&select=*");
-        return check toEvents(raw);
+        json raw = check db:sbGet("/rest/v1/events?status=eq.PUBLISHED&order=created_at.asc&select=*");
+        return toEvents(raw);
     }
 
     resource function post events/[string id]/register(
@@ -120,40 +120,74 @@ service / on new http:Listener(port) {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // ADMIN — Publications  /admin/publications
+    // ADMIN — Current user profile (used after login to verify session)
+    // ════════════════════════════════════════════════════════════════════════
+
+    resource function get admin/me(http:Request req) returns types:MeResponse|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, email] = authResult;
+
+        types:Member|error memberResult = db:getMemberByAuthId(uid);
+        if memberResult is error {
+            return forbidden("User is authenticated but not a registered member of BrAIN Labs.");
+        }
+        return {
+            id: memberResult.id,
+            auth_user_id: memberResult.auth_user_id,
+            slug: memberResult.slug,
+            name: memberResult.name,
+            position: memberResult.position,
+            contact_email: memberResult.contact_email ?: email,
+            image_url: memberResult.image_url,
+            status: memberResult.status,
+            role: db:getMemberRole(memberResult)
+        };
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ADMIN — Publications
     // ════════════════════════════════════════════════════════════════════════
 
     resource function get admin/publications(http:Request req)
-            returns types:Publication[]|http:Response|error {
+            returns types:ResearchPublication[]|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
-        var [uid, role, _] = authResult;
-        string q = role == "super_admin"
-            ? "/rest/v1/publications?order=created_at.desc&select=*"
-            : "/rest/v1/publications?created_by=eq." + uid + "&order=created_at.desc&select=*";
-        json raw = check db:sbGet(q);
-        return check toPublications(raw);
+        json raw = check db:sbGet("/rest/v1/research_publications?order=created_at.desc&select=*");
+        return toResearchPublications(raw);
     }
 
     resource function post admin/publications(http:Request req,
-            @http:Payload types:Publication pub)
-            returns types:Publication|http:Response|error {
+            @http:Payload types:ResearchPublication pub)
+            returns types:ResearchPublication|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
         var [uid, _, _] = authResult;
-        pub.created_by = uid;
-        json created = check db:sbPost("/rest/v1/publications", pub.toJson());
-        types:Publication[] arr = check toPublications(created);
+        
+        var pubCheck = requireAdminForPublish(uid, pub.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        types:Member member = check db:getMemberByAuthId(uid);
+        pub.member_id = member.id;
+        json created = check db:sbPost("/rest/v1/research_publications", pub.toJson());
+        types:ResearchPublication[] arr = check toResearchPublications(created);
         return arr[0];
     }
 
     resource function put admin/publications/[string id](http:Request req,
-            @http:Payload types:Publication pub)
-            returns types:Publication|http:Response|error {
+            @http:Payload types:ResearchPublication pub)
+            returns types:ResearchPublication|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
-        json updated = check db:sbPatch("/rest/v1/publications?id=eq." + id, pub.toJson());
-        types:Publication[] arr = check toPublications(updated);
+        var [uid, _, _] = authResult;
+        
+        var pubCheck = requireAdminForPublish(uid, pub.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        json updated = check db:sbPatch("/rest/v1/research_publications?id=eq." + id, pub.toJson());
+        types:ResearchPublication[] arr = check toResearchPublications(updated);
         return arr[0];
     }
 
@@ -161,54 +195,53 @@ service / on new http:Listener(port) {
             returns types:MessageResponse|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
-        check db:sbDelete("/rest/v1/publications?id=eq." + id);
+        check db:sbDelete("/rest/v1/research_publications?id=eq." + id);
         return {message: "Publication deleted"};
     }
 
-    resource function post admin/publications/summarize(http:Request req,
-            @http:Payload record {|string 'abstract;|} body)
-            returns types:SummarizeResponse|http:Response|error {
-        var authResult = requireAuth(req);
-        if authResult is http:Response { return authResult; }
-        string summary = check ai:summarize(body.'abstract, hfToken);
-        return {summary};
-    }
-
     // ════════════════════════════════════════════════════════════════════════
-    // ADMIN — Blog Posts  /admin/blog
+    // ADMIN — Blog Posts
     // ════════════════════════════════════════════════════════════════════════
 
     resource function get admin/blog(http:Request req)
-            returns types:BlogPost[]|http:Response|error {
+            returns types:Blog[]|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
-        var [uid, role, _] = authResult;
-        string q = role == "super_admin"
-            ? "/rest/v1/blog_posts?order=created_at.desc&select=*"
-            : "/rest/v1/blog_posts?created_by=eq." + uid + "&order=created_at.desc&select=*";
-        json raw = check db:sbGet(q);
-        return check toBlogPosts(raw);
+        json raw = check db:sbGet("/rest/v1/blogs?order=created_at.desc&select=*");
+        return toBlogs(raw);
     }
 
     resource function post admin/blog(http:Request req,
-            @http:Payload types:BlogPost post)
-            returns types:BlogPost|http:Response|error {
+            @http:Payload types:Blog post)
+            returns types:Blog|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
         var [uid, _, _] = authResult;
-        post.created_by = uid;
-        json created = check db:sbPost("/rest/v1/blog_posts", post.toJson());
-        types:BlogPost[] arr = check toBlogPosts(created);
+
+        var pubCheck = requireAdminForPublish(uid, post.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        types:Member member = check db:getMemberByAuthId(uid);
+        post.member_id = member.id;
+        json created = check db:sbPost("/rest/v1/blogs", post.toJson());
+        types:Blog[] arr = check toBlogs(created);
         return arr[0];
     }
 
     resource function put admin/blog/[string id](http:Request req,
-            @http:Payload types:BlogPost post)
-            returns types:BlogPost|http:Response|error {
+            @http:Payload types:Blog post)
+            returns types:Blog|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
-        json updated = check db:sbPatch("/rest/v1/blog_posts?id=eq." + id, post.toJson());
-        types:BlogPost[] arr = check toBlogPosts(updated);
+        var [uid, _, _] = authResult;
+
+        var pubCheck = requireAdminForPublish(uid, post.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        json updated = check db:sbPatch("/rest/v1/blogs?id=eq." + id, post.toJson());
+        types:Blog[] arr = check toBlogs(updated);
         return arr[0];
     }
 
@@ -216,81 +249,20 @@ service / on new http:Listener(port) {
             returns types:MessageResponse|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
-        check db:sbDelete("/rest/v1/blog_posts?id=eq." + id);
+        check db:sbDelete("/rest/v1/blogs?id=eq." + id);
         return {message: "Blog post deleted"};
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // ADMIN — Research Articles  /admin/research
-    // ════════════════════════════════════════════════════════════════════════
-
-    resource function get admin/research(http:Request req)
-            returns types:ResearchArticle[]|http:Response|error {
-        var authResult = requireAuth(req);
-        if authResult is http:Response { return authResult; }
-        var [uid, role, _] = authResult;
-        string q = role == "super_admin"
-            ? "/rest/v1/research_articles?order=created_at.desc&select=*"
-            : "/rest/v1/research_articles?created_by=eq." + uid + "&order=created_at.desc&select=*";
-        json raw = check db:sbGet(q);
-        return check toResearchArticles(raw);
-    }
-
-    resource function post admin/research(http:Request req,
-            @http:Payload types:ResearchArticle article)
-            returns types:ResearchArticle|http:Response|error {
-        var authResult = requireAuth(req);
-        if authResult is http:Response { return authResult; }
-        var [uid, _, _] = authResult;
-        article.created_by = uid;
-        json created = check db:sbPost("/rest/v1/research_articles", article.toJson());
-        types:ResearchArticle[] arr = check toResearchArticles(created);
-        return arr[0];
-    }
-
-    resource function put admin/research/[string id](http:Request req,
-            @http:Payload types:ResearchArticle article)
-            returns types:ResearchArticle|http:Response|error {
-        var authResult = requireAuth(req);
-        if authResult is http:Response { return authResult; }
-        json updated = check db:sbPatch(
-            "/rest/v1/research_articles?id=eq." + id, article.toJson()
-        );
-        types:ResearchArticle[] arr = check toResearchArticles(updated);
-        return arr[0];
-    }
-
-    resource function delete admin/research/[string id](http:Request req)
-            returns types:MessageResponse|http:Response|error {
-        var authResult = requireAuth(req);
-        if authResult is http:Response { return authResult; }
-        check db:sbDelete("/rest/v1/research_articles?id=eq." + id);
-        return {message: "Research article deleted"};
-    }
-
-    resource function post admin/research/classify(http:Request req,
-            @http:Payload record {|string 'abstract;|} body)
-            returns types:ClassifyResponse|http:Response|error {
-        var authResult = requireAuth(req);
-        if authResult is http:Response { return authResult; }
-        string area = check ai:classifyResearchArea(body.'abstract, hfToken);
-        return {area};
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // ADMIN — Events  /admin/events
+    // ADMIN — Events
     // ════════════════════════════════════════════════════════════════════════
 
     resource function get admin/events(http:Request req)
             returns types:Event[]|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
-        var [uid, role, _] = authResult;
-        string q = role == "super_admin"
-            ? "/rest/v1/events?order=event_date.asc&select=*"
-            : "/rest/v1/events?created_by=eq." + uid + "&order=event_date.asc&select=*";
-        json raw = check db:sbGet(q);
-        return check toEvents(raw);
+        json raw = check db:sbGet("/rest/v1/events?order=created_at.desc&select=*");
+        return toEvents(raw);
     }
 
     resource function post admin/events(http:Request req,
@@ -299,7 +271,13 @@ service / on new http:Listener(port) {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
         var [uid, _, _] = authResult;
-        ev.created_by = uid;
+
+        var pubCheck = requireAdminForPublish(uid, ev.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        types:Member member = check db:getMemberByAuthId(uid);
+        ev.member_id = member.id;
         json created = check db:sbPost("/rest/v1/events", ev.toJson());
         types:Event[] arr = check toEvents(created);
         return arr[0];
@@ -310,6 +288,12 @@ service / on new http:Listener(port) {
             returns types:Event|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
+        var [uid, _, _] = authResult;
+
+        var pubCheck = requireAdminForPublish(uid, ev.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
         json updated = check db:sbPatch("/rest/v1/events?id=eq." + id, ev.toJson());
         types:Event[] arr = check toEvents(updated);
         return arr[0];
@@ -324,35 +308,284 @@ service / on new http:Listener(port) {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // ADMIN — Users  /admin/users  (super_admin only)
+    // ADMIN — Grants
     // ════════════════════════════════════════════════════════════════════════
 
-    resource function get admin/users(http:Request req)
-            returns types:Profile[]|http:Response|error {
+    resource function get admin/grants(http:Request req)
+            returns types:Grant[]|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
-        var [_, role, _] = authResult;
-        if role != "super_admin" {
-            return forbidden("Only super_admin may access user management");
-        }
-        json raw = check db:sbGet("/rest/v1/profiles?order=created_at.asc&select=*");
-        return check toProfiles(raw);
+        json raw = check db:sbGet("/rest/v1/grants?order=created_at.desc&select=*");
+        return toGrants(raw);
     }
 
-    resource function put admin/users/[string id]/role(http:Request req,
-            @http:Payload record {|string role;|} body)
-            returns types:Profile|http:Response|error {
+    resource function post admin/grants(http:Request req,
+            @http:Payload types:Grant g)
+            returns types:Grant|http:Response|error {
         var authResult = requireAuth(req);
         if authResult is http:Response { return authResult; }
-        var [_, callerRole, _] = authResult;
-        if callerRole != "super_admin" {
-            return forbidden("Only super_admin may change roles");
-        }
-        if body.role != "super_admin" && body.role != "researcher" {
-            return badRequest("role must be 'super_admin' or 'researcher'");
-        }
-        json updated = check db:sbPatch("/rest/v1/profiles?id=eq." + id, {role: body.role});
-        types:Profile[] arr = check toProfiles(updated);
+        var [uid, _, _] = authResult;
+
+        var pubCheck = requireAdminForPublish(uid, g.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        types:Member member = check db:getMemberByAuthId(uid);
+        g.member_id = member.id;
+        json created = check db:sbPost("/rest/v1/grants", g.toJson());
+        types:Grant[] arr = check toGrants(created);
         return arr[0];
     }
+
+    resource function put admin/grants/[string id](http:Request req,
+            @http:Payload types:Grant g)
+            returns types:Grant|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, _] = authResult;
+
+        var pubCheck = requireAdminForPublish(uid, g.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        json updated = check db:sbPatch("/rest/v1/grants?id=eq." + id, g.toJson());
+        types:Grant[] arr = check toGrants(updated);
+        return arr[0];
+    }
+
+    resource function delete admin/grants/[string id](http:Request req)
+            returns types:MessageResponse|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        check db:sbDelete("/rest/v1/grants?id=eq." + id);
+        return {message: "Grant deleted"};
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ADMIN — Members Management (Super Admin only)
+    // ════════════════════════════════════════════════════════════════════════
+
+    resource function get admin/members(http:Request req)
+            returns types:Member[]|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        json raw = check db:sbGet("/rest/v1/members?order=name.asc&select=*");
+        return toMembers(raw);
+    }
+
+    resource function post admin/members(http:Request req,
+            @http:Payload types:Member m)
+            returns types:Member|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        json created = check db:sbPost("/rest/v1/members", m.toJson());
+        types:Member[] arr = check toMembers(created);
+        return arr[0];
+    }
+
+    resource function patch admin/members/[string id](http:Request req,
+            @http:Payload record {|string status;|} body)
+            returns types:Member|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, _] = authResult;
+        
+        var pubCheck = requireAdminForPublish(uid, body.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        json updated = check db:sbPatch("/rest/v1/members?id=eq." + id, {status: body.status});
+        types:Member[] arr = check toMembers(updated);
+        return arr[0];
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ADMIN — Projects
+    // ════════════════════════════════════════════════════════════════════════
+
+    resource function get admin/projects(http:Request req)
+            returns types:Project[]|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        json raw = check db:sbGet("/rest/v1/projects?order=created_at.desc&select=*");
+        return toProjects(raw);
+    }
+
+    resource function post admin/projects(http:Request req,
+            @http:Payload types:Project p)
+            returns types:Project|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, _] = authResult;
+
+        var pubCheck = requireAdminForPublish(uid, p.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        types:Member member = check db:getMemberByAuthId(uid);
+        p.member_id = member.id;
+        json created = check db:sbPost("/rest/v1/projects", p.toJson());
+        types:Project[] arr = check toProjects(created);
+        return arr[0];
+    }
+
+    resource function put admin/projects/[string id](http:Request req,
+            @http:Payload types:Project p)
+            returns types:Project|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, _] = authResult;
+
+        var pubCheck = requireAdminForPublish(uid, p.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        json updated = check db:sbPatch("/rest/v1/projects?id=eq." + id, p.toJson());
+        types:Project[] arr = check toProjects(updated);
+        return arr[0];
+    }
+
+    resource function delete admin/projects/[string id](http:Request req)
+            returns types:MessageResponse|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        check db:sbDelete("/rest/v1/projects?id=eq." + id);
+        return {message: "Project deleted"};
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ADMIN — Project Items
+    // ════════════════════════════════════════════════════════════════════════
+
+    resource function get admin/project\-items(http:Request req, string project_id)
+            returns types:ProjectItem[]|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        json raw = check db:sbGet("/rest/v1/project_items?project_id=eq." + project_id + "&order=display_order.asc&select=*");
+        return toProjectItems(raw);
+    }
+
+    resource function post admin/project\-items(http:Request req,
+            @http:Payload types:ProjectItem pi)
+            returns types:ProjectItem|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        json created = check db:sbPost("/rest/v1/project_items", pi.toJson());
+        types:ProjectItem[] arr = check toProjectItems(created);
+        return arr[0];
+    }
+
+    resource function put admin/project\-items/[string id](http:Request req,
+            @http:Payload types:ProjectItem pi)
+            returns types:ProjectItem|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        json updated = check db:sbPatch("/rest/v1/project_items?id=eq." + id, pi.toJson());
+        types:ProjectItem[] arr = check toProjectItems(updated);
+        return arr[0];
+    }
+
+    resource function delete admin/project\-items/[string id](http:Request req)
+            returns types:MessageResponse|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        check db:sbDelete("/rest/v1/project_items?id=eq." + id);
+        return {message: "Project item deleted"};
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ADMIN — Tutorials Series
+    // ════════════════════════════════════════════════════════════════════════
+
+    resource function get admin/tutorials(http:Request req)
+            returns types:TutorialSeries[]|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        json raw = check db:sbGet("/rest/v1/tutorial_series?order=created_at.desc&select=*");
+        return toTutorialSeries(raw);
+    }
+
+    resource function post admin/tutorials(http:Request req,
+            @http:Payload types:TutorialSeries ts)
+            returns types:TutorialSeries|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, _] = authResult;
+
+        var pubCheck = requireAdminForPublish(uid, ts.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        types:Member member = check db:getMemberByAuthId(uid);
+        ts.member_id = member.id;
+        json created = check db:sbPost("/rest/v1/tutorial_series", ts.toJson());
+        types:TutorialSeries[] arr = check toTutorialSeries(created);
+        return arr[0];
+    }
+
+    resource function put admin/tutorials/[string id](http:Request req,
+            @http:Payload types:TutorialSeries ts)
+            returns types:TutorialSeries|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, _] = authResult;
+
+        var pubCheck = requireAdminForPublish(uid, ts.status);
+        if pubCheck is http:Response { return pubCheck; }
+        if pubCheck is error { return badRequest("Failed to verify user role"); }
+
+        json updated = check db:sbPatch("/rest/v1/tutorial_series?id=eq." + id, ts.toJson());
+        types:TutorialSeries[] arr = check toTutorialSeries(updated);
+        return arr[0];
+    }
+
+    resource function delete admin/tutorials/[string id](http:Request req)
+            returns types:MessageResponse|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        check db:sbDelete("/rest/v1/tutorial_series?id=eq." + id);
+        return {message: "Tutorial series deleted"};
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ADMIN — Tutorial Pages
+    // ════════════════════════════════════════════════════════════════════════
+
+    resource function get admin/tutorial\-pages(http:Request req, string series_id)
+            returns types:TutorialPage[]|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        json raw = check db:sbGet("/rest/v1/tutorial_pages?series_id=eq." + series_id + "&order=display_order.asc&select=*");
+        return toTutorialPages(raw);
+    }
+
+    resource function post admin/tutorial\-pages(http:Request req,
+            @http:Payload types:TutorialPage tp)
+            returns types:TutorialPage|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        json created = check db:sbPost("/rest/v1/tutorial_pages", tp.toJson());
+        types:TutorialPage[] arr = check toTutorialPages(created);
+        return arr[0];
+    }
+
+    resource function put admin/tutorial\-pages/[string id](http:Request req,
+            @http:Payload types:TutorialPage tp)
+            returns types:TutorialPage|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        json updated = check db:sbPatch("/rest/v1/tutorial_pages?id=eq." + id, tp.toJson());
+        types:TutorialPage[] arr = check toTutorialPages(updated);
+        return arr[0];
+    }
+
+    resource function delete admin/tutorial\-pages/[string id](http:Request req)
+            returns types:MessageResponse|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        check db:sbDelete("/rest/v1/tutorial_pages?id=eq." + id);
+        return {message: "Tutorial page deleted"};
+    }
+
 }
+

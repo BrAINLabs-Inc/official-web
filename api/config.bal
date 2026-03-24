@@ -4,10 +4,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 configurable int    port               = 8080;
-configurable string googleClientId     = ?;
-configurable string googleClientSecret = ?;
-configurable string googleRedirectUri  = ?;
-configurable string allowedEmailDomain = "brainlabsinc.org";
-configurable string adminRedirectUri   = "https://admin.brainlabsinc.org/auth/callback";
-configurable string jwtSecret          = ?;
+configurable string jwtSecret          = ?;    // Supabase JWT Secret
 configurable string hfToken            = "";   // optional — enables AI features
+// Comma-separated list of Supabase auth_user_ids that have super_admin role.
+// Example: "uuid-1,uuid-2"
+// The 'role' field is NOT in the schema — role is resolved at runtime here.
+configurable string superAdminIds      = "";

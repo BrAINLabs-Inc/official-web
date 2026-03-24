@@ -1,17 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { RoleGuard } from "./components/RoleGuard";
-import { AppLayout } from "./components/AppLayout";
-import Login from "./pages/Login";
-import AuthCallback from "./pages/AuthCallback";
-import Dashboard from "./pages/Dashboard";
-import Publications from "./pages/Publications";
-import Blog from "./pages/Blog";
-import Research from "./pages/Research";
-import Events from "./pages/Events";
-import Users from "./pages/Users";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { RoleGuard } from "./components/auth/RoleGuard";
+import { AppLayout } from "./components/layout/AppLayout";
+import Login from "./pages/auth/Login";
+import CompleteProfile from "./pages/auth/CompleteProfile";
+import Dashboard from "./pages/dashboard/Dashboard";
+import Publications from "./pages/content/Publications";
+import Blog from "./pages/content/Blog";
+import Events from "./pages/content/Events";
+import Grants from "./pages/content/Grants";
+import Projects from "./pages/content/Projects";
+import Tutorials from "./pages/content/Tutorials";
+import Users from "./pages/users/Users";
 
 // Dev-login bypass: visiting /?devlogin=1 sets a mock super_admin session
 // so you can explore the full UI without a running backend.
@@ -25,7 +27,7 @@ function DevLoginHandler() {
         name: "Dr. Asel Silva",
         email: "asel@brainlabsinc.org",
         avatar: "https://api.dicebear.com/7.x/initials/svg?seed=AS&backgroundColor=000000&textColor=ffffff",
-      });
+      }, "PUBLISHED");
     }
   }, [params, setSession, token]);
 
@@ -37,9 +39,9 @@ export default function App() {
     <BrowserRouter>
       <DevLoginHandler />
       <Routes>
-        {/* Public routes */}
+        {/* Public auth routes */}
         <Route path="/login" element={<Login />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/complete-profile" element={<CompleteProfile />} />
 
         {/* Protected admin routes */}
         <Route
@@ -54,8 +56,10 @@ export default function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="publications" element={<Publications />} />
           <Route path="blog" element={<Blog />} />
-          <Route path="research" element={<Research />} />
           <Route path="events" element={<Events />} />
+          <Route path="projects" element={<Projects />} />
+          <Route path="grants" element={<Grants />} />
+          <Route path="tutorials" element={<Tutorials />} />
           <Route
             path="users"
             element={

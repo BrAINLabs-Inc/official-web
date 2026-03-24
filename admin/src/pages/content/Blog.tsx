@@ -1,29 +1,46 @@
 import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Star, X, ChevronDown } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
-import { api, type BlogPost } from "../lib/api";
+import { useAuth } from "../../hooks/useAuth";
+import { api, type Blog as BlogType } from "../../lib/api";
 
 function StatusPill({ status }: { status: string }) {
+  const isPublished = status === "PUBLISHED";
+  const isPending = status === "PENDING_REVIEW";
+  
   return (
-    <span className={`status-pill ${status === "published" ? "status-published" : "status-draft"}`}>
-      {status === "published" ? "Published" : "Draft"}
+    <span className={`status-pill ${isPublished ? "status-published" : isPending ? "bg-amber-100 text-amber-700" : "status-draft"}`}>
+      {status.charAt(0) + status.slice(1).toLowerCase().replace("_", " ")}
     </span>
   );
 }
 
-const EMPTY: Partial<BlogPost> = { title: "", slug: "", content: "", excerpt: "", cover_url: "", tags: [], status: "draft" };
+const EMPTY: Partial<BlogType> = { 
+  title: "", 
+  slug: "", 
+  content: "", 
+  excerpt: "", 
+  image_url: "", 
+  tags: [], 
+  status: "DRAFT" 
+};
 
-export default function Blog() {
-  const { token } = useAuth();
+export default function BlogPage() {
+  const { token, role } = useAuth();
+  const isAdmin = role === "super_admin";
   const t = token ?? "";
-  const [items, setItems] = useState<BlogPost[]>([]);
+  const [items, setItems] = useState<BlogType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Partial<BlogPost> | null>(null);
+  const [editing, setEditing] = useState<Partial<BlogType> | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    api.blog.list(t).then((data) => { setItems(data); setLoading(false); });
+    if (t) {
+      api.blog.list(t).then((data) => { setItems(data); setLoading(false); }).catch(err => {
+        console.error("Failed to fetch blogs", err);
+        setLoading(false);
+      });
+    }
   }, [t]);
 
   const generateSlug = (title: string) =>
@@ -41,21 +58,35 @@ export default function Blog() {
         setItems((prev) => [created, ...prev]);
       }
       setEditing(null);
+    } catch (err) {
+      console.error("Save failed", err);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleTogglePublish = async (post: BlogPost) => {
-    const updated = await api.blog.update(t, post.id, { status: post.status === "published" ? "draft" : "published" });
-    setItems((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+  const handleTogglePublish = async (post: BlogType) => {
+    try {
+      const updated = await api.blog.update(t, post.id!, { 
+        status: post.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED" 
+      });
+      setItems((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    } catch (err) {
+      console.error("Toggle publish failed", err);
+    }
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
     setDeletingId(id);
-    await api.blog.delete(t, id);
-    setItems((prev) => prev.filter((p) => p.id !== id));
-    setDeletingId(null);
+    try {
+      await api.blog.delete(t, id);
+      setItems((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error("Delete failed", err);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -81,7 +112,7 @@ export default function Blog() {
               <tr className="border-b border-zinc-100 bg-zinc-50">
                 <th className="text-left px-5 py-3 font-medium text-zinc-500 text-xs uppercase tracking-wider">Title</th>
                 <th className="text-left px-5 py-3 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden md:table-cell">Slug</th>
-                <th className="text-left px-5 py-3 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden lg:table-cell">Tags</th>
+                <th className="text-left px-5 py-3 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden lg:table-cell">Author</th>
                 <th className="text-left px-5 py-3 font-medium text-zinc-500 text-xs uppercase tracking-wider">Status</th>
                 <th className="px-5 py-3" />
               </tr>
@@ -94,23 +125,19 @@ export default function Blog() {
                     {post.excerpt && <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">{post.excerpt}</p>}
                   </td>
                   <td className="px-5 py-4 text-zinc-400 font-mono text-xs hidden md:table-cell">{post.slug}</td>
-                  <td className="px-5 py-4 hidden lg:table-cell">
-                    <div className="flex flex-wrap gap-1">
-                      {(post.tags ?? []).slice(0, 2).map((tag) => (
-                        <span key={tag} className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{tag}</span>
-                      ))}
-                    </div>
-                  </td>
+                  <td className="px-5 py-4 text-zinc-500 hidden lg:table-cell">{post.author_name ?? "—"}</td>
                   <td className="px-5 py-4"><StatusPill status={post.status} /></td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => handleTogglePublish(post)} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors" title={post.status === "published" ? "Unpublish" : "Publish"}>
-                        <Star size={14} fill={post.status === "published" ? "currentColor" : "none"} />
-                      </button>
+                      {isAdmin && (
+                        <button onClick={() => handleTogglePublish(post)} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors" title={post.status === "PUBLISHED" ? "Unpublish" : "Publish"}>
+                          <Star size={14} fill={post.status === "PUBLISHED" ? "currentColor" : "none"} />
+                        </button>
+                      )}
                       <button onClick={() => setEditing(post)} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(post.id)} disabled={deletingId === post.id} className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40">
+                      <button onClick={() => handleDelete(post.id!)} disabled={deletingId === post.id} className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -133,28 +160,32 @@ export default function Blog() {
             </div>
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
               <Field label="Title">
-                <input className="field-input" value={editing.title ?? ""} onChange={(e) => setEditing((p) => ({ ...p, title: e.target.value, slug: generateSlug(e.target.value) }))} placeholder="Post title" />
+                <input className="field-input" value={editing.title ?? ""} onChange={(e) => setEditing((p: any) => ({ ...p, title: e.target.value, slug: generateSlug(e.target.value) }))} placeholder="Post title" />
               </Field>
               <Field label="Slug">
-                <input className="field-input font-mono text-xs" value={editing.slug ?? ""} onChange={(e) => setEditing((p) => ({ ...p, slug: e.target.value }))} placeholder="post-slug" />
+                <input className="field-input font-mono text-xs" value={editing.slug ?? ""} onChange={(e) => setEditing((p: any) => ({ ...p, slug: e.target.value }))} placeholder="post-slug" />
+              </Field>
+              <Field label="Author Name">
+                <input className="field-input" value={editing.author_name ?? ""} onChange={(e) => setEditing((p: any) => ({ ...p, author_name: e.target.value }))} placeholder="Dr. A. Silva" />
               </Field>
               <Field label="Excerpt">
-                <textarea className="field-input" value={editing.excerpt ?? ""} onChange={(e) => setEditing((p) => ({ ...p, excerpt: e.target.value }))} placeholder="Short summary for listings" rows={2} />
+                <textarea className="field-input" value={editing.excerpt ?? ""} onChange={(e) => setEditing((p: any) => ({ ...p, excerpt: e.target.value }))} placeholder="Short summary for listings" rows={2} />
               </Field>
               <Field label="Content (Markdown)">
-                <textarea className="field-input font-mono text-xs min-h-[180px] resize-y" value={editing.content ?? ""} onChange={(e) => setEditing((p) => ({ ...p, content: e.target.value }))} placeholder="# Heading&#10;&#10;Write your post in Markdown…" />
+                <textarea className="field-input font-mono text-xs min-h-[180px] resize-y" value={editing.content ?? ""} onChange={(e) => setEditing((p: any) => ({ ...p, content: e.target.value }))} placeholder="# Heading&#10;&#10;Write your post in Markdown…" />
               </Field>
-              <Field label="Cover Image URL">
-                <input className="field-input" value={editing.cover_url ?? ""} onChange={(e) => setEditing((p) => ({ ...p, cover_url: e.target.value }))} placeholder="https://…" />
+              <Field label="Image URL">
+                <input className="field-input" value={editing.image_url ?? ""} onChange={(e) => setEditing((p: any) => ({ ...p, image_url: e.target.value }))} placeholder="https://…" />
               </Field>
               <Field label="Tags (comma-separated)">
-                <input className="field-input" value={(editing.tags ?? []).join(", ")} onChange={(e) => setEditing((p) => ({ ...p, tags: e.target.value.split(",").map((t) => t.trim()) }))} placeholder="Research, AI, Events" />
+                <input className="field-input" value={(editing.tags ?? []).join(", ")} onChange={(e) => setEditing((p: any) => ({ ...p, tags: e.target.value.split(",").map((t) => t.trim()) }))} placeholder="Research, AI, Events" />
               </Field>
               <Field label="Status">
                 <div className="relative">
-                  <select className="field-input appearance-none pr-8" value={editing.status ?? "draft"} onChange={(e) => setEditing((p) => ({ ...p, status: e.target.value as "draft" | "published" }))}>
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
+                  <select className="field-input appearance-none pr-8" value={editing.status ?? "DRAFT"} onChange={(e) => setEditing((p: any) => ({ ...p, status: e.target.value as any }))}>
+                    <option value="DRAFT">Draft</option>
+                    <option value="PENDING_REVIEW">Pending Review</option>
+                    {isAdmin && <option value="PUBLISHED">Published</option>}
                   </select>
                   <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
                 </div>
