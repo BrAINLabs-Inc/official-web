@@ -24,6 +24,72 @@ export interface Member {
   updated_at?: string;
 }
 
+export interface ResearchInterest {
+  id?: string;
+  member_id?: string;
+  category: "THEORETICAL" | "APPLIED";
+  interest_name: string;
+  display_order?: number;
+}
+
+export interface AcademicQualification {
+  id?: string;
+  member_id?: string;
+  degree: string;
+  institution: string;
+  period: string;
+  details?: string;
+  display_order?: number;
+}
+
+export interface CareerResponsibility {
+  id?: string;
+  career_experience_id?: string;
+  description: string;
+  display_order?: number;
+}
+
+export interface CareerExperience {
+  id?: string;
+  member_id?: string;
+  category: "ACADEMIC" | "INDUSTRY" | "VOLUNTEER";
+  role: string;
+  institution: string;
+  period: string;
+  display_order?: number;
+  career_responsibilities?: CareerResponsibility[];
+}
+
+export interface HonoursAndAward {
+  id?: string;
+  member_id?: string;
+  description: string;
+  display_order?: number;
+}
+
+export interface Membership {
+  id?: string;
+  member_id?: string;
+  organization_name: string;
+  display_order?: number;
+}
+
+export interface OngoingResearch {
+  id?: string;
+  member_id?: string;
+  research_title: string;
+  display_order?: number;
+}
+
+export interface MemberCV extends Member {
+  research_interests?: ResearchInterest[];
+  academic_qualifications?: AcademicQualification[];
+  career_experiences?: CareerExperience[];
+  honours_and_awards?: HonoursAndAward[];
+  memberships?: Membership[];
+  ongoing_research?: OngoingResearch[];
+}
+
 export interface ResearchPublication {
   id?: string;
   member_id?: string;
@@ -142,6 +208,24 @@ async function request<T>(
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 export const api = {
+  // ── Me ────────────────────────────────────────────────────────────────────
+  me: {
+    get: (token: string) => request<Member>("/admin/me", token),
+    update: (token: string, data: Partial<Member>) =>
+      request<Member>("/admin/me", token, { method: "PUT", body: JSON.stringify(data) }),
+    changePassword: (token: string, data: any) =>
+      request<{ message: string }>("/admin/me/password", token, { method: "POST", body: JSON.stringify(data) }),
+    cv: {
+      get: (token: string) => request<MemberCV>("/admin/me/cv", token),
+      create: <T>(token: string, section: string, data: Partial<T>) =>
+        request<T>(`/admin/me/cv/${section}`, token, { method: "POST", body: JSON.stringify(data) }),
+      update: <T>(token: string, section: string, id: string, data: Partial<T>) =>
+        request<T>(`/admin/me/cv/${section}/${id}`, token, { method: "PUT", body: JSON.stringify(data) }),
+      delete: (token: string, section: string, id: string) =>
+        request<void>(`/admin/me/cv/${section}/${id}`, token, { method: "DELETE" }),
+    },
+  },
+
   // ── Publications ──────────────────────────────────────────────────────────
   publications: {
     list: (token: string) =>

@@ -12,6 +12,7 @@ export interface AuthUser {
   email: string;
   avatar?: string;
   slug?: string;
+  position?: string;
 }
 
 interface AuthState {
@@ -21,6 +22,7 @@ interface AuthState {
   token: string | null;
   loginWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   setSession: (token: string, role: "super_admin" | "researcher" | null, user: AuthUser, status: any) => void;
+  updateUser: (updates: Partial<AuthUser>) => void;
   logout: () => void;
   isAdmin: () => boolean;
   isResearcher: () => boolean;
@@ -60,6 +62,7 @@ export const useAuth = create<AuthState>()(
               slug: string;
               role: string;
               status: string;
+              position?: string;
             };
           };
 
@@ -74,6 +77,7 @@ export const useAuth = create<AuthState>()(
               email: data.member.contact_email ?? email,
               avatar: data.member.image_url ?? "",
               slug: data.member.slug,
+              position: data.member.position,
             },
           });
 
@@ -85,6 +89,12 @@ export const useAuth = create<AuthState>()(
 
       setSession: (token, role, user, status) => {
         set({ token, role, user, status });
+      },
+
+      updateUser: (updates) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, ...updates } : null,
+        }));
       },
 
       logout: () => {

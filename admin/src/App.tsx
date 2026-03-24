@@ -14,6 +14,8 @@ import Grants from "./pages/content/Grants";
 import Projects from "./pages/content/Projects";
 import Tutorials from "./pages/content/Tutorials";
 import Users from "./pages/users/Users";
+import Account from "./pages/account/Account";
+import Settings from "./pages/settings/Settings";
 
 // Dev-login bypass: visiting /?devlogin=1 sets a mock super_admin session
 // so you can explore the full UI without a running backend.
@@ -68,6 +70,10 @@ export default function App() {
               </RoleGuard>
             }
           />
+          
+          <Route path="account" element={<Account />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="help" element={<Navigate to="/account" replace />} />
         </Route>
 
         {/* Catch-all */}

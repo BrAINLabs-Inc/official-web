@@ -20,6 +20,7 @@ export default function Members() {
   }, [t]);
 
   const handleStatusChange = async (member: Member, newStatus: string) => {
+    if (!member.id) return;
     setUpdatingId(member.id);
     try {
       const updated = await api.members.updateStatus(t, member.id, newStatus);
@@ -93,7 +94,7 @@ export default function Members() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-zinc-500 hidden lg:table-cell">{formatDate(member.created_at)}</td>
+                  <td className="px-5 py-4 text-zinc-500 hidden lg:table-cell">{formatDate(member.created_at ?? new Date().toISOString())}</td>
                   <td className="px-5 py-4">
                     <span className={`status-pill ${member.status === "PUBLISHED" ? "status-published" : "status-draft"}`}>
                       {member.status.charAt(0) + member.status.slice(1).toLowerCase().replace("_", " ")}

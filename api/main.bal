@@ -145,6 +145,121 @@ service / on new http:Listener(port) {
         };
     }
 
+    resource function put admin/me(http:Request req, @http:Payload map<json> profile) returns types:MeResponse|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, email] = authResult;
+
+        types:Member target = check db:getMemberByAuthId(uid);
+        
+        json updatePayload = {
+            name: profile["name"] is string ? profile["name"] : target.name,
+            position: profile["position"],
+            contact_email: profile["contact_email"],
+            image_url: profile["image_url"],
+            university: profile["university"],
+            country: profile["country"],
+            linkedin_url: profile["linkedin_url"],
+            summary: profile["summary"]
+        };
+
+        _ = check db:sbPatch("/rest/v1/members?id=eq." + (target.id ?: ""), updatePayload);
+        
+        return {
+            id: target.id ?: "",
+            auth_user_id: target.auth_user_id,
+            slug: target.slug,
+            name: profile["name"] is string ? <string>profile["name"] : target.name,
+            position: profile["position"] is string ? <string>profile["position"] : (),
+            contact_email: profile["contact_email"] is string ? <string>profile["contact_email"] : email,
+            image_url: profile["image_url"] is string ? <string>profile["image_url"] : (),
+            status: target.status,
+            role: db:getMemberRole(target)
+        };
+    }
+
+    resource function post admin/me/password(http:Request req, @http:Payload types:PasswordChangePayload body) returns http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, email] = authResult;
+
+        // 1. Verify current password by attempting a login
+        var loginCheck = db:supabaseLogin(email, body.current_password);
+        if loginCheck is error || loginCheck.'error != () {
+            return unauthorized("Current password is incorrect");
+        }
+
+        // 2. Update password via admin API
+        check db:supabaseUpdateUser(uid, {password: body.new_password});
+        
+        http:Response res = new;
+        res.statusCode = 200;
+        res.setPayload({message: "Password updated successfully"});
+        return res;
+    }
+
+    // ─── CV Profile Generic Endpoints ──────────────────────────────────────────
+
+    resource function get admin/me/cv(http:Request req) returns json|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, _] = authResult;
+        types:Member target = check db:getMemberByAuthId(uid);
+
+        string selectQuery = "*,research_interests(*),academic_qualifications(*),career_experiences(*,career_responsibilities(*)),honours_and_awards(*),memberships(*),ongoing_research(*)";
+        json result = check db:sbGet("/rest/v1/members?id=eq." + (target.id ?: "") + "&select=" + selectQuery);
+        
+        if result is json[] && result.length() > 0 {
+            return result[0];
+        }
+        return badRequest("CV profile not found");
+    }
+
+    resource function post admin/me/cv/[string section](http:Request req, @http:Payload json payload) returns json|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+        var [uid, _, _] = authResult;
+        types:Member target = check db:getMemberByAuthId(uid);
+
+        string[] allowed = ["research_interests", "academic_qualifications", "career_experiences", "honours_and_awards", "memberships", "ongoing_research", "career_responsibilities"];
+        if allowed.indexOf(section) is () { return badRequest("Invalid CV table"); }
+
+        if payload is map<json> {
+            if section != "career_responsibilities" {
+                payload["member_id"] = target.id;
+            }
+            return check db:sbPost("/rest/v1/" + section, payload);
+        }
+        return badRequest("Payload must be a JSON object");
+    }
+
+    resource function put admin/me/cv/[string section]/[string id](http:Request req, @http:Payload json payload) returns json|http:Response|error {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+
+        string[] allowed = ["research_interests", "academic_qualifications", "career_experiences", "honours_and_awards", "memberships", "ongoing_research", "career_responsibilities"];
+        if allowed.indexOf(section) is () { return badRequest("Invalid CV table"); }
+
+        // Strip id and member_id to prevent tampering
+        if payload is map<json> {
+            _ = payload.removeIfHasKey("id");
+            _ = payload.removeIfHasKey("member_id");
+            return check db:sbPatch("/rest/v1/" + section + "?id=eq." + id, payload);
+        }
+        return badRequest("Payload must be a JSON object");
+    }
+
+    resource function delete admin/me/cv/[string section]/[string id](http:Request req) returns error?|http:Response {
+        var authResult = requireAuth(req);
+        if authResult is http:Response { return authResult; }
+
+        string[] allowed = ["research_interests", "academic_qualifications", "career_experiences", "honours_and_awards", "memberships", "ongoing_research", "career_responsibilities"];
+        if allowed.indexOf(section) is () { return badRequest("Invalid CV table"); }
+
+        _ = check db:sbDelete("/rest/v1/" + section + "?id=eq." + id);
+        return;
+    }
+
     // ════════════════════════════════════════════════════════════════════════
     // ADMIN — Publications
     // ════════════════════════════════════════════════════════════════════════

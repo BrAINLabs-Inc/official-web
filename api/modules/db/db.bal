@@ -117,6 +117,20 @@ public function supabaseLogin(string email, string password) returns types:Login
     return body.cloneWithType(types:LoginResponse);
 }
 
+// ─── Supabase Auth — Update user (Admin) ──────────────────────────────────────
+public function supabaseUpdateUser(string authUserId, json body) returns error? {
+    http:Response resp = check supabaseClient->put(
+        "/auth/v1/admin/users/" + authUserId,
+        body,
+        wh()
+    );
+    if resp.statusCode >= 400 {
+        string errBody = check resp.getTextPayload();
+        log:printError("Supabase Admin Update error", statusCode = resp.statusCode, uid = authUserId, body = errBody);
+        return error("Password update failed: " + errBody);
+    }
+}
+
 // ─── Member operations ────────────────────────────────────────────────────────
 
 public function getMemberByAuthId(string authUserId) returns types:Member|error {

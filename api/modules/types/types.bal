@@ -21,6 +21,69 @@ public type Member record {
     string? updated_at = ();
 };
 
+// ── research_interests ────────────────────────────────────────────────────────
+public type ResearchInterest record {
+    string? id = ();
+    string? member_id = ();
+    string category;
+    string interest_name;
+    int display_order = 0;
+};
+
+// ── academic_qualifications ───────────────────────────────────────────────────
+public type AcademicQualification record {
+    string? id = ();
+    string? member_id = ();
+    string degree;
+    string institution;
+    string period;
+    string? details = ();
+    int display_order = 0;
+};
+
+// ── career_experiences ────────────────────────────────────────────────────────
+public type CareerExperience record {
+    string? id = ();
+    string? member_id = ();
+    string category;
+    string role;
+    string institution;
+    string period;
+    int display_order = 0;
+};
+
+// ── career_responsibilities ───────────────────────────────────────────────────
+public type CareerResponsibility record {
+    string? id = ();
+    string career_experience_id;
+    string description;
+    int display_order = 0;
+};
+
+// ── honours_and_awards ────────────────────────────────────────────────────────
+public type HonoursAndAward record {
+    string? id = ();
+    string? member_id = ();
+    string description;
+    int display_order = 0;
+};
+
+// ── memberships ───────────────────────────────────────────────────────────────
+public type Membership record {
+    string? id = ();
+    string? member_id = ();
+    string organization_name;
+    int display_order = 0;
+};
+
+// ── ongoing_research ──────────────────────────────────────────────────────────
+public type OngoingResearch record {
+    string? id = ();
+    string? member_id = ();
+    string research_title;
+    int display_order = 0;
+};
+
 // ── research_publications ─────────────────────────────────────────────────────
 public type ResearchPublication record {
     string? id = ();
@@ -151,6 +214,11 @@ public type LoginResponse record {
 public type AuthLoginPayload record {|
     string email;
     string password;
+|};
+
+public type PasswordChangePayload record {|
+    string current_password;
+    string new_password;
 |};
 
 public type MeResponse record {

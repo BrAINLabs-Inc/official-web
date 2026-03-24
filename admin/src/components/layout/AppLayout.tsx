@@ -11,6 +11,9 @@ import {
   Menu,
   X,
   Brain,
+  UserCircle,
+  Settings,
+  HelpCircle,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { cn } from "../../lib/utils";
@@ -24,6 +27,12 @@ const navItems = [
   { label: "Users", path: "/users", icon: Users, roles: ["super_admin"] },
 ] as const;
 
+const otherNavItems = [
+  { label: "Account", path: "/account", icon: UserCircle, roles: ["super_admin", "researcher"] },
+  { label: "Settings", path: "/settings", icon: Settings, roles: ["super_admin", "researcher"] },
+  { label: "Help", path: "/help", icon: HelpCircle, roles: ["super_admin", "researcher"] },
+] as const;
+
 export function AppLayout() {
   const { user, role, logout } = useAuth();
   const navigate = useNavigate();
@@ -35,6 +44,10 @@ export function AppLayout() {
   };
 
   const filteredNav = navItems.filter((item) =>
+    role ? item.roles.includes(role as never) : false
+  );
+
+  const filteredOtherNav = otherNavItems.filter((item) =>
     role ? item.roles.includes(role as never) : false
   );
 
@@ -52,8 +65,25 @@ export function AppLayout() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+        <h3 className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Main</h3>
         {filteredNav.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            onClick={() => setMobileOpen(false)}
+            className={({ isActive }) =>
+              cn("nav-link", isActive && "active")
+            }
+          >
+            <item.icon size={16} />
+            {item.label}
+          </NavLink>
+        ))}
+
+        <div className="pt-6" />
+        <h3 className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Other</h3>
+        {filteredOtherNav.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

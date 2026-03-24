@@ -9,9 +9,11 @@ import {
   ArrowRight,
   TrendingUp,
   Brain,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { api } from "../../lib/api";
+import { ProfileSettingsModal } from "./ProfileSettingsModal";
 
 interface StatCardProps {
   label: string;
@@ -47,6 +49,7 @@ export default function Dashboard() {
   const token = useAuth((s) => s.token) ?? "";
   const [stats, setStats] = useState({ publications: 0, blog: 0, events: 0, projects: 0, grants: 0, users: 0 });
   const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -95,23 +98,30 @@ export default function Dashboard() {
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shrink-0">
             <Brain size={16} className="text-white" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 leading-none">
               Welcome back, {user?.name?.split(" ")[0] ?? "User"}
             </h1>
-            <p className="text-xs text-zinc-400 mt-1.5 flex items-center gap-2">
-              {user?.email} &bull; 
+            <p className="text-xs text-zinc-400 mt-1.5 flex items-center gap-2 flex-wrap">
+              {user?.position ?? user?.email} &bull; 
               <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${role === "super_admin" ? "bg-black text-white" : "bg-zinc-100 text-zinc-600"}`}>
                 {role === "super_admin" ? "Super Admin" : "Researcher"}
               </span>
             </p>
           </div>
         </div>
+        <button
+          onClick={() => setShowSettings(true)}
+          className="flex items-center gap-2 px-3 py-1.5 bg-white border border-zinc-200 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-colors shadow-sm whitespace-nowrap"
+        >
+          <Settings size={14} className="text-zinc-500" />
+          <span>Profile Settings</span>
+        </button>
       </div>
 
       {/* Stats grid */}
@@ -177,6 +187,10 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+      <ProfileSettingsModal 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+      />
     </div>
   );
 }
