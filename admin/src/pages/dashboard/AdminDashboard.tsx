@@ -33,7 +33,7 @@ interface PendingItem {
   href: string;
 }
 
-export function SuperAdminDashboard({ token }: { token: string }) {
+export function AdminDashboard() {
   const [stats, setStats] = useState<Stats>({ users: 0, publications: 0, blog: 0, events: 0, pending: 0 });
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,23 +42,23 @@ export function SuperAdminDashboard({ token }: { token: string }) {
     const fetchStats = async () => {
       try {
         const [users, pubs, blogs, events, projects] = await Promise.all([
-          api.members.list(token),
-          api.publications.list(token),
-          api.blog.list(token),
-          api.events.list(token),
-          api.projects.list(token),
+          api.admin.getMembers(),
+          api.publications.list(),
+          api.blogs.list(),
+          api.events.list(),
+          api.projects.list(),
         ]);
 
-        const pendingPubs: PendingItem[] = pubs.filter(p => p.status === 'PENDING_REVIEW').map(p => ({
+        const pendingPubs: PendingItem[] = pubs.filter((p: any) => p.approval_status === 'PENDING').map((p: any) => ({
           id: p.id!,
           title: p.title,
           type: 'Publication',
-          author: p.authors.split(',')[0],
+          author: p.authors || "Unknown",
           date: p.publication_year?.toString() ?? "N/A",
           href: '/publications'
         }));
 
-        const pendingBlogs: PendingItem[] = blogs.filter(b => b.status === 'PENDING_REVIEW').map(b => ({
+        const pendingBlogs: PendingItem[] = blogs.filter((b: any) => b.approval_status === 'PENDING').map((b: any) => ({
           id: b.id!,
           title: b.title,
           type: 'Blog',
@@ -67,7 +67,7 @@ export function SuperAdminDashboard({ token }: { token: string }) {
           href: '/blog'
         }));
 
-        const pendingEvents: PendingItem[] = events.filter(e => e.status === 'PENDING_REVIEW').map(e => ({
+        const pendingEvents: PendingItem[] = events.filter((e: any) => e.approval_status === 'PENDING').map((e: any) => ({
           id: e.id!,
           title: e.title,
           type: 'Event',
@@ -76,9 +76,9 @@ export function SuperAdminDashboard({ token }: { token: string }) {
           href: '/events'
         }));
 
-        const pendingProjects: PendingItem[] = projects.filter(p => p.status === 'PENDING_REVIEW').map(p => ({
+        const pendingProjects: PendingItem[] = projects.filter((p: any) => p.approval_status === 'PENDING').map((p: any) => ({
           id: p.id!,
-          title: p.category,
+          title: p.title || p.category,
           type: 'Project',
           author: "Research Team",
           date: p.created_at?.split('T')[0] ?? "N/A",
@@ -102,7 +102,7 @@ export function SuperAdminDashboard({ token }: { token: string }) {
       }
     };
     fetchStats();
-  }, [token]);
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">

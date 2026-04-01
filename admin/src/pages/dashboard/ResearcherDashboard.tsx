@@ -21,37 +21,36 @@ interface Stats {
   completeness: number;
 }
 
-export function ResearcherDashboard({ token, memberId }: { token: string, memberId: string }) {
+export function ResearcherDashboard({ memberId }: { memberId: number }) {
   const [stats, setStats] = useState<Stats>({ publications: 0, projects: 0, grants: 0, completeness: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [pubs, projs, grants, cv] = await Promise.all([
-          api.publications.list(token),
-          api.projects.list(token),
-          api.grants.list(token),
-          api.me.cv.get(token),
+        const [pubs, projs, grants, profile] = await Promise.all([
+          api.publications.list(),
+          api.projects.list(),
+          api.grants.list(),
+          api.me.get(),
         ]);
 
-        // Filter for "My" items (in a real app, the API would handle this, 
-        // but here we filter by member_id on the frontend for now)
-        const myPubs = pubs.filter(p => p.member_id === memberId).length;
-        const myProjs = projs.filter(p => p.member_id === memberId).length;
-        const myGrants = grants.filter(g => g.member_id === memberId).length;
+        // Filter for "My" items based on the new schema and API structure
+        const myPubs = pubs.filter((p: any) => p.created_by_member_id === memberId).length;
+        const myProjs = projs.filter((p: any) => p.created_by_member_id === memberId).length;
+        const myGrants = grants.filter((g: any) => g.created_by_researcher === memberId).length;
 
-        // Calculate profile completeness
-        const cvSections = [
-          (cv?.research_interests?.length ?? 0) > 0,
-          (cv?.academic_qualifications?.length ?? 0) > 0,
-          (cv?.career_experiences?.length ?? 0) > 0,
-          (cv?.honours_and_awards?.length ?? 0) > 0,
-          (cv?.memberships?.length ?? 0) > 0,
-          (cv?.ongoing_research?.length ?? 0) > 0,
-          !!cv?.summary
+        // Calculate profile completeness based on schema(2).sql researcher fields
+        const rd = profile.role_detail;
+        const profileSections = [
+          !!rd?.country,
+          !!rd?.linkedin_url,
+          !!rd?.image_url,
+          !!rd?.bio,
+          !!rd?.occupation,
+          !!rd?.workplace,
         ];
-        const completeness = Math.round((cvSections.filter(Boolean).length / cvSections.length) * 100);
+        const completeness = Math.round((profileSections.filter(Boolean).length / profileSections.length) * 100);
 
         setStats({
           publications: myPubs,
@@ -66,7 +65,7 @@ export function ResearcherDashboard({ token, memberId }: { token: string, member
       }
     };
     fetchStats();
-  }, [token, memberId]);
+  }, [memberId]);
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
