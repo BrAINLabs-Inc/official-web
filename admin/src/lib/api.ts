@@ -148,6 +148,7 @@ export const api = {
     removeEducation: (id: number) => apiClient.delete(`/me/education/${id}`).then(res => res.data),
     addOngoingResearch: (title: string) => apiClient.post<OngoingResearch>('/me/ongoing-research', { title }).then(res => res.data),
     removeOngoingResearch: (id: number) => apiClient.delete(`/me/ongoing-research/${id}`).then(res => res.data),
+    changePassword: (data: any) => apiClient.post('/me/change-password', data).then(res => res.data),
   },
   admin: {
     getMembers: () => apiClient.get<BaseMember[]>('/admin/members').then(res => res.data),

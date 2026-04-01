@@ -35,6 +35,10 @@ const OngoingResearchSchema = z.object({
   title: z.string().min(1).max(255),
 });
 
+const ChangePasswordSchema = z.object({
+  new_password: z.string().min(6).max(100),
+});
+
 // ─── GET /me ─────────────────────────────────────────────────────────────────
 
 meRouter.get('/', async (req, res) => {
@@ -142,4 +146,21 @@ meRouter.post('/ongoing-research', requireRole('researcher', 'admin'), async (re
 meRouter.delete('/ongoing-research/:id', requireRole('researcher', 'admin'), async (req, res) => {
   await deleteOngoingResearch(Number(req.params.id), req.user.sub);
   res.json({ message: 'Ongoing research entry removed' });
+});
+
+// ─── POST /me/change-password ───────────────────────────────────────────────
+
+meRouter.post('/change-password', async (req, res) => {
+  const parsed = ChangePasswordSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+  const { new_password } = parsed.data;
+
+  // Use admin auth API as we are in backend with service role
+  const { error } = await supabase.auth.admin.updateUserById(req.user.sub, {
+    password: new_password
+  });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ message: 'Security node synchronized: Password updated' });
 });
