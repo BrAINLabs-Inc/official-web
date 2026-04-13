@@ -1,144 +1,118 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-/* ─── Tailwind v4: CSS-based design token configuration ─────── */
+/* ─── Light-Only Monochrome Design System ─────── */
 @theme {
-  /* Colors (Shadcn neutral black/white palette) */
-  --color-border: hsl(0 0% 89.8%);
-  --color-input: hsl(0 0% 89.8%);
-  --color-ring: hsl(0 0% 3.9%);
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(0 0% 3.9%);
+  /* Colors: Strictly grayscale */
+  --color-border: #e2e2e2;
+  --color-input: #e2e2e2;
+  --color-ring: #000000;
+  --color-background: #ffffff;
+  --color-foreground: #000000;
 
-  --color-primary: hsl(0 0% 9%);
-  --color-primary-foreground: hsl(0 0% 98%);
-  --color-secondary: hsl(0 0% 96.1%);
-  --color-secondary-foreground: hsl(0 0% 9%);
-  --color-muted: hsl(0 0% 96.1%);
-  --color-muted-foreground: hsl(0 0% 45.1%);
-  --color-accent: hsl(0 0% 96.1%);
-  --color-accent-foreground: hsl(0 0% 9%);
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(0 0% 98%);
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(0 0% 3.9%);
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(0 0% 3.9%);
+  --color-primary: #000000;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f4f4f5;
+  --color-secondary-foreground: #000000;
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+  --color-accent: #f4f4f5;
+  --color-accent-foreground: #000000;
 
-  /* Border radius */
-  --radius: 0.5rem;
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  /* Use high-contrast gray for destructive to stay monochrome */
+  --color-destructive: #000000; 
+  --color-destructive-foreground: #ffffff;
 
-  /* Animations */
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-  --animate-fade-in: fade-in 0.3s ease-out;
-  --animate-slide-in: slide-in 0.25s ease-out;
-  --animate-spin: spin 1s linear infinite;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #000000;
+  --color-card: #ffffff;
+  --color-card-foreground: #000000;
+
+  /* Radius: Minimalist sharp/slight rounding */
+  --radius: 0.25rem;
+  --radius-lg: 0.25rem;
+  --radius-md: 0.125rem;
+  --radius-sm: 0rem;
 }
 
-/* ─── Keyframes ───────────────────────────────────────────────── */
-@keyframes accordion-down {
-  from { height: 0; }
-  to { height: var(--radix-accordion-content-height); }
+/* ─── Global Styles ───────────────────────────────────────────── */
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  border-color: var(--color-border); 
 }
-@keyframes accordion-up {
-  from { height: var(--radix-accordion-content-height); }
-  to { height: 0; }
-}
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes slide-in {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ─── Base ───────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; border-color: var(--color-border); }
 
 body {
   background: var(--color-background);
   color: var(--color-foreground);
-  font-family: 'Inter', sans-serif;
-  font-feature-settings: "rlig" 1, "calt" 1;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ─── Custom component classes ───────────────────────────────── */
+/* ─── Utility Components ───────────────────────────────────────── */
+
+/* Status Pills (Monochrome) */
 .status-pill {
   display: inline-flex;
   align-items: center;
-  border-radius: 9999px;
-  padding: 2px 10px;
-  font-size: 0.75rem;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
   font-weight: 600;
-  transition: color 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
 }
-.status-published { background: #000; color: #fff; }
-.status-draft { background: #f4f4f5; color: #71717a; border: 1px solid #e4e4e7; }
+.status-approved { background: #000; color: #fff; }
+.status-pending { background: #f4f4f5; color: #000; border: 1px solid #000; }
+.status-draft { background: #fff; color: #71717a; border: 1px solid #e2e2e2; }
+.status-rejected { background: #000; color: #fff; border: 1px solid #000; text-decoration: line-through; }
 
-.role-badge-super_admin {
-  display: inline-flex; align-items: center;
-  border-radius: 6px; background: #000; color: #fff;
-  font-size: 0.7rem; font-weight: 500; padding: 2px 8px;
-}
-.role-badge-researcher {
-  display: inline-flex; align-items: center;
-  border-radius: 6px; background: #f4f4f5; color: #3f3f46;
-  border: 1px solid #e4e4e7; font-size: 0.7rem; font-weight: 500; padding: 2px 8px;
-}
-
-/* Skeleton shimmer */
-.skeleton {
-  border-radius: 6px;
-  background: #f4f4f5;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-@keyframes shimmer {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
-
-/* Sidebar nav link */
-.nav-link {
-  display: flex; align-items: center; gap: 12px;
-  border-radius: 8px; padding: 10px 12px;
-  font-size: 0.875rem; font-weight: 500; color: #52525b;
-  text-decoration: none;
-  transition: background 0.15s, color 0.15s;
-}
-.nav-link:hover { background: #f4f4f5; color: #09090b; }
-.nav-link.active { background: #18181b; color: #fff; }
-.nav-link.active:hover { background: #27272a; }
-
-/* Form field input */
-.field-input {
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid #e4e4e7;
+/* Dashboard Cards */
+.card-monochrome {
   background: #fff;
+  border: 1px solid #e2e2e2;
+  transition: border-color 0.2s;
+}
+.card-monochrome:hover {
+  border-color: #000;
+}
+
+/* Inputs */
+.input-monochrome {
+  width: 100%;
+  border: 1px solid #e2e2e2;
+  border-radius: 4px;
   padding: 8px 12px;
   font-size: 0.875rem;
-  color: #09090b;
   outline: none;
-  transition: box-shadow 0.15s, border-color 0.15s;
+  transition: border-color 0.2s;
 }
-.field-input::placeholder { color: #a1a1aa; }
-.field-input:focus {
-  border-color: transparent;
-  box-shadow: 0 0 0 2px #18181b;
+.input-monochrome:focus {
+  border-color: #000;
 }
 
-/* Animate fade-in for page transitions */
-.animate-fade-in { animation: fade-in 0.3s ease-out; }
-.animate-slide-in { animation: slide-in 0.25s ease-out; }
-.animate-spin { animation: spin 1s linear infinite; }
-.animate-pulse { animation: shimmer 1.5s ease-in-out infinite; }
+/* Buttons */
+.btn-monochrome {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.btn-primary { background: #000; color: #fff; }
+.btn-primary:hover { background: #333; }
+.btn-secondary { background: #fff; color: #000; border: 1px solid #000; }
+.btn-secondary:hover { background: #f4f4f5; }
+
+/* ─── Animations ────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-enter {
+  animation: fadeIn 0.3s ease-out;
+}

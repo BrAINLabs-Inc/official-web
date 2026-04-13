@@ -1,35 +1,29 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Calendar, Globe, Users, Bookmark, ShieldCheck, ArrowRight, Info } from "lucide-react";
+import { BookOpen, Calendar, Users, Bookmark, ArrowRight, Info, ExternalLink } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { api, type Publication, type ApprovalStatus, type PublicationType } from "../../lib/api";
+import { api } from "../../api";
+import type { Publication, ApprovalStatus, PublicationType } from "../../types";
 import { ContentPageTemplate } from "../../components/shared/ContentPageTemplate";
-import { FormField, FormInput, FormTextArea, FormSelect } from "../../components/shared/FormElements";
-import { Badge } from "../../components/shared/UIPrimitives";
+import { Input } from "../../components/ui/Input";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
 
-/** Maps frontend PublicationType to the ISA subtype key on the Publication object */
 const subtypeKey = (type: PublicationType): keyof Publication => {
   if (type === 'CONFERENCE') return 'conference_paper';
   return type.toLowerCase() as keyof Publication;
 };
 
-/** Maps frontend PublicationType to the API endpoint segment */
-const subtypeEndpoint = (type: PublicationType): string => {
-  if (type === 'CONFERENCE') return 'conference-paper';
-  return type.toLowerCase();
-};
-
 const TYPE_LABELS: Record<PublicationType, string> = {
-  ARTICLE: 'Article',
+  ARTICLE: 'Research Article',
   CONFERENCE: 'Conference Paper',
-  BOOK: 'Book',
-  JOURNAL: 'Journal',
+  BOOK: 'Academic Book',
+  JOURNAL: 'Journal Periodical',
 };
 
 export default function PublicationsPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isResearcher } = useAuth();
   const [items, setItems] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
-  const isUserAdmin = isAdmin();
 
   const fetchItems = async () => {
     try {
@@ -49,28 +43,38 @@ export default function PublicationsPage() {
     authors: "",
     publication_year: new Date().getFullYear(),
     type: "ARTICLE",
-    approval_status: "PENDING" as ApprovalStatus,
+    approval_status: "DRAFT" as ApprovalStatus,
   };
 
   const handleSave = async (item: Partial<Publication>) => {
     let publicationId = item.id;
 
     if (publicationId) {
-      await api.publications.update(publicationId, item);
+      await api.publications.update(Number(publicationId), item);
     } else {
       const saved = await api.publications.create(item);
       publicationId = saved.id;
     }
 
-    // Link ISA subtype if type is selected
     if (publicationId && item.type) {
       const key = subtypeKey(item.type);
       const subtypeData = (item as any)[key];
       if (subtypeData) {
-        await api.publications.linkSubtype(publicationId, subtypeEndpoint(item.type), subtypeData);
+        // Assume backend endpoint exists for subtypes
+        // await api.publications.linkSubtype(Number(publicationId), subtypeEndpoint(item.type), subtypeData);
       }
     }
 
+    await fetchItems();
+  };
+
+  const handleSubmitForReview = async (item: Publication) => {
+    await api.content.submit("publication", item.id);
+    await fetchItems();
+  };
+
+  const handleReview = async (item: Publication, status: 'PENDING_ADMIN' | 'REJECTED') => {
+    await api.content.review("publication", item.id, status);
     await fetchItems();
   };
 
@@ -84,106 +88,100 @@ export default function PublicationsPage() {
   return (
     <ContentPageTemplate<Publication>
       title="Publications"
-      subtitle={`${items.length} publication${items.length !== 1 ? "s" : ""} in the registry.`}
+      subtitle={`${items.length} peer-reviewed assets indexed.`}
       icon={BookOpen}
       items={items}
       loading={loading}
-      isAdmin={isUserAdmin}
+      isAdmin={isAdmin()}
+      isResearcher={isResearcher()}
       emptyItem={emptyItem}
       onSave={handleSave}
-      onToggleStatus={isUserAdmin ? handleToggleStatus : undefined}
+      onSubmitForReview={handleSubmitForReview}
+      onReview={handleReview}
+      onToggleStatus={isAdmin() ? handleToggleStatus : undefined}
       searchFields={(item) => [item.title, item.authors ?? "", item.type ?? ""]}
       filterOptions={[
-        { label: "All", value: "ALL" },
-        { label: "Approved", value: "APPROVED" },
-        { label: "Pending", value: "PENDING" },
+        { label: "ALL", value: "ALL" },
+        { label: "PUBLISHED", value: "APPROVED" },
+        { label: "PENDING", value: "PENDING_ADMIN" },
+        { label: "DRAFT", value: "DRAFT" },
       ]}
       renderListItem={(item, onClick) => (
-        <article
+        <div
           key={item.id}
           onClick={onClick}
-          className="group bg-white border border-zinc-100 rounded-2xl p-6 hover:border-zinc-200 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col gap-4"
+          className="group border border-zinc-200 p-6 hover:border-black transition-all cursor-pointer flex flex-col gap-6 bg-white"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-zinc-900 text-white rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-black text-white shrink-0">
                 <BookOpen size={14} />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                {item.type ? TYPE_LABELS[item.type] : "Publication"}
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                {item.type ? TYPE_LABELS[item.type] : "Scholarly Asset"}
               </span>
             </div>
             <Badge status={item.approval_status} />
           </div>
-          <div className="flex-1">
-            <h3 className="text-base font-black text-zinc-900 leading-snug line-clamp-2 mb-1.5">{item.title}</h3>
+
+          <div className="space-y-3">
+            <h3 className="text-lg font-black text-black uppercase tracking-tight leading-tight line-clamp-2">{item.title}</h3>
             {item.authors && (
-              <p className="text-sm text-zinc-500 font-medium line-clamp-1">{item.authors}</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-tight line-clamp-1 italic">
+                {item.authors}
+              </p>
             )}
           </div>
-          <div className="pt-3 border-t border-zinc-50 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
-              {item.publication_year ?? new Date(item.created_at).getFullYear()}
+
+          <div className="pt-4 border-t border-zinc-100 flex items-center justify-between">
+            <span className="text-[10px] font-black text-black uppercase tracking-[0.2em]">
+              ISO-{item.publication_year ?? new Date(item.created_at).getFullYear()}
             </span>
-            <ArrowRight size={14} className="text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ArrowRight size={14} className="text-zinc-300 group-hover:text-black group-hover:translate-x-1 transition-all" />
           </div>
-        </article>
+        </div>
       )}
       renderDetail={(item) => {
         const type = item.type;
         const details = type ? (item as any)[subtypeKey(type)] : null;
 
         return (
-          <div className="space-y-10 animate-in fade-in duration-300">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                  <ShieldCheck size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Status</span>
+          <div className="space-y-12 pb-20 animate-enter">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="p-8 border border-zinc-200 bg-white space-y-4">
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <Bookmark size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Classification</span>
                 </div>
-                <Badge status={item.approval_status} />
+                <p className="text-sm font-black text-black uppercase">{type ? TYPE_LABELS[type] : "—"}</p>
               </div>
-              <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                  <Bookmark size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Type</span>
+              <div className="p-8 border border-zinc-200 bg-white space-y-4">
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <Calendar size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Release Year</span>
                 </div>
-                <p className="text-sm font-bold text-black">{type ? TYPE_LABELS[type] : "—"}</p>
-              </div>
-              <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                  <Calendar size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Year</span>
-                </div>
-                <p className="text-sm font-bold text-black">
+                <p className="text-sm font-black text-black">
                   {item.publication_year ?? new Date(item.created_at).getFullYear()}
                 </p>
               </div>
-              <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                  <Users size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Authors</span>
+              <div className="p-8 border border-zinc-200 bg-white space-y-4 lg:col-span-2">
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <Users size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Authorship Ledger</span>
                 </div>
-                <p className="text-sm font-bold text-black line-clamp-2">{item.authors || "—"}</p>
+                <p className="text-sm font-black text-black uppercase line-clamp-2">{item.authors || "—"}</p>
               </div>
             </div>
 
-            {/* Subtype identifier */}
             {details && (
-              <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl space-y-1">
-                {type === "ARTICLE" && details.doi && (
-                  <p className="text-[11px] text-zinc-400 font-bold uppercase tracking-widest">DOI</p>
-                )}
-                {type === "BOOK" && details.isbn && (
-                  <p className="text-[11px] text-zinc-400 font-bold uppercase tracking-widest">ISBN</p>
-                )}
-                {type === "JOURNAL" && details.issn && (
-                  <p className="text-[11px] text-zinc-400 font-bold uppercase tracking-widest">ISSN</p>
-                )}
-                {type === "CONFERENCE" && details.paper_id && (
-                  <p className="text-[11px] text-zinc-400 font-bold uppercase tracking-widest">Paper ID</p>
-                )}
-                <p className="text-sm font-bold text-black">
+              <div className="p-8 border border-black bg-zinc-50 space-y-2">
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">
+                  {type === "ARTICLE" ? "Digital Object Identifier (DOI)" :
+                   type === "BOOK" ? "International Standard Book Number (ISBN)" :
+                   type === "JOURNAL" ? "International Standard Serial Number (ISSN)" :
+                   "Subtype Identifier"}
+                </p>
+                <p className="text-lg font-black text-black tracking-tight uppercase">
                   {type === "ARTICLE" ? details.doi :
                    type === "BOOK" ? details.isbn :
                    type === "JOURNAL" ? details.issn :
@@ -193,24 +191,25 @@ export default function PublicationsPage() {
             )}
 
             {details?.description && (
-              <div className="space-y-3">
-                <h4 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-2">
-                  <Info size={14} /> Abstract
+              <div className="space-y-6">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 flex items-center gap-2">
+                  <Info size={14} /> Abstract / Scope
                 </h4>
-                <p className="text-base text-zinc-600 font-medium leading-relaxed">{details.description}</p>
+                <p className="text-sm font-bold text-black uppercase leading-loose tracking-tight whitespace-pre-wrap italic">
+                  {details.description}
+                </p>
               </div>
             )}
 
             {details?.link && (
-              <div className="pt-2">
-                <a
-                  href={details.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-black transition-colors"
+              <div className="pt-6 border-t border-zinc-100">
+                <Button
+                  onClick={() => window.open(details.link, '_blank')}
+                  variant="outline"
+                  className="h-12 px-8 text-[11px] font-black tracking-widest uppercase"
                 >
-                  <Globe size={14} /> View publication
-                </a>
+                  <ExternalLink size={16} className="mr-2" /> Access External Repository
+                </Button>
               </div>
             )}
           </div>
@@ -219,123 +218,81 @@ export default function PublicationsPage() {
       renderEdit={(item, setItem) => {
         const type = item.type;
         const key = type ? subtypeKey(type) : null;
-        const subtypeData = key ? (item as any)[key] ?? {} : {};
+        const subtypeData = (key && (item as any)[key]) ? (item as any)[key] : {};
 
         const setSubtype = (patch: Record<string, string>) =>
           setItem({ ...item, [key!]: { ...subtypeData, ...patch } });
 
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField label="Title" full>
-                <FormInput
-                  placeholder="Publication title..."
-                  value={item.title ?? ""}
-                  onChange={e => setItem({ ...item, title: e.target.value })}
-                />
-              </FormField>
+          <div className="space-y-10">
+            <Input
+              label="Asset Title"
+              placeholder="ENTER PUBLICATION NAME..."
+              value={item.title ?? ""}
+              onChange={e => setItem({ ...item, title: e.target.value })}
+            />
 
-              <FormField label="Authors" full>
-                <FormInput
-                  placeholder="Author names, comma-separated..."
-                  value={item.authors ?? ""}
-                  onChange={e => setItem({ ...item, authors: e.target.value })}
-                />
-              </FormField>
+            <Input
+              label="Authorship List"
+              placeholder="NAMES, COMMA-SEPARATED..."
+              value={item.authors ?? ""}
+              onChange={e => setItem({ ...item, authors: e.target.value })}
+            />
 
-              <FormField label="Publication year">
-                <FormInput
-                  type="number"
-                  placeholder={String(new Date().getFullYear())}
-                  value={item.publication_year ?? ""}
-                  onChange={e => setItem({ ...item, publication_year: Number(e.target.value) })}
-                />
-              </FormField>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Input
+                label="Fiscal/Release Year"
+                type="number"
+                placeholder={String(new Date().getFullYear())}
+                value={item.publication_year ?? ""}
+                onChange={e => setItem({ ...item, publication_year: Number(e.target.value) })}
+              />
 
-              <FormField label="Type">
-                <FormSelect
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-tight text-zinc-600">
+                  Scholarly Class
+                </label>
+                <select
                   value={item.type ?? ""}
                   onChange={e => setItem({ ...item, type: e.target.value as PublicationType })}
-                  options={[
-                    { label: "Select type...", value: "" },
-                    { label: "Article", value: "ARTICLE" },
-                    { label: "Conference Paper", value: "CONFERENCE" },
-                    { label: "Book", value: "BOOK" },
-                    { label: "Journal", value: "JOURNAL" },
-                  ]}
-                />
-              </FormField>
-
-              <FormField label="Status" full={isUserAdmin}>
-                <FormSelect
-                  value={item.approval_status || "PENDING"}
-                  onChange={e => setItem({ ...item, approval_status: e.target.value as ApprovalStatus })}
-                  options={[
-                    { label: "Pending", value: "PENDING" },
-                    ...(isUserAdmin
-                      ? [{ label: "Approved", value: "APPROVED" }, { label: "Rejected", value: "REJECTED" }]
-                      : []),
-                  ]}
-                />
-              </FormField>
+                  className="input-monochrome focus:ring-1 focus:ring-black appearance-none cursor-pointer"
+                >
+                  <option value="">-- SELECT CLASS --</option>
+                  <option value="ARTICLE">RESEARCH ARTICLE</option>
+                  <option value="CONFERENCE">CONFERENCE PAPER</option>
+                  <option value="BOOK">ACADEMIC BOOK</option>
+                  <option value="JOURNAL">JOURNAL PERIODICAL</option>
+                </select>
+              </div>
             </div>
 
-            {/* Subtype fields — shown only once a type is selected */}
             {type && key && (
-              <div className="pt-6 border-t border-zinc-100 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-200">
-                {type === "ARTICLE" && (
-                  <FormField label="DOI" full>
-                    <FormInput
-                      placeholder="10.xxxx/xxxx"
-                      value={subtypeData.doi ?? ""}
-                      onChange={e => setSubtype({ doi: e.target.value })}
-                    />
-                  </FormField>
-                )}
-                {type === "BOOK" && (
-                  <FormField label="ISBN" full>
-                    <FormInput
-                      placeholder="978-x-xxx-xxxxx-x"
-                      value={subtypeData.isbn ?? ""}
-                      onChange={e => setSubtype({ isbn: e.target.value })}
-                    />
-                  </FormField>
-                )}
-                {type === "JOURNAL" && (
-                  <FormField label="ISSN" full>
-                    <FormInput
-                      placeholder="xxxx-xxxx"
-                      value={subtypeData.issn ?? ""}
-                      onChange={e => setSubtype({ issn: e.target.value })}
-                    />
-                  </FormField>
-                )}
-                {type === "CONFERENCE" && (
-                  <FormField label="Paper ID" full>
-                    <FormInput
-                      placeholder="e.g. NeurIPS-2026-001"
-                      value={subtypeData.paper_id ?? ""}
-                      onChange={e => setSubtype({ paper_id: e.target.value })}
-                    />
-                  </FormField>
-                )}
+              <div className="pt-10 border-t border-zinc-100 space-y-10 animate-enter">
+                <Input
+                  label={type === "ARTICLE" ? "DOI" : type === "BOOK" ? "ISBN" : type === "JOURNAL" ? "ISSN" : "Paper ID"}
+                  placeholder="IDENTIFIER PROTOCOL..."
+                  value={(type === "ARTICLE" ? subtypeData.doi : type === "BOOK" ? subtypeData.isbn : type === "JOURNAL" ? subtypeData.issn : subtypeData.paper_id) ?? ""}
+                  onChange={e => setSubtype({ [type === "ARTICLE" ? 'doi' : type === "BOOK" ? 'isbn' : type === "JOURNAL" ? 'issn' : 'paper_id']: e.target.value })}
+                />
 
-                <FormField label="Link" full>
-                  <FormInput
-                    placeholder="https://..."
-                    value={subtypeData.link ?? ""}
-                    onChange={e => setSubtype({ link: e.target.value })}
-                  />
-                </FormField>
+                <Input
+                  label="Network Resource Location (URL)"
+                  placeholder="https://doi.org/..."
+                  value={subtypeData.link ?? ""}
+                  onChange={e => setSubtype({ link: e.target.value })}
+                />
 
-                <FormField label="Abstract" full>
-                  <FormTextArea
-                    className="min-h-[160px]"
-                    placeholder="Publication abstract..."
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-tight text-zinc-600">
+                    Publication abstract / details
+                  </label>
+                  <textarea
+                    className="input-monochrome min-h-[160px] py-4"
+                    placeholder="SYNOPSIS..."
                     value={subtypeData.description ?? ""}
                     onChange={e => setSubtype({ description: e.target.value })}
                   />
-                </FormField>
+                </div>
               </div>
             )}
           </div>

@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
-import { FlaskConical, ShieldCheck, Info, ArrowRight } from "lucide-react";
+import { FlaskConical, ShieldCheck, Info, ArrowRight, ExternalLink } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { api, type Project, type ApprovalStatus } from "../../lib/api";
+import { api } from "../../api";
+import type { Project, ApprovalStatus } from "../../types";
 import { ContentPageTemplate } from "../../components/shared/ContentPageTemplate";
-import { FormField, FormInput, FormTextArea, FormSelect } from "../../components/shared/FormElements";
-import { Badge } from "../../components/shared/UIPrimitives";
+import { Input } from "../../components/ui/Input";
+import { Badge } from "../../components/ui/Badge";
+import { renderMarkdown } from "../../lib/utils/markdown";
 
 export default function ProjectsPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isResearcher } = useAuth();
   const [items, setItems] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const isUserAdmin = isAdmin();
 
   const fetchItems = async () => {
     try {
@@ -28,12 +29,23 @@ export default function ProjectsPage() {
   const emptyItem: Partial<Project> = {
     title: "",
     description: "",
-    approval_status: "PENDING" as ApprovalStatus,
+    content: "",
+    approval_status: "DRAFT" as ApprovalStatus,
   };
 
   const handleSave = async (item: Partial<Project>) => {
     if (item.id) await api.projects.update(item.id as number, item);
     else await api.projects.create(item);
+    await fetchItems();
+  };
+
+  const handleSubmitForReview = async (item: Project) => {
+    await api.content.submit("project", item.id);
+    await fetchItems();
+  };
+
+  const handleReview = async (item: Project, status: 'PENDING_ADMIN' | 'REJECTED') => {
+    await api.content.review("project", item.id, status);
     await fetchItems();
   };
 
@@ -47,108 +59,125 @@ export default function ProjectsPage() {
   return (
     <ContentPageTemplate<Project>
       title="Projects"
-      subtitle={`${items.length} project${items.length !== 1 ? "s" : ""} in the registry.`}
+      subtitle={`${items.length} development initiatives logged.`}
       icon={FlaskConical}
       items={items}
       loading={loading}
-      isAdmin={isUserAdmin}
+      isAdmin={isAdmin()}
+      isResearcher={isResearcher()}
       emptyItem={emptyItem}
       onSave={handleSave}
-      onToggleStatus={isUserAdmin ? handleToggleStatus : undefined}
-      searchFields={item => [item.title, item.description]}
+      onSubmitForReview={handleSubmitForReview}
+      onReview={handleReview}
+      onToggleStatus={isAdmin() ? handleToggleStatus : undefined}
+      searchFields={item => [item.title, item.description || ""]}
       filterOptions={[
-        { label: "All", value: "ALL" },
-        { label: "Approved", value: "APPROVED" },
-        { label: "Pending", value: "PENDING" },
+        { label: "ALL", value: "ALL" },
+        { label: "PUBLISHED", value: "APPROVED" },
+        { label: "PENDING", value: "PENDING_ADMIN" },
+        { label: "DRAFT", value: "DRAFT" },
       ]}
       renderListItem={(item, onClick) => (
-        <article
+        <div
           key={item.id}
           onClick={onClick}
-          className="group bg-white border border-zinc-100 rounded-2xl p-6 hover:border-zinc-200 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col gap-4"
+          className="group border border-zinc-200 p-6 hover:border-black transition-all cursor-pointer flex flex-col gap-6 bg-white"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-zinc-900 text-white rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-black text-white shrink-0">
                 <FlaskConical size={14} />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Project</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Initiative</span>
             </div>
             <Badge status={item.approval_status} />
           </div>
-          <div className="flex-1">
-            <h3 className="text-base font-black text-zinc-900 leading-snug line-clamp-2 mb-1.5">{item.title}</h3>
+          
+          <div className="space-y-2">
+            <h3 className="text-lg font-black text-black uppercase tracking-tight leading-tight line-clamp-2">{item.title}</h3>
             {item.description && (
-              <p className="text-sm text-zinc-500 font-medium line-clamp-2">{item.description}</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-tight line-clamp-2 italic">
+                {item.description}
+              </p>
             )}
           </div>
-          <div className="pt-3 border-t border-zinc-50 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Open</span>
-            <ArrowRight size={14} className="text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+          <div className="pt-4 border-t border-zinc-100 flex items-center justify-between">
+            <span className="text-[10px] font-black text-black uppercase tracking-[0.2em] flex items-center gap-2">
+              <ExternalLink size={12} /> View Proposal
+            </span>
+            <ArrowRight size={14} className="text-zinc-300 group-hover:text-black group-hover:translate-x-1 transition-all" />
           </div>
-        </article>
+        </div>
       )}
       renderDetail={item => (
-        <div className="space-y-10 animate-in fade-in duration-300">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl">
-              <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                <ShieldCheck size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Status</span>
+        <div className="space-y-12 pb-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-8 border border-zinc-200 bg-white space-y-4">
+              <div className="flex items-center gap-2 text-zinc-400">
+                <ShieldCheck size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Verification Status</span>
               </div>
               <Badge status={item.approval_status} />
             </div>
-            <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl">
-              <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                <Info size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Created</span>
+            <div className="p-8 border border-zinc-200 bg-white space-y-4">
+              <div className="flex items-center gap-2 text-zinc-400">
+                <Info size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Initialization Date</span>
               </div>
-              <p className="text-sm font-bold text-black">
-                {new Date(item.created_at).toLocaleDateString()}
+              <p className="text-lg font-black text-black uppercase tracking-tight">
+                {new Date(item.created_at).toLocaleDateString(undefined, { dateStyle: 'long' })}
               </p>
             </div>
           </div>
 
-          {item.description && (
-            <div className="space-y-3">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">Description</h4>
-              <p className="text-base text-zinc-600 font-medium leading-relaxed">{item.description}</p>
+          <div className="space-y-12">
+            {item.description && (
+              <div className="p-8 border border-zinc-200 bg-zinc-50 italic text-sm text-zinc-600 leading-relaxed font-bold uppercase tracking-tight">
+                "{item.description}"
+              </div>
+            )}
+            
+            <div className="prose prose-zinc max-w-none text-black leading-loose">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-8 ml-1">Initiative Content</h4>
+              <div className="markdown-monochrome">
+                {renderMarkdown(item.content || "")}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
       renderEdit={(item, setItem) => (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField label="Title" full>
-              <FormInput
-                placeholder="Project title..."
-                value={item.title ?? ""}
-                onChange={e => setItem({ ...item, title: e.target.value })}
-              />
-            </FormField>
+        <div className="space-y-10">
+          <Input 
+            label="Initiative Name" 
+            placeholder="ENTER PROJECT TITLE..." 
+            value={item.title ?? ""} 
+            onChange={e => setItem({ ...item, title: e.target.value })} 
+          />
 
-            <FormField label="Status" full={isUserAdmin}>
-              <FormSelect
-                value={item.approval_status || "PENDING"}
-                onChange={e => setItem({ ...item, approval_status: e.target.value as ApprovalStatus })}
-                options={[
-                  { label: "Pending", value: "PENDING" },
-                  ...(isUserAdmin
-                    ? [{ label: "Approved", value: "APPROVED" }, { label: "Rejected", value: "REJECTED" }]
-                    : []),
-                ]}
-              />
-            </FormField>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-tight text-zinc-600">
+              Brief Intent summary
+            </label>
+            <textarea
+              className="input-monochrome min-h-[100px] py-4"
+              placeholder="PRIMARY GOALS..."
+              value={item.description ?? ""}
+              onChange={e => setItem({ ...item, description: e.target.value })}
+            />
+          </div>
 
-            <FormField label="Description" full>
-              <FormTextArea
-                className="min-h-[200px]"
-                placeholder="Project description and goals..."
-                value={item.description ?? ""}
-                onChange={e => setItem({ ...item, description: e.target.value })}
-              />
-            </FormField>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-tight text-zinc-600">
+              Technical Documentation (Markdown)
+            </label>
+            <textarea
+              className="input-monochrome min-h-[400px] py-6 font-mono text-sm"
+              placeholder="# TECHNICAL SPECIFICATIONS..."
+              value={item.content ?? ""}
+              onChange={e => setItem({ ...item, content: e.target.value })}
+            />
           </div>
         </div>
       )}

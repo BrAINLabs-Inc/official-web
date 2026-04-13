@@ -1,207 +1,115 @@
-# TASK.md — BrAIN Labs Inc. Rebuild Sprint
+# TASK.md — BrAIN Labs Inc. Rebuild (Monochrome Edition)
 
 > Status legend: `[ ]` = TODO · `[/]` = In Progress · `[x]` = Done
 
 ---
 
-## Phase 0 — Schema & Decision
+## Phase 0 — Blueprint & Architecture
 
-- [x] Finalise and review `schema.sql` (canonical schema)
-- [x] Compare Ballerina vs Go vs Express.js for backend
-- [x] **Decision: Express.js (Node.js)** — best free-tier hosting + ecosystem
-- [x] Write `prompt.md`, `CLAUDE.md`, `TASK.md` aligned to new schema
-
----
-
-## Phase 1 — Backend Scaffold (`backend/`)
-
-- [x] Initialise `backend/` with `npm init` and set `"type": "module"`
-- [x] Install dependencies:
-  - `express`, `cors`, `helmet`, `dotenv`
-  - `@supabase/supabase-js`
-  - `jsonwebtoken`
-  - `zod`
-  - `express-async-errors`
-  - Dev: `nodemon`
-- [x] Create `backend/src/index.js` (Express app, CORS, helmet, error handler)
-- [x] Create `backend/src/config/supabase.js` (service role client)
-- [x] Create `backend/.env` and `backend/.env.example`
-- [x] Create `backend/src/middleware/auth.js` (JWT verify, attach `req.user`)
-- [x] Create `backend/src/middleware/requireRole.js` (role gate factory)
-- [x] Health check `GET /health`
+- [x] Finalise Corrected Schema in `schema.sql` (Canonical Source)
+- [x] Design Monochrome Design System (Black, White, Grayscale)
+- [x] Define Frontend File Structure (`admin/src/` cleanup)
+- [x] Write `prompt.md`, `CLAUDE.md`, and this `TASK.md` overhaul
 
 ---
 
-## Phase 2 — Auth Routes (`backend/src/routes/auth.js`)
+## Phase 1 — Backend Foundation (`backend/`)
 
-- [x] `POST /auth/register`
-  - Validate body with Zod (first_name, second_name, contact_email, password, role)
-  - Create `member` row via Supabase Auth + `member` table insert
-  - Create `researcher` or `research_assistant` row (approval_status = PENDING)
-  - Return 201 + basic member info
-- [x] `POST /auth/login`
-  - Supabase Auth `signInWithPassword`
-  - Resolve role from `admin` / `researcher` / `research_assistant` tables
-  - Sign JWT with `{ sub: member.id, role, email, slug }`
-  - Return `{ token, user }`
-- [x] `POST /auth/logout` (client-side only — just return 200)
+- [x] Initialise Express.js scaffold (JWT, CORS, Helmet, Supabase JS)
+- [x] Auth Core:
+  - [x] `POST /auth/register` (Handle RA `assigned_by_researcher_id` — FIX D1)
+  - [x] `POST /auth/login` (Role resolution with JWT `sub` and `role`)
+- [x] Global Middleware:
+  - [x] Auth verify (`req.user`)
+  - [x] Role gate factory (`requireRole`)
+  - [x] Error handling & 健康检查 (`GET /health`)
+- [ ] **API Excellence & Endpoint Correctness**:
+  - [ ] audit all endpoints against Zod schemas for strict input validation
+  - [ ] ensure consistent 403/401 JSON responses for role/auth failures
+  - [ ] verify all `:table` param endpoints follow the unified content controller pattern
+  - [ ] add request logging middleware for debugging workflow transitions
 
----
-
-## Phase 3 — Member & Profile Routes
-
-- [x] `GET /me` — Return own member + role-specific profile
-- [x] `PUT /me` — Update basic member fields (name, bio, occupation, etc.)
-- [x] `POST /me/education` — Add educational_background row
-- [x] `DELETE /me/education/:id` — Delete own education row
-- [x] `POST /me/ongoing-research` — Add ongoing_research row
-- [x] `DELETE /me/ongoing-research/:id` — Delete own ongoing_research row
-- [x] `POST /me/change-password` — Change own password (via Supabase auth admin API)
 
 ---
 
-## Phase 4 — Admin Routes (`/admin/...`)
+## Phase 2 — Frontend Design System & Architecture (`admin/`)
 
-- [x] `GET /admin/members` — List all members with joined role info (admin only)
-- [x] `GET /admin/members/:id` — Full member detail
-- [x] `PATCH /admin/members/:id/approve` — Set researcher/RA approval_status = APPROVED
-- [x] `PATCH /admin/members/:id/reject` — Set approval_status = REJECTED
-- [x] `POST /admin/members/:id/resign` — Create former_member row; delete researcher/RA row (Zod validated)
-- [x] `GET /admin/content/pending` — All pending blogs/tutorials/projects/events/grants
-- [x] `PATCH /admin/content/:table/:id/approve` — Set approval_status = APPROVED
-- [x] `PATCH /admin/content/:table/:id/reject` — Set approval_status = REJECTED
-
----
-
-## Phase 5 — Content Routes
-
-### Blogs (`/blogs`)
-- [x] `GET /blogs` — List own blogs (admin sees all) — **security fix applied**
-- [x] `POST /blogs` — Create blog (approval_status = PENDING; enforce CHECK constraint)
-- [x] `GET /blogs/:id` — Get single blog (own only)
-- [x] `PUT /blogs/:id` — Update blog (resets to PENDING if content changed)
-- [x] `DELETE /blogs/:id` — Delete blog (cascades blog_image, blog_keyword)
-- [x] `POST /blogs/:id/images` — Add blog_image
-- [x] `DELETE /blogs/:id/images/:imageId` — Remove blog_image
-- [x] `POST /blogs/:id/keywords` — Add blog_keyword
-- [x] `DELETE /blogs/:id/keywords/:keywordId` — Remove blog_keyword
-
-### Tutorials (`/tutorials`)
-- [x] `GET /tutorials` — List own tutorials — **security fix applied**
-- [x] `POST /tutorials` — Create tutorial (PENDING)
-- [x] `GET /tutorials/:id`
-- [x] `PUT /tutorials/:id`
-- [x] `DELETE /tutorials/:id`
-- [x] `POST /tutorials/:id/images` — Add tutorial_image
-
-### Projects (`/projects`)
-- [x] `GET /projects` — List own projects — **security fix applied**
-- [x] `POST /projects` — Create project (PENDING)
-- [x] `GET /projects/:id`
-- [x] `PUT /projects/:id`
-- [x] `DELETE /projects/:id`
-- [x] `POST /projects/:id/diagrams` — Add project_diagram
-
-### Events (researcher only)
-- [x] `GET /events` — List own events — **security fix applied**
-- [x] `POST /events` — Create event (PENDING; FK to researcher.member_id)
-- [x] `GET /events/:id`
-- [x] `PUT /events/:id`
-- [x] `DELETE /events/:id`
-- [x] `POST /events/:id/images` — Add event_image
-
-### Grants (researcher only)
-- [x] `GET /grants` — List own grants — **security fix applied**
-- [x] `POST /grants` — Create grant (PENDING; FK to researcher.member_id)
-- [x] `GET /grants/:id`
-- [x] `PUT /grants/:id`
-- [x] `DELETE /grants/:id`
+- [ ] **Frontend Restructuring**:
+  - [ ] Standardize foldering: `api/`, `components/ui/`, `hooks/`, `pages/`, `store/`, `types/`
+  - [ ] Centralize Axios logic in `src/api/` with Bearer interceptors
+- [ ] **Monochrome Design System (White/Black/Gray)**:
+  - [ ] Implement global styles in `index.css` (Inter font, 1px contrast borders)
+  - [ ] Create UI primitives in `components/ui/`:
+    - Button (Solid Black/White text), Input (1px Border), Card (No shadow, border-only)
+    - Modal (Minimalist), Badge (Grayscale status indicators)
+- [ ] **Auth Workflow**:
+  - [x] Persisted Zustand store for Auth state
+  - [x] Protected & Role-guarded route components
 
 ---
 
-## Phase 6 — Publications (`/publications`)
+## Phase 3 — Identity & Profile Management
 
-- [x] `GET /publications` — List own publications (joined with subtype) — **security fix applied**
-- [x] `POST /publications` — Create publication base row
-- [x] `POST /publications/:id/conference-paper` — Link conference_paper
-- [x] `POST /publications/:id/book` — Link book
-- [x] `POST /publications/:id/journal` — Link journal
-- [x] `POST /publications/:id/article` — Link article
-- [x] `PUT /publications/:id` — Update base publication
-- [x] `DELETE /publications/:id` — Delete (cascades subtypes)
-
----
-
-## Phase 7 — Public Routes (`/public/...`)
-
-- [x] `GET /public/blogs` — APPROVED blogs only
-- [x] `GET /public/blogs/:id` — Single APPROVED blog
-- [x] `GET /public/tutorials` — APPROVED tutorials only
-- [x] `GET /public/tutorials/:id` — Single APPROVED tutorial
-- [x] `GET /public/projects` — APPROVED projects only
-- [x] `GET /public/projects/:id` — Single APPROVED project
-- [x] `GET /public/events` — APPROVED events only
-- [x] `GET /public/events/:id` — Single APPROVED event
-- [x] `GET /public/publications` — APPROVED publications (joined with subtypes)
-- [x] `GET /public/publications/:id` — Single APPROVED publication
-- [x] `GET /public/researchers` — APPROVED researchers (profile cards)
-- [x] `GET /public/researchers/:slug` — Full researcher profile
+- [ ] **Member Directory (Admin Only)**:
+  - [x] `GET /admin/members` with joined role info
+  - [ ] `PATCH /admin/members/:id` to approve/reject Researchers & RAs
+  - [ ] Implement Resignation workflow (XOR trigger safety — FIX C3/C6)
+- [ ] **Profile Editor**:
+  - [x] Linked Background/Research multi-row management
+  - [ ] Handle `updated_at` triggers and display (FIX D5)
+  - [ ] slug validation (lowercase alphanumeric only — FIX M1)
 
 ---
 
-## Phase 8 — Admin Dashboard (`admin/`)
+## Phase 4 — Core Content Infrastructure
 
-- [x] Remove old Ballerina-specific API calls
-- [x] `src/lib/api.ts` — Axios instance with base URL, Bearer interceptor, 401 response interceptor
-- [x] Auth store (`useAuth.ts`) with Zustand + persist — login, logout, role helpers
-- [x] `ProtectedRoute` component (redirect to /login if no token)
-- [x] `RoleGuard` component (403 UI for insufficient role)
-- [x] **Pages:**
-  - [x] `/login` — Login form
-  - [x] `/register` — Registration form
-  - [x] `/dashboard` — Role-specific dashboard (Admin / Researcher / RA views)
-  - [x] `/dashboard/members` — Member list + approve/reject (admin only)
-  - [x] `/blog` — Blog list + create/edit
-  - [x] `/tutorials` — Tutorial list + create/edit
-  - [x] `/projects` — Project list + create/edit
-  - [x] `/events` — Events list + create/edit (researcher + admin only — **role guard fixed**)
-  - [x] `/grants` — Grants list + create/edit (researcher + admin only — **role guard fixed**)
-  - [x] `/publications` — Publications list + create/edit
-  - [x] `/account` — Profile editor
-  - [x] `/settings` — Settings page
-  - [ ] `/content/pending` — Dedicated content approval queue page (pending — currently in AdminDashboard)
-  - [ ] `/members/:id` — Deep-linked member detail page
+- [ ] **Global Content Rules**:
+  - [ ] Implement `approval_status_enum` logic (`DRAFT` as default for NEW content)
+  - [ ] Handle `SET NULL` authorship in UI (Former Member display — FIX C1/C2/C5)
+- [ ] **Content Tables (Backend + Form UI)**:
+  - [ ] **Blogs**: Keyword & Image management; Author XOR check (FIX C4)
+  - [ ] **Tutorials**: Description & Content (Rich Text)
+  - [ ] **Projects**: Handle NEW `content` field and diagram UNIQUE constraint (FIX D6/M3)
+  - [ ] **Events**: Implementation of merged `event_datetime` (FIX M2)
+    - [ ] `POST/PUT /events`: Validate single `ISO-8601` datetime string via Zod
+  - [ ] **Grants**: Implementation of `grant_document` child table (FIX D4)
+    - [ ] `POST/PUT /grants`: Support `documents[]` array for atomic creation/update
+  - [ ] **Publications**: Base table + subtype ISA logic (Conference, Book, Journal, Article)
+    - [ ] `POST /publications`: Support subtype injection (e.g., `type: 'BOOK', bookDetails: { isbn, link }`)
+
 
 ---
 
-## Phase 9 — Public Website Update (`web/`)
+## Phase 5 — Advanced Workflow (RA → Researcher → Admin)
 
-- [ ] Update `VITE_API_URL` to point to new Express backend
-- [ ] Replace any old API calls with new `/public/*` endpoints
-- [ ] Test all public pages: blogs, events, publications, researcher cards
+- [ ] **Submission Stage (RA)**:
+  - [ ] `PATCH /content/:table/:id/submit` — Hand off to assigned researcher
+    - [ ] Set `approval_status = 'PENDING_RESEARCHER'`
+    - [ ] Verify `reviewed_by_researcher_id` is automatically set to RA's assigned researcher
+  - [ ] Dashboard view for RA: Tracking submission progress
+- [ ] **Review Stage (Researcher)**:
+  - [ ] `GET /researcher/reviews` — Content assigned to `me` for review
+  - [ ] `PATCH /content/:table/:id/review` — Researcher action
+    - [ ] Body: `{ status: 'PENDING_ADMIN' | 'REJECTED' | 'DRAFT' }`
+- [ ] **Approval Stage (Admin)**:
+  - [ ] `GET /admin/content/pending` — Final filter for `PENDING_ADMIN`
+  - [ ] `PATCH /admin/content/:table/:id/approve` — Set `approved_by_admin_id` and status `APPROVED`
 
----
-
-## Phase 10 — Deployment
-
-- [ ] Create `backend/Dockerfile` for containerised deployment
-- [ ] Create `render.yaml` (Render deployment config for backend)
-- [ ] Deploy backend to Render (free tier)
-- [ ] Set all environment variables on Render dashboard
-- [ ] Deploy `admin/` to Cloudflare Pages
-- [ ] Set `VITE_API_URL` in Cloudflare Pages environment
-- [ ] Verify CORS from admin domain → Render backend
-- [ ] Smoke test end-to-end: login → create blog → admin approve → public visible
 
 ---
 
-## Backlog / Future
+## Phase 6 — Public Website (`web/`)
 
-- [ ] File uploads (images, grant docs) via Supabase Storage
-- [ ] Email notifications on approval/rejection (Supabase Edge Functions or Resend)
-- [ ] Researcher profile CV export to PDF
-- [ ] Public website search across publications and blogs
-- [ ] Rate limiting (`express-rate-limit`) on auth endpoints
-- [ ] Refresh token support (currently JWT is 7d, no refresh)
-- [ ] `/content/pending` dedicated admin page (tabbed by content type)
-- [ ] `/members/:id` deep-linked member detail page
+- [ ] Connect `web/` project to new Express `/public/*` endpoints
+- [ ] Implement matching Monochrome theme for the public surface
+- [ ] SEO Optimisation (Sitemap, Metadata, Semantic HTML)
+- [ ] Smoke tests: Full lifecycle from RA Draft to Public Visibility
+
+---
+
+## Phase 7 — Deployment & Quality
+
+- [ ] Containerise backend (`Dockerfile`)
+- [ ] Setup CI/CD: Render (Backend) + Cloudflare Pages (Frontend)
+- [ ] Rate limiting & Refresh token support (Backlog)
+- [ ] Storage integration (Supabase Storage for Images/Docs)

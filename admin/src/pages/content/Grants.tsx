@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { Briefcase, Calendar, ShieldCheck, FileText, ArrowRight, Info } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { api, type Grant, type ApprovalStatus } from "../../lib/api";
+import { api } from "../../api";
+import type { Grant, ApprovalStatus } from "../../types";
 import { ContentPageTemplate } from "../../components/shared/ContentPageTemplate";
-import { FormField, FormInput, FormTextArea, FormSelect } from "../../components/shared/FormElements";
-import { Badge } from "../../components/shared/UIPrimitives";
+import { Input } from "../../components/ui/Input";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
 
 export default function GrantsPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isResearcher } = useAuth();
   const [items, setItems] = useState<Grant[]>([]);
   const [loading, setLoading] = useState(true);
-  const isUserAdmin = isAdmin();
 
   const fetchItems = async () => {
     try {
@@ -28,10 +29,9 @@ export default function GrantsPage() {
   const emptyItem: Partial<Grant> = {
     title: "",
     description: "",
-    legal_docs: "",
     passed_date: new Date().toISOString().split('T')[0],
     expire_date: new Date(Date.now() + 31_536_000_000).toISOString().split('T')[0],
-    approval_status: "PENDING" as ApprovalStatus,
+    approval_status: "DRAFT" as ApprovalStatus,
   };
 
   const handleSave = async (item: Partial<Grant>) => {
@@ -40,9 +40,18 @@ export default function GrantsPage() {
     await fetchItems();
   };
 
+  const handleSubmitForReview = async (item: Grant) => {
+    await api.content.submit("grant_info", item.id);
+    await fetchItems();
+  };
+
+  const handleReview = async (item: Grant, status: 'PENDING_ADMIN' | 'REJECTED') => {
+    await api.content.review("grant_info", item.id, status);
+    await fetchItems();
+  };
+
   const handleToggleStatus = async (item: Grant) => {
     const newStatus = item.approval_status === "APPROVED" ? "REJECTED" : "APPROVED";
-    // DB table is grant_info — must match the backend route param
     if (newStatus === "APPROVED") await api.admin.approveContent("grant_info", item.id);
     else await api.admin.rejectContent("grant_info", item.id);
     await fetchItems();
@@ -51,154 +60,148 @@ export default function GrantsPage() {
   return (
     <ContentPageTemplate<Grant>
       title="Grants"
-      subtitle={`${items.length} grant${items.length !== 1 ? "s" : ""} in the registry.`}
+      subtitle={`${items.length} fiscal appropriations currently active.`}
       icon={Briefcase}
       items={items}
       loading={loading}
-      isAdmin={isUserAdmin}
+      isAdmin={isAdmin()}
+      isResearcher={isResearcher()}
       emptyItem={emptyItem}
       onSave={handleSave}
-      onToggleStatus={isUserAdmin ? handleToggleStatus : undefined}
-      searchFields={(item) => [item.title, item.description]}
+      onSubmitForReview={handleSubmitForReview}
+      onReview={handleReview}
+      onToggleStatus={isAdmin() ? handleToggleStatus : undefined}
+      searchFields={(item) => [item.title, item.description || ""]}
       filterOptions={[
-        { label: "All", value: "ALL" },
-        { label: "Approved", value: "APPROVED" },
-        { label: "Pending", value: "PENDING" },
+        { label: "ALL", value: "ALL" },
+        { label: "PUBLISHED", value: "APPROVED" },
+        { label: "PENDING", value: "PENDING_ADMIN" },
+        { label: "DRAFT", value: "DRAFT" },
       ]}
       renderListItem={(item, onClick) => (
-        <article
+        <div
           key={item.id}
           onClick={onClick}
-          className="group bg-white border border-zinc-100 rounded-2xl p-6 hover:border-zinc-200 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col gap-4"
+          className="group border border-zinc-200 p-6 hover:border-black transition-all cursor-pointer flex flex-col gap-6 bg-white"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-zinc-900 text-white rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-black text-white shrink-0">
                 <Briefcase size={14} />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Grant</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Fiscal Unit</span>
             </div>
             <Badge status={item.approval_status} />
           </div>
-          <div className="flex-1">
-            <h3 className="text-base font-black text-zinc-900 leading-snug line-clamp-2 mb-1.5">{item.title}</h3>
+          
+          <div className="space-y-2">
+            <h3 className="text-lg font-black text-black uppercase tracking-tight leading-tight line-clamp-2">{item.title}</h3>
             {item.description && (
-              <p className="text-sm text-zinc-500 font-medium line-clamp-2">{item.description}</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-tight line-clamp-2 italic">
+                {item.description}
+              </p>
             )}
           </div>
-          <div className="pt-3 border-t border-zinc-50 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
-              {item.passed_date} — {item.expire_date}
+
+          <div className="pt-4 border-t border-zinc-100 flex items-center justify-between">
+            <span className="text-[10px] font-black text-black uppercase tracking-[0.2em]">
+              EXP: {item.expire_date}
             </span>
-            <ArrowRight size={14} className="text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ArrowRight size={14} className="text-zinc-300 group-hover:text-black group-hover:translate-x-1 transition-all" />
           </div>
-        </article>
+        </div>
       )}
       renderDetail={(item) => (
-        <div className="space-y-10 animate-in fade-in duration-300">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl">
-              <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                <ShieldCheck size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Status</span>
+        <div className="space-y-12 pb-20 animate-enter">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-8 border border-zinc-200 bg-white space-y-4">
+              <div className="flex items-center gap-2 text-zinc-400">
+                <ShieldCheck size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Compliance Status</span>
               </div>
               <Badge status={item.approval_status} />
             </div>
-            <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl">
-              <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                <Calendar size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Award date</span>
+            <div className="p-8 border border-zinc-200 bg-white space-y-4">
+              <div className="flex items-center gap-2 text-zinc-400">
+                <Calendar size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Awarded</span>
               </div>
-              <p className="text-sm font-bold text-black">{item.passed_date}</p>
+              <p className="text-lg font-black text-black uppercase">{item.passed_date}</p>
             </div>
-            <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl">
-              <div className="flex items-center gap-2 mb-3 text-zinc-400">
-                <Calendar size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Expiry date</span>
+            <div className="p-8 border border-zinc-200 bg-white space-y-4">
+              <div className="flex items-center gap-2 text-zinc-400">
+                <Calendar size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Expiration</span>
               </div>
-              <p className="text-sm font-bold text-black">{item.expire_date}</p>
+              <p className="text-lg font-black text-black uppercase">{item.expire_date}</p>
             </div>
           </div>
 
           {item.description && (
-            <div className="space-y-3">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-2">
-                <Info size={14} /> Description
+            <div className="space-y-6">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 flex items-center gap-2">
+                <Info size={14} /> Scope of Appropriation
               </h4>
-              <p className="text-base text-zinc-600 font-medium leading-relaxed">{item.description}</p>
+              <p className="text-sm font-bold text-black uppercase leading-loose tracking-tight whitespace-pre-wrap italic">
+                {item.description}
+              </p>
             </div>
           )}
 
-          {item.legal_docs && (
-            <div className="pt-4">
-              <a
-                href={item.legal_docs}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-black transition-colors"
-              >
-                <FileText size={14} /> View legal document
-              </a>
+          {item.documents && item.documents.length > 0 && (
+            <div className="pt-6 border-t border-zinc-100 flex flex-wrap gap-4">
+              {item.documents.map(doc => (
+                <Button
+                  key={doc.id}
+                  onClick={() => window.open(doc.doc_url, '_blank')}
+                  variant="outline"
+                  className="h-12 px-8 text-[11px] font-black tracking-widest uppercase"
+                >
+                  <FileText size={16} className="mr-2" /> {doc.doc_label || 'View Document'} (PDF)
+                </Button>
+              ))}
             </div>
           )}
         </div>
       )}
       renderEdit={(item, setItem) => (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField label="Title" full>
-              <FormInput
-                placeholder="Grant title..."
-                value={item.title ?? ""}
-                onChange={e => setItem({ ...item, title: e.target.value })}
-              />
-            </FormField>
+        <div className="space-y-10">
+          <Input 
+            label="Appropriation Title" 
+            placeholder="ENTER GRANT NAME..." 
+            value={item.title ?? ""} 
+            onChange={e => setItem({ ...item, title: e.target.value })} 
+          />
 
-            <FormField label="Award date">
-              <FormInput
-                type="date"
-                value={item.passed_date ?? ""}
-                onChange={e => setItem({ ...item, passed_date: e.target.value })}
-              />
-            </FormField>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Input 
+              label="Award Date" 
+              type="date" 
+              value={item.passed_date ?? ""} 
+              onChange={e => setItem({ ...item, passed_date: e.target.value })} 
+            />
+            <Input 
+              label="Expiry Date" 
+              type="date" 
+              value={item.expire_date ?? ""} 
+              onChange={e => setItem({ ...item, expire_date: e.target.value })} 
+            />
+          </div>
 
-            <FormField label="Expiry date">
-              <FormInput
-                type="date"
-                value={item.expire_date ?? ""}
-                onChange={e => setItem({ ...item, expire_date: e.target.value })}
-              />
-            </FormField>
+          <p className="p-8 border border-dashed border-zinc-200 text-center text-[10px] font-black text-zinc-300 uppercase tracking-widest">
+            Note: Documents are managed post-creation via official protocol.
+          </p>
 
-            <FormField label="Legal document URL">
-              <FormInput
-                placeholder="https://..."
-                value={item.legal_docs ?? ""}
-                onChange={e => setItem({ ...item, legal_docs: e.target.value })}
-              />
-            </FormField>
-
-            <FormField label="Status" full={isUserAdmin}>
-              <FormSelect
-                value={item.approval_status || "PENDING"}
-                onChange={e => setItem({ ...item, approval_status: e.target.value as ApprovalStatus })}
-                options={[
-                  { label: "Pending", value: "PENDING" },
-                  ...(isUserAdmin
-                    ? [{ label: "Approved", value: "APPROVED" }, { label: "Rejected", value: "REJECTED" }]
-                    : []),
-                ]}
-              />
-            </FormField>
-
-            <FormField label="Description" full>
-              <FormTextArea
-                className="min-h-[180px]"
-                placeholder="Grant description and scope..."
-                value={item.description ?? ""}
-                onChange={e => setItem({ ...item, description: e.target.value })}
-              />
-            </FormField>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-tight text-zinc-600">
+              Appropriation summary
+            </label>
+            <textarea
+              className="input-monochrome min-h-[160px] py-4"
+              placeholder="TERMS AND OBJECTIVES..."
+              value={item.description ?? ""}
+              onChange={e => setItem({ ...item, description: e.target.value })}
+            />
           </div>
         </div>
       )}

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Users, BookOpen, FileText, Inbox, ArrowRight, CheckSquare2 } from "lucide-react";
+import { Users, BookOpen, FileText, Inbox, ArrowRight, CheckSquare2, ShieldAlert } from "lucide-react";
 import { Link } from "react-router-dom";
-import { api } from "../../lib/api";
-import { StatCard } from "./components/StatCard";
-import { MinimalCard, FunctionalButton, Badge } from "../../components/shared/UIPrimitives";
-import { cn } from "../../lib/utils";
+import { api } from "../../api";
+import { StatCard } from "../../components/ui/StatCard";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
 
 interface Stats {
   users: number;
@@ -40,45 +40,45 @@ export function AdminDashboard() {
         ]);
 
         const pendingPubs: PendingItem[] = pubs
-          .filter((p: any) => p.approval_status === "PENDING")
+          .filter((p: any) => p.approval_status === "PENDING_ADMIN")
           .map((p: any) => ({
             id: String(p.id),
             title: p.title,
             type: "Publication" as const,
-            author: p.authors ?? "Unknown",
+            author: p.authors ?? "Personnel",
             date: p.publication_year?.toString() ?? "—",
             href: "/publications",
           }));
 
         const pendingBlogs: PendingItem[] = blogs
-          .filter((b: any) => b.approval_status === "PENDING")
+          .filter((b: any) => b.approval_status === "PENDING_ADMIN")
           .map((b: any) => ({
             id: String(b.id),
             title: b.title,
             type: "Blog" as const,
-            author: b.author_name ?? "Unknown",
+            author: b.author_name ?? "Personnel",
             date: b.created_at?.split("T")[0] ?? "—",
             href: "/blog",
           }));
 
         const pendingEvents: PendingItem[] = events
-          .filter((e: any) => e.approval_status === "PENDING")
+          .filter((e: any) => e.approval_status === "PENDING_ADMIN")
           .map((e: any) => ({
             id: String(e.id),
             title: e.title,
             type: "Event" as const,
-            author: e.event_type ?? "General",
-            date: e.event_date ?? "—",
+            author: "Engagement",
+            date: e.event_datetime ? new Date(e.event_datetime).toLocaleDateString() : "—",
             href: "/events",
           }));
 
         const pendingProjects: PendingItem[] = projects
-          .filter((p: any) => p.approval_status === "PENDING")
+          .filter((p: any) => p.approval_status === "PENDING_ADMIN")
           .map((p: any) => ({
             id: String(p.id),
-            title: p.title ?? p.category ?? "Untitled",
+            title: p.title ?? "Untitled Initiative",
             type: "Project" as const,
-            author: "Research Team",
+            author: "Research Unit",
             date: p.created_at?.split("T")[0] ?? "—",
             href: "/projects",
           }));
@@ -103,128 +103,124 @@ export function AdminDashboard() {
   }, []);
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-32">
-      {/* Page header */}
-      <div className="border-b border-zinc-100 pb-8">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="w-2 h-2 bg-zinc-900 rounded-full" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Admin</span>
+    <div className="space-y-12 animate-enter">
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-black pb-8">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-zinc-400">
+            <ShieldAlert size={14} />
+            <span className="text-[10px] font-black uppercase tracking-[0.25em]">Central Oversight</span>
+          </div>
+          <h1 className="text-4xl font-black text-black tracking-tighter uppercase">Administration</h1>
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-tight">Review clearance requests and oversee institutional output.</p>
         </div>
-        <h1 className="text-3xl font-black text-black tracking-tight mb-1">Administration</h1>
-        <p className="text-sm text-zinc-500 font-medium">
-          Manage members, review content, and oversee research output.
-        </p>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Members" value={loading ? "—" : stats.users} icon={Users} href="/dashboard/members" />
-        <StatCard label="Publications" value={loading ? "—" : stats.publications} icon={BookOpen} href="/publications" />
-        <StatCard label="Blog posts" value={loading ? "—" : stats.blog} icon={FileText} href="/blog" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard label="Total Personnel" value={loading ? "—" : stats.users} icon={Users} />
+        <StatCard label="Peer Records" value={loading ? "—" : stats.publications} icon={BookOpen} />
+        <StatCard label="Intelligence" value={loading ? "—" : stats.blog} icon={FileText} />
         <StatCard
-          label="Awaiting review"
+          label="Awaiting Sign-off"
           value={loading ? "—" : stats.pending}
           icon={Inbox}
-          href="/publications"
-          className={cn(stats.pending > 0 ? "border-zinc-300 ring-1 ring-zinc-200" : "")}
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Pending content feed */}
-        <div className="lg:col-span-8">
-          <MinimalCard className="overflow-hidden">
-            <div className="flex items-center justify-between px-8 py-6 border-b border-zinc-50">
-              <h2 className="text-sm font-black text-black uppercase tracking-widest flex items-center gap-2">
-                Awaiting Review
-                <span className="px-2 py-0.5 bg-zinc-900 text-white rounded-full text-[10px] font-bold">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-8 space-y-6">
+          <div className="border border-black bg-white">
+            <div className="flex items-center justify-between px-8 py-6 border-b border-black bg-zinc-50">
+              <h2 className="text-[11px] font-black text-black uppercase tracking-[0.2em] flex items-center gap-3">
+                Action Required
+                <span className="px-2 py-0.5 bg-black text-white text-[9px] font-black">
                   {pendingItems.length}
                 </span>
               </h2>
               <Link
                 to="/publications"
-                className="text-[11px] font-bold text-zinc-400 hover:text-black uppercase tracking-widest underline underline-offset-4 transition-colors"
+                className="text-[10px] font-black text-black uppercase tracking-widest hover:underline underline-offset-4"
               >
-                View all
+                Full Registry
               </Link>
             </div>
 
-            <div className="divide-y divide-zinc-50">
+            <div className="divide-y divide-zinc-100">
               {loading ? (
-                [1, 2, 3].map(i => (
-                  <div key={i} className="h-16 mx-6 my-3 bg-zinc-50 rounded-xl animate-pulse" />
-                ))
+                <div className="p-12 text-center text-[10px] font-black uppercase tracking-[0.4em] text-zinc-300 animate-pulse">
+                  Syncing System Cache...
+                </div>
               ) : pendingItems.length > 0 ? (
                 pendingItems.map(item => (
                   <Link
                     key={`${item.type}-${item.id}`}
                     to={item.href}
-                    className="flex items-center justify-between px-8 py-5 hover:bg-zinc-50 transition-colors group"
+                    className="flex items-center justify-between px-8 py-6 hover:bg-zinc-50 transition-all group"
                   >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <Badge status="PENDING" className="flex-shrink-0" />
+                    <div className="flex items-center gap-6 min-w-0">
+                      <Badge status="PENDING_ADMIN" />
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-black leading-none mb-1 truncate group-hover:underline">
+                        <p className="text-sm font-black text-black uppercase tracking-tight truncate group-hover:underline">
                           {item.title}
                         </p>
-                        <p className="text-[11px] text-zinc-400 font-medium">
-                          {item.type} · {item.author} · {item.date}
+                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest pt-1">
+                          {item.type} • {item.author} • {item.date}
                         </p>
                       </div>
                     </div>
                     <ArrowRight
-                      size={14}
-                      className="text-zinc-300 flex-shrink-0 ml-4 transition-transform group-hover:translate-x-0.5"
+                      size={16}
+                      className="text-zinc-300 group-hover:text-black group-hover:translate-x-1 transition-all"
                     />
                   </Link>
                 ))
               ) : (
-                <div className="py-20 text-center flex flex-col items-center gap-4">
-                  <CheckSquare2 size={32} className="text-zinc-200" />
-                  <p className="text-sm font-medium text-zinc-300">All content is up to date</p>
+                <div className="py-24 text-center space-y-4">
+                  <CheckSquare2 size={32} className="mx-auto text-zinc-200" />
+                  <p className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.3em]">All Clear: No Pending Protocols</p>
                 </div>
               )}
             </div>
-          </MinimalCard>
+          </div>
         </div>
 
-        {/* Sidebar actions */}
-        <div className="lg:col-span-4 space-y-4">
-          <MinimalCard className="p-6">
-            <h3 className="text-[11px] font-black uppercase tracking-widest text-zinc-400 mb-4">Quick create</h3>
-            <div className="space-y-2">
+        <div className="lg:col-span-4 space-y-8">
+          <div className="border border-black p-8 space-y-6">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-6">Initialize Record</h3>
+            <div className="space-y-3">
               {[
-                { label: "New publication", href: "/publications" },
-                { label: "New blog post", href: "/blog" },
-                { label: "New event", href: "/events" },
-                { label: "New project", href: "/projects" },
+                { label: "New Publication", href: "/publications" },
+                { label: "New Intelligence Post", href: "/blog" },
+                { label: "New Engagement", href: "/events" },
+                { label: "New Initiative", href: "/projects" },
               ].map(action => (
                 <Link
                   key={action.label}
                   to={action.href}
-                  className="flex items-center justify-between w-full px-4 py-3 text-sm font-semibold bg-zinc-50 hover:bg-zinc-100 border border-zinc-100 hover:border-zinc-200 rounded-xl transition-all"
+                  className="flex items-center justify-between w-full px-5 py-4 text-[10px] font-black uppercase tracking-widest border border-zinc-200 hover:border-black transition-all bg-white"
                 >
                   {action.label}
                   <ArrowRight size={14} className="text-zinc-300" />
                 </Link>
               ))}
             </div>
-          </MinimalCard>
+          </div>
 
-          <MinimalCard className="p-6 relative overflow-hidden">
-            <h3 className="text-[11px] font-black uppercase tracking-widest text-zinc-400 mb-2">Members</h3>
-            <p className="text-sm text-zinc-500 font-medium leading-relaxed mb-5">
-              Review applications and manage member access.
-            </p>
-            <Link to="/dashboard/members">
-              <FunctionalButton className="w-full">
-                View members
-              </FunctionalButton>
-            </Link>
-            <div className="absolute -right-6 -bottom-6 opacity-[0.04]">
-              <Users size={120} />
+          <div className="border border-black p-8 bg-black text-white space-y-6 relative overflow-hidden">
+            <div className="space-y-2">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Personnel Management</h3>
+              <p className="text-sm font-bold uppercase tracking-tight leading-relaxed">
+                Review credential requests and adjust personnel clearance levels.
+              </p>
             </div>
-          </MinimalCard>
+            <Link to="/dashboard/members" className="block">
+              <Button variant="outline" className="w-full h-12 text-white border-white hover:bg-white hover:text-black uppercase text-[10px] font-black tracking-widest">
+                Access Directory
+              </Button>
+            </Link>
+            <div className="absolute -right-8 -bottom-8 opacity-10">
+              <Users size={160} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
