@@ -1,115 +1,124 @@
-# TASK.md — BrAIN Labs Inc. Rebuild (Monochrome Edition)
+# TASK.md — BrAIN Labs Inc.
 
 > Status legend: `[ ]` = TODO · `[/]` = In Progress · `[x]` = Done
 
 ---
 
-## Phase 0 — Blueprint & Architecture
+## Phase 0 — Schema & Architecture
 
-- [x] Finalise Corrected Schema in `schema.sql` (Canonical Source)
-- [x] Design Monochrome Design System (Black, White, Grayscale)
-- [x] Define Frontend File Structure (`admin/src/` cleanup)
-- [x] Write `prompt.md`, `CLAUDE.md`, and this `TASK.md` overhaul
-
----
-
-## Phase 1 — Backend Foundation (`backend/`)
-
-- [x] Initialise Express.js scaffold (JWT, CORS, Helmet, Supabase JS)
-- [x] Auth Core:
-  - [x] `POST /auth/register` (Handle RA `assigned_by_researcher_id` — FIX D1)
-  - [x] `POST /auth/login` (Role resolution with JWT `sub` and `role`)
-- [x] Global Middleware:
-  - [x] Auth verify (`req.user`)
-  - [x] Role gate factory (`requireRole`)
-  - [x] Error handling & 健康检查 (`GET /health`)
-- [ ] **API Excellence & Endpoint Correctness**:
-  - [ ] audit all endpoints against Zod schemas for strict input validation
-  - [ ] ensure consistent 403/401 JSON responses for role/auth failures
-  - [ ] verify all `:table` param endpoints follow the unified content controller pattern
-  - [ ] add request logging middleware for debugging workflow transitions
-
+- [x] Finalise corrected schema (`schema(2).sql`) — canonical source of truth
+- [x] Define approval workflow: `DRAFT → PENDING_RESEARCHER → PENDING_ADMIN → APPROVED / REJECTED`
+- [x] ISA role pattern: `member → admin / researcher / research_assistant / former_member`
+- [x] Monochrome design system (black/white/zinc, Inter font, no shadows)
+- [x] Define project layout: `backend/`, `admin/`, `web/`
 
 ---
 
-## Phase 2 — Frontend Design System & Architecture (`admin/`)
+## Phase 1 — Backend (`backend/`)
 
-- [ ] **Frontend Restructuring**:
-  - [ ] Standardize foldering: `api/`, `components/ui/`, `hooks/`, `pages/`, `store/`, `types/`
-  - [ ] Centralize Axios logic in `src/api/` with Bearer interceptors
-- [ ] **Monochrome Design System (White/Black/Gray)**:
-  - [ ] Implement global styles in `index.css` (Inter font, 1px contrast borders)
-  - [ ] Create UI primitives in `components/ui/`:
-    - Button (Solid Black/White text), Input (1px Border), Card (No shadow, border-only)
-    - Modal (Minimalist), Badge (Grayscale status indicators)
-- [ ] **Auth Workflow**:
-  - [x] Persisted Zustand store for Auth state
-  - [x] Protected & Role-guarded route components
+### Auth
+- [x] `POST /auth/register` — creates member + role row (handles `assigned_by_researcher_id` for RAs)
+- [x] `POST /auth/login` — role resolution + JWT with `sub` (member id) and `role`
+- [x] `requireAuth` middleware
+- [x] `requireRole(...roles)` middleware
 
----
+### Bugs fixed
+- [x] All content routes now create with `approval_status: 'DRAFT'` (was `'PENDING'`)
+- [x] `getAllPendingContent` queries `PENDING_ADMIN` (was `PENDING`)
+- [x] Events: removed non-existent `event_date`/`event_time` fields — uses `event_datetime` (TIMESTAMPTZ)
+- [x] Grants: removed non-existent `legal_docs` column — uses `grant_document` child table with CRUD endpoints
+- [x] Tutorials: added missing `title` to Zod schema
+- [x] Projects: added `content` field to Zod schema
+- [x] Publications: added `authors` and `publication_year` to Zod schema; subtype upsert on `publication_id`
 
-## Phase 3 — Identity & Profile Management
+### Content routes (`/blogs`, `/tutorials`, `/projects`, `/events`, `/grants`, `/publications`)
+- [x] `GET /` — list (admin sees all, others see own)
+- [x] `POST /` — create with `approval_status: 'DRAFT'`
+- [x] `GET /:id` — get one (ownership check)
+- [x] `PUT /:id` — update (resets to `DRAFT`)
+- [x] `DELETE /:id` — delete (own or admin)
+- [x] `POST /grants/:id/documents` — add document to grant
+- [x] `DELETE /grants/:id/documents/:docId` — remove document
+- [x] `POST /publications/:id/:subtype` — link ISA subtype (upsert)
 
-- [ ] **Member Directory (Admin Only)**:
-  - [x] `GET /admin/members` with joined role info
-  - [ ] `PATCH /admin/members/:id` to approve/reject Researchers & RAs
-  - [ ] Implement Resignation workflow (XOR trigger safety — FIX C3/C6)
-- [ ] **Profile Editor**:
-  - [x] Linked Background/Research multi-row management
-  - [ ] Handle `updated_at` triggers and display (FIX D5)
-  - [ ] slug validation (lowercase alphanumeric only — FIX M1)
+### Approval workflow (`/content`)
+- [x] `PATCH /content/:table/:id/submit` — RA → `PENDING_RESEARCHER`; Researcher/Admin → `PENDING_ADMIN`
+- [x] `PATCH /content/:table/:id/review` — Researcher forwards `PENDING_RESEARCHER` → `PENDING_ADMIN` or `REJECTED`
+- [x] `GET /content/researcher/reviews` — items in `PENDING_RESEARCHER` state for researcher queue
 
----
+### Admin routes (`/admin`)
+- [x] `GET /admin/members` — list all members with role info
+- [x] `PATCH /admin/members/:id/approve` — approve member
+- [x] `PATCH /admin/members/:id/reject` — reject member
+- [x] `GET /admin/content/pending` — all `PENDING_ADMIN` content across tables
+- [x] `PATCH /admin/content/:table/:id/approve` — approve content
+- [x] `PATCH /admin/content/:table/:id/reject` — reject content
 
-## Phase 4 — Core Content Infrastructure
-
-- [ ] **Global Content Rules**:
-  - [ ] Implement `approval_status_enum` logic (`DRAFT` as default for NEW content)
-  - [ ] Handle `SET NULL` authorship in UI (Former Member display — FIX C1/C2/C5)
-- [ ] **Content Tables (Backend + Form UI)**:
-  - [ ] **Blogs**: Keyword & Image management; Author XOR check (FIX C4)
-  - [ ] **Tutorials**: Description & Content (Rich Text)
-  - [ ] **Projects**: Handle NEW `content` field and diagram UNIQUE constraint (FIX D6/M3)
-  - [ ] **Events**: Implementation of merged `event_datetime` (FIX M2)
-    - [ ] `POST/PUT /events`: Validate single `ISO-8601` datetime string via Zod
-  - [ ] **Grants**: Implementation of `grant_document` child table (FIX D4)
-    - [ ] `POST/PUT /grants`: Support `documents[]` array for atomic creation/update
-  - [ ] **Publications**: Base table + subtype ISA logic (Conference, Book, Journal, Article)
-    - [ ] `POST /publications`: Support subtype injection (e.g., `type: 'BOOK', bookDetails: { isbn, link }`)
-
-
----
-
-## Phase 5 — Advanced Workflow (RA → Researcher → Admin)
-
-- [ ] **Submission Stage (RA)**:
-  - [ ] `PATCH /content/:table/:id/submit` — Hand off to assigned researcher
-    - [ ] Set `approval_status = 'PENDING_RESEARCHER'`
-    - [ ] Verify `reviewed_by_researcher_id` is automatically set to RA's assigned researcher
-  - [ ] Dashboard view for RA: Tracking submission progress
-- [ ] **Review Stage (Researcher)**:
-  - [ ] `GET /researcher/reviews` — Content assigned to `me` for review
-  - [ ] `PATCH /content/:table/:id/review` — Researcher action
-    - [ ] Body: `{ status: 'PENDING_ADMIN' | 'REJECTED' | 'DRAFT' }`
-- [ ] **Approval Stage (Admin)**:
-  - [ ] `GET /admin/content/pending` — Final filter for `PENDING_ADMIN`
-  - [ ] `PATCH /admin/content/:table/:id/approve` — Set `approved_by_admin_id` and status `APPROVED`
-
+### TODO
+- [ ] Rate limiting middleware
+- [ ] Request logging for workflow transitions
+- [ ] Resignation workflow (create `former_member`, remove role row)
 
 ---
 
-## Phase 6 — Public Website (`web/`)
+## Phase 2 — Admin Dashboard (`admin/`)
 
-- [ ] Connect `web/` project to new Express `/public/*` endpoints
-- [ ] Implement matching Monochrome theme for the public surface
-- [ ] SEO Optimisation (Sitemap, Metadata, Semantic HTML)
-- [ ] Smoke tests: Full lifecycle from RA Draft to Public Visibility
+### Design system
+- [x] Global CSS: Inter font, zinc palette, monochrome tokens
+- [x] UI primitives: `Button`, `Input`, `Badge`, `StatCard`
+- [x] `ContentPageTemplate` — shared template for all content pages (list / detail / edit)
+
+### Auth
+- [x] JWT stored in localStorage (`brain_labs_token`)
+- [x] 401 handling: custom event `brain:session-expired` → `SessionHandler` component (no infinite loop)
+- [x] Session timeout banner with countdown
+
+### Layout
+- [x] `AppLayout` — sidebar navigation, role-aware menu items
+- [x] Protected routes with role guards
+
+### Bug fixes
+- [x] Removed duplicate API client (`admin/src/lib/api.ts` — old, had wrong status strings)
+- [x] All pages import from `../../api` (the correct `admin/src/api/index.ts`)
+
+### Jargon removed — all pages now use plain language
+- [x] Login: "Institutional Oversight Terminal" → "Admin Dashboard"; "Authorize Access" → "Sign In"
+- [x] Register: "Personnel Entry Protocol" → "Create Account"; "Access Password" → "Password"
+- [x] AdminDashboard: "Central Oversight" → "Admin"; "Intelligence" → "Blog Posts"; "Initialize Record" → "Quick Actions"
+- [x] ResearcherDashboard: "Command Center" → "Dashboard"; "Identity Ledger" → "Your Profile"; "Peer Records" → "Publications"
+- [x] ResearchAssistantDashboard: "Support Terminal" → "Dashboard"; "Entry Protocols" → "Quick Actions"
+- [x] MemberManagement: "Personnel Directory" → "Members"; "AUTHORIZE" → "Approve"; "VERIFY" → "Approve"
+- [x] Blog: "Research Title", "ENTER PROTOCOL NAME", "Core Content" → plain labels
+- [x] Events: "Engagement Name", "Operation Location", "Scope of Engagement" → plain labels
+- [x] Projects: "Initiative Name", "Verification Status", "Initialization Date" → plain labels
+- [x] Tutorials: "Educational Asset", "Curriculum Content", "Module Title" → plain labels
+- [x] Grants: "Fiscal Unit", "Compliance Status", "Appropriation Title" → plain labels
+- [x] Publications: "Scholarly Asset", "ISO-{year}", "Authorship Ledger", "Scholarly Class" → plain labels
+
+### Workflow buttons — correct role-based actions
+- [x] DRAFT + owner: Edit + "Submit for review"
+- [x] PENDING_RESEARCHER + isResearcher: "Reject" + "Forward to admin"
+- [x] PENDING_ADMIN + isAdmin: "Approve"
+- [x] APPROVED + isAdmin: "Revoke"
+
+### TODO
+- [ ] Profile settings page (`/account`) — edit `me`, change password, manage education/research
+- [ ] Researcher review queue page — dedicated view of `PENDING_RESEARCHER` items
 
 ---
 
-## Phase 7 — Deployment & Quality
+## Phase 3 — Public Website (`web/`)
 
-- [ ] Containerise backend (`Dockerfile`)
-- [ ] Setup CI/CD: Render (Backend) + Cloudflare Pages (Frontend)
-- [ ] Rate limiting & Refresh token support (Backlog)
-- [ ] Storage integration (Supabase Storage for Images/Docs)
+- [ ] Connect to Express `/public/*` endpoints
+- [ ] Matching monochrome design
+- [ ] SEO (sitemap, metadata, semantic HTML)
+- [ ] End-to-end smoke test: RA draft → public visibility
+
+---
+
+## Phase 4 — Deployment
+
+- [ ] Dockerfile for backend
+- [ ] CI/CD: Render (backend) + Cloudflare Pages (admin + web)
+- [ ] Supabase Storage for images / grant documents
+- [ ] Refresh token support
