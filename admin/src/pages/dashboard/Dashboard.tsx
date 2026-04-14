@@ -2,43 +2,50 @@ import { useAuth } from "../../hooks/useAuth";
 import { AdminDashboard } from "./AdminDashboard";
 import { ResearcherDashboard } from "./ResearcherDashboard";
 import { ResearchAssistantDashboard } from "./ResearchAssistantDashboard";
-import { Loader2, Clock, ShieldAlert } from "lucide-react";
+import { Clock, ShieldAlert } from "lucide-react";
 
 export default function Dashboard() {
   const { user, token, isAdmin, isResearcher, isAssistant } = useAuth();
 
   if (!token || !user) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center p-8">
-        <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+      <div className="flex min-h-[60vh] items-center justify-center bg-white">
+        <div className="w-10 h-10 border-4 border-black border-t-transparent animate-spin" />
       </div>
     );
   }
 
   // Handle Pending status for Researchers and Assistants
-  if (user.approval_status === 'PENDING' && !isAdmin()) {
+  if (user.approval_status === 'PENDING_ADMIN' && !isAdmin()) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] p-10 text-center space-y-6 animate-in fade-in duration-700">
-        <div className="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center border border-zinc-100 shadow-sm">
-          <Clock className="w-10 h-10 text-zinc-400" />
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-10 text-center space-y-12 animate-enter">
+        <div className="w-24 h-24 bg-black flex items-center justify-center border border-black group">
+          <Clock className="w-12 h-12 text-white group-hover:rotate-12 transition-transform" />
         </div>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">Account Under Review</h1>
-          <p className="text-zinc-500 max-w-sm mx-auto text-sm leading-relaxed">
-            Welcome, <span className="font-bold text-black">{user.first_name}</span>. Your application for a <span className="font-bold text-black capitalize">{user.role.replace('_', ' ')}</span> account is currently being reviewed by our administrators.
+        
+        <div className="space-y-4 max-w-lg">
+          <div className="flex items-center justify-center gap-2 text-zinc-400">
+             <span className="text-[10px] font-black uppercase tracking-[0.4em]">Protocol: Identity Review</span>
+          </div>
+          <h1 className="text-4xl font-black text-black tracking-tighter uppercase leading-none">Security Clearance Required</h1>
+          <p className="text-sm font-bold text-black uppercase leading-loose tracking-tight pt-4">
+            Personnel <span className="underline">{user.first_name} {user.second_name}</span> is currently in the verification queue. 
+            Access to laboratory systems is restricted until authorization is granted.
           </p>
         </div>
-        <div className="bg-zinc-50 border border-zinc-100 px-4 py-2 rounded-full flex items-center gap-2">
-          <div className="w-2 h-2 bg-zinc-400 rounded-full animate-pulse"></div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Awaiting Approval</span>
+
+        <div className="border border-black px-8 py-3 flex items-center gap-4">
+          <div className="w-2 h-2 bg-black animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-black">Awaiting Administrative Sign-off</span>
         </div>
-        <p className="text-xs text-zinc-400">We'll notify you once your access is granted.</p>
+
+        <p className="text-[10px] text-zinc-300 font-black uppercase tracking-widest pt-8">Reference: BRN-{user.id}-IDENT</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto space-y-12 animate-enter">
       {isAdmin() ? (
         <AdminDashboard />
       ) : isResearcher() ? (
@@ -46,9 +53,14 @@ export default function Dashboard() {
       ) : isAssistant() ? (
         <ResearchAssistantDashboard memberId={user.id} />
       ) : (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <ShieldAlert className="w-12 h-12 text-zinc-300" />
-          <p className="text-sm font-medium text-zinc-500">Unknown role configuration. Please contact support.</p>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
+          <div className="w-16 h-16 bg-black flex items-center justify-center text-white">
+            <ShieldAlert size={32} />
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-[10px] font-black text-black uppercase tracking-[0.3em]">Critical Exception</p>
+            <p className="text-sm font-bold text-zinc-500 uppercase">Role configuration mismatch. Contact Oversight.</p>
+          </div>
         </div>
       )}
     </div>

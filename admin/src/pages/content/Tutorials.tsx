@@ -1,24 +1,27 @@
 import { useState, useEffect } from "react";
-import { GraduationCap, Hash, ArrowRight } from "lucide-react";
+import { GraduationCap, BookOpen, Calendar } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { api, type Tutorial, type ApprovalStatus } from "../../lib/api";
+import { api } from "../../api";
+import type { Tutorial, ApprovalStatus } from "../../types";
 import { ContentPageTemplate } from "../../components/shared/ContentPageTemplate";
-import { FormField, FormInput, FormTextArea, FormSelect } from "../../components/shared/FormElements";
+import { Input } from "../../components/ui/Input";
+import { Badge } from "../../components/ui/Badge";
 import { renderMarkdown } from "../../lib/utils/markdown";
-import { Badge } from "../../components/shared/UIPrimitives";
 
 export default function TutorialsPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isResearcher } = useAuth();
   const [items, setItems] = useState<Tutorial[]>([]);
   const [loading, setLoading] = useState(true);
-  const isUserAdmin = isAdmin();
 
   const fetchItems = async () => {
     try {
       const data = await api.tutorials.list();
       setItems(data);
-    } catch (err) { console.error("Failed to fetch tutorials:", err); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("Failed to fetch tutorials:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchItems(); }, []);
@@ -27,12 +30,22 @@ export default function TutorialsPage() {
     title: "",
     description: "",
     content: "",
-    approval_status: "PENDING" as ApprovalStatus,
+    approval_status: "DRAFT" as ApprovalStatus,
   };
 
   const handleSave = async (item: Partial<Tutorial>) => {
     if (item.id) await api.tutorials.update(item.id as number, item);
     else await api.tutorials.create(item);
+    await fetchItems();
+  };
+
+  const handleSubmitForReview = async (item: Tutorial) => {
+    await api.content.submit("tutorial", item.id);
+    await fetchItems();
+  };
+
+  const handleReview = async (item: Tutorial, status: 'PENDING_ADMIN' | 'REJECTED') => {
+    await api.content.review("tutorial", item.id, status);
     await fetchItems();
   };
 
@@ -46,84 +59,107 @@ export default function TutorialsPage() {
   return (
     <ContentPageTemplate<Tutorial>
       title="Tutorials"
-      subtitle={`${items.length} learning modules indexed in the professional registry.`}
+      subtitle={`${items.length} tutorial${items.length !== 1 ? "s" : ""} available.`}
       icon={GraduationCap}
       items={items}
       loading={loading}
-      isAdmin={isUserAdmin}
+      isAdmin={isAdmin()}
+      isResearcher={isResearcher()}
       emptyItem={emptyItem}
       onSave={handleSave}
-      onToggleStatus={isUserAdmin ? handleToggleStatus : undefined}
-      searchFields={(item) => [item.title, item.description]}
+      onSubmitForReview={handleSubmitForReview}
+      onReview={handleReview}
+      onToggleStatus={isAdmin() ? handleToggleStatus : undefined}
+      searchFields={(item) => [item.title, item.description || ""]}
       filterOptions={[
-        { label: "ALL MODULES", value: "ALL" },
-        { label: "PUBLISHED HUB", value: "APPROVED" },
-        { label: "PENDING NODE", value: "PENDING" },
+        { label: "ALL", value: "ALL" },
+        { label: "PUBLISHED", value: "APPROVED" },
+        { label: "PENDING", value: "PENDING_ADMIN" },
+        { label: "DRAFT", value: "DRAFT" },
       ]}
       renderListItem={(item, onClick) => (
-        <article key={item.id} onClick={onClick} className="group relative bg-white border border-zinc-100 p-10 hover:shadow-2xl hover:shadow-zinc-200/50 transition-all duration-500 cursor-pointer flex flex-col gap-8 rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-           <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
-                 <div className="p-2.5 bg-zinc-900 text-white rounded-xl shadow-lg opacity-90">
-                    <GraduationCap size={18} />
-                 </div>
-                 <span className="text-[11px] font-black uppercase tracking-[0.25em] text-zinc-900 border-b-2 border-zinc-900 pb-0.5">
-                    LEARNING NODE
-                 </span>
+        <div 
+          key={item.id} 
+          onClick={onClick} 
+          className="group bg-white border border-zinc-200 hover:border-zinc-400 hover:shadow-sm rounded-xl p-5 cursor-pointer flex flex-col gap-4 transition-all"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-black text-white shrink-0">
+                <GraduationCap size={14} />
               </div>
-              <Badge status={item.approval_status} className="rounded-full" />
-           </div>
-           <div className="flex-1 min-w-0">
-              <h3 className="text-2xl font-black text-zinc-900 leading-tight group-hover:text-black transition-all line-clamp-2 uppercase tracking-tighter">{item.title}</h3>
-              <p className="text-[11px] text-zinc-400 font-bold uppercase tracking-[0.2em] mt-6 flex items-center gap-3 bg-zinc-50 px-4 py-2 rounded-full w-fit border border-zinc-100 italic">
-                <Hash size={13} /> MOD-0X{item.id?.toString().slice(-4).toUpperCase()}
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Tutorial</span>
+            </div>
+            <Badge status={item.approval_status} />
+          </div>
+          
+          <div className="space-y-2">
+            <h3 className="text-lg font-black text-black uppercase tracking-tight leading-tight line-clamp-2">{item.title}</h3>
+            {item.description && (
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-tight line-clamp-2 italic">
+                {item.description}
               </p>
-           </div>
-           <div className="pt-8 border-t border-zinc-50 flex items-center justify-between">
-              <div className="text-[10px] font-black text-zinc-300 uppercase tracking-widest translate-x-2 group-hover:translate-x-0 transition-all opacity-0 group-hover:opacity-100 flex items-center gap-2">
-                 Execute Module <ArrowRight size={12} />
-              </div>
-           </div>
-        </article>
+            )}
+          </div>
+
+          <div className="pt-4 border-t border-zinc-100 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em]">
+            <span className="flex items-center gap-2 text-black">
+              <BookOpen size={12} /> View tutorial
+            </span>
+            <span className="flex items-center gap-2 text-zinc-400">
+               <Calendar size={12} /> {new Date(item.created_at).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
       )}
       renderDetail={(item) => (
-        <div className="space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="p-14 bg-zinc-50/50 border border-zinc-100 rounded-[2.5rem] italic text-xl text-zinc-600 leading-relaxed font-medium shadow-inner">
-               "{item.description}"
-            </div>
-            <div className="space-y-10 md-content border-t border-zinc-100 pt-16 text-zinc-900 leading-loose">
-               {renderMarkdown(item.content || "")}
+        <div className="space-y-12 pb-20">
+            {item.description && (
+              <div className="p-8 border border-zinc-200 bg-zinc-50 italic text-sm text-zinc-600 leading-relaxed font-bold uppercase tracking-tight">
+                "{item.description}"
+              </div>
+            )}
+            
+            <div className="prose prose-zinc max-w-none text-black leading-loose">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-8 ml-1">Content</h4>
+              <div className="markdown-monochrome">
+                {renderMarkdown(item.content || "")}
+              </div>
             </div>
         </div>
       )}
       renderEdit={(item, setItem) => (
-        <div className="space-y-16">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-               <FormField label="Identifier Identification" full><FormInput placeholder="Registry Title Identification node..." value={item.title} onChange={e => setItem({...item, title: e.target.value})} className="rounded-2xl" /></FormField>
-               
-               <FormField label="Registry Status Hub" full={isUserAdmin}>
-                  <FormSelect 
-                    value={item.approval_status || "PENDING"} 
-                    onChange={e => setItem({ ...item, approval_status: e.target.value as ApprovalStatus })}
-                    className="rounded-2xl"
-                    options={[
-                      { label: "PENDING MODERATION Cluster", value: "PENDING" },
-                      ...(isUserAdmin ? [{ label: "AUTHORIZE MODULE Cluster", value: "APPROVED" }, { label: "INVALIDATE MODULE Cluster", value: "REJECTED" }] : [])
-                    ]}
-                  />
-               </FormField>
+        <div className="space-y-10">
+          <Input
+            label="Title"
+            placeholder="Enter tutorial title..."
+            value={item.title ?? ""} 
+            onChange={e => setItem({...item, title: e.target.value})} 
+          />
 
-               <FormField label="Operational Context Node" full><FormTextArea className="min-h-[160px] rounded-3xl" placeholder="Brief identify hook for the learning node Registry..." value={item.description} onChange={e => setItem({...item, description: e.target.value})} /></FormField>
-               
-               <FormField label="Full Technical Module Payload (Markdown)" full>
-                  <FormTextArea 
-                    className="min-h-[500px] font-mono text-sm leading-loose border-2 rounded-3xl" 
-                    placeholder="# Initialize technical narrative body..." 
-                    value={item.content} 
-                    onChange={e => setItem({...item, content: e.target.value})} 
-                  />
-               </FormField>
-            </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-tight text-zinc-600">
+              Summary
+            </label>
+            <textarea
+              className="input-monochrome min-h-[100px] py-4"
+              placeholder="What will learners achieve..."
+              value={item.description ?? ""}
+              onChange={e => setItem({...item, description: e.target.value})}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-tight text-zinc-600">
+              Content (Markdown supported)
+            </label>
+            <textarea
+              className="input-monochrome min-h-[400px] py-6 font-mono text-sm"
+              placeholder="# Start writing..."
+              value={item.content ?? ""}
+              onChange={e => setItem({...item, content: e.target.value})}
+            />
+          </div>
         </div>
       )}
     />

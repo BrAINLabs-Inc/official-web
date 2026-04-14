@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import { BookOpen, Calendar, Image as ImageIcon, ExternalLink, ArrowRight } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { api, type Blog, type ApprovalStatus } from "../../lib/api";
+import { api } from "../../api";
+import type { Blog, ApprovalStatus } from "../../types";
 import { ContentPageTemplate } from "../../components/shared/ContentPageTemplate";
-import { FormField, FormInput, FormTextArea, FormSelect } from "../../components/shared/FormElements";
+import { Input } from "../../components/ui/Input";
+import { Badge } from "../../components/ui/Badge";
 import { renderMarkdown } from "../../lib/utils/markdown";
-import { Badge } from "../../components/shared/UIPrimitives";
 
 export default function BlogPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isResearcher } = useAuth();
   const [items, setItems] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
-  const isUserAdmin = isAdmin();
 
   const fetchItems = async () => {
     try {
@@ -30,12 +30,22 @@ export default function BlogPage() {
     title: "",
     content: "",
     description: "",
-    approval_status: "PENDING" as ApprovalStatus,
+    approval_status: "DRAFT" as ApprovalStatus,
   };
 
   const handleSave = async (item: Partial<Blog>) => {
     if (item.id) await api.blogs.update(item.id as number, item);
     else await api.blogs.create(item);
+    await fetchItems();
+  };
+
+  const handleSubmitForReview = async (item: Blog) => {
+    await api.content.submit("blog", item.id);
+    await fetchItems();
+  };
+
+  const handleReview = async (item: Blog, status: 'PENDING_ADMIN' | 'REJECTED') => {
+    await api.content.review("blog", item.id, status);
     await fetchItems();
   };
 
@@ -49,106 +59,103 @@ export default function BlogPage() {
   return (
     <ContentPageTemplate<Blog>
       title="Articles"
-      subtitle={`${items.length} technical insights archived in the professional registry.`}
+      subtitle={`${items.length} article${items.length !== 1 ? "s" : ""}.`}
       icon={BookOpen}
       items={items}
       loading={loading}
-      isAdmin={isUserAdmin}
+      isAdmin={isAdmin()}
+      isResearcher={isResearcher()}
       emptyItem={emptyItem}
       onSave={handleSave}
-      onToggleStatus={isUserAdmin ? handleToggleStatus : undefined}
-      searchFields={(item) => [item.title, item.description]}
+      onSubmitForReview={handleSubmitForReview}
+      onReview={handleReview}
+      onToggleStatus={isAdmin() ? handleToggleStatus : undefined}
+      searchFields={(item) => [item.title, item.description || ""]}
       filterOptions={[
-        { label: "ALL INDEX", value: "ALL" },
-        { label: "PUBLISHED", value: "APPROVED" },
-        { label: "PENDING", value: "PENDING" },
+        { label: "ALL", value: "ALL" },
+        { label: "APPROVED", value: "APPROVED" },
+        { label: "PENDING", value: "PENDING_ADMIN" },
+        { label: "DRAFT", value: "DRAFT" },
       ]}
       renderListItem={(item, onClick) => (
-        <article 
+        <div 
           key={item.id} 
           onClick={onClick}
-          className="group relative bg-white border border-zinc-100 p-10 hover:shadow-2xl hover:shadow-zinc-200/50 transition-all duration-500 cursor-pointer flex flex-col gap-8 rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-700"
+          className="group bg-white border border-zinc-200 hover:border-zinc-400 hover:shadow-sm rounded-xl p-5 cursor-pointer flex flex-col gap-4 transition-all"
         >
-          <div className="flex items-start justify-between">
-             <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-zinc-900 text-white rounded-xl shadow-lg opacity-90">
-                   <ImageIcon size={18} />
-                </div>
-                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-900 border-b-2 border-zinc-900 pb-0.5">
-                   TECHNICAL INSIGHT
-                </span>
-             </div>
-             <Badge status={item.approval_status} className="rounded-full" />
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-black text-white shrink-0">
+                <ImageIcon size={14} />
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                <Calendar size={12} />
+                <span>{new Date(item.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+            <Badge status={item.approval_status} />
           </div>
-          <div className="flex-1 min-w-0">
-             <div className="flex items-center gap-2 mb-6 text-[11px] font-bold text-zinc-400 uppercase tracking-widest leading-none bg-zinc-50 px-3 py-1.5 rounded-full w-fit">
-                <Calendar size={13} /> {new Date(item.created_at).toLocaleDateString()}
-             </div>
-             <h2 className="text-2xl font-black text-zinc-900 leading-tight group-hover:text-black transition-all line-clamp-2 uppercase tracking-tighter">{item.title}</h2>
-             <p className="text-[13px] font-medium text-zinc-500 leading-relaxed line-clamp-2 mt-6">{item.description || "No summary node provided for this index entry."}</p>
+          
+          <div className="space-y-2">
+            <h2 className="text-lg font-black text-black uppercase tracking-tight leading-tight line-clamp-2">{item.title}</h2>
+            <p className="text-xs font-bold text-zinc-500 uppercase tracking-tight line-clamp-2 italic">
+              {item.description || "No metadata provided."}
+            </p>
           </div>
-          <div className="pt-10 border-t border-zinc-50 flex items-center justify-between">
-             <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-zinc-900 opacity-80 group-hover:opacity-100 transition-opacity">
-                Execute Read <ExternalLink size={14} />
-             </div>
-             <div className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em] translate-x-2 group-hover:translate-x-0 transition-opacity opacity-0 group-hover:opacity-100 flex items-center gap-2">
-                Open node <ArrowRight size={12} />
-             </div>
+
+          <div className="pt-4 border-t border-zinc-100 flex items-center justify-between">
+            <span className="text-[10px] font-black text-black uppercase tracking-[0.2em] flex items-center gap-2">
+              <ExternalLink size={12} /> Read article
+            </span>
+            <ArrowRight size={14} className="text-zinc-300 group-hover:text-black group-hover:translate-x-1 transition-all" />
           </div>
-        </article>
+        </div>
       )}
       renderDetail={(item) => (
-        <div className="space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
-           <div className="p-14 bg-zinc-50/50 border border-zinc-100 rounded-[2.5rem] italic text-xl text-zinc-600 leading-relaxed font-medium shadow-inner">
+        <div className="space-y-12 pb-20">
+           {item.description && (
+            <div className="p-8 border border-zinc-200 bg-zinc-50 italic text-sm text-zinc-600 leading-relaxed font-bold uppercase tracking-tight">
               "{item.description}"
-           </div>
-           <div className="space-y-10 md-content border-t border-zinc-100 pt-16 text-zinc-900 leading-loose">
-              {renderMarkdown(item.content || "")}
+            </div>
+          )}
+           <div className="prose prose-zinc max-w-none text-black leading-loose">
+              <div className="markdown-monochrome">
+                {renderMarkdown(item.content || "")}
+              </div>
            </div>
         </div>
       )}
       renderEdit={(item, setItem) => (
-        <div className="space-y-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <FormField label="Internal Label" full>
-              <FormInput 
-                placeholder="Technical Article identification..." 
-                value={item.title || ""} 
-                onChange={e => setItem({ ...item, title: e.target.value })}
-                className="rounded-2xl"
-              />
-            </FormField>
-            
-            <FormField label="Registry Status" full={isUserAdmin}>
-              <FormSelect 
-                value={item.approval_status || "PENDING"} 
-                onChange={e => setItem({ ...item, approval_status: e.target.value as ApprovalStatus })}
-                className="rounded-2xl"
-                options={[
-                  { label: "PENDING REVIEW Hub", value: "PENDING" },
-                  { label: "LOCAL DRAFT Node", value: "DRAFT" },
-                  ...(isUserAdmin ? [{ label: "AUTHORIZE ENTRY Node", value: "APPROVED" }, { label: "INVALIDATE ENTRY Node", value: "REJECTED" }] : [])
-                ]}
-              />
-            </FormField>
+        <div className="space-y-10">
+          <Input
+            label="Title"
+            placeholder="Enter article title..."
+            value={item.title || ""} 
+            onChange={e => setItem({ ...item, title: e.target.value })}
+          />
 
-            <FormField label="Operational Abstract" full>
-               <FormTextArea 
-                 placeholder="Brief hook for the insight registry node..." 
-                 value={item.description || ""}
-                 onChange={e => setItem({ ...item, description: e.target.value })}
-                 className="rounded-3xl min-h-[160px]"
-               />
-            </FormField>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-tight text-zinc-600">
+              Description
+            </label>
+            <textarea
+              placeholder="Brief summary of the article..."
+              value={item.description || ""}
+              onChange={e => setItem({ ...item, description: e.target.value })}
+              className="input-monochrome min-h-[100px] py-4"
+            />
+          </div>
 
-            <FormField label="Full Technical Payload (Markdown)" full>
-              <FormTextArea 
-                className="min-h-[500px] font-mono text-sm leading-loose border-2 rounded-3xl"
-                placeholder="# Initialize technical narrative body..." 
-                value={item.content || ""}
-                onChange={e => setItem({ ...item, content: e.target.value })}
-              />
-            </FormField>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-tight text-zinc-600">
+              Content (Markdown supported)
+            </label>
+            <textarea
+              className="input-monochrome min-h-[400px] py-6 font-mono text-sm"
+              placeholder="# Start writing..."
+              value={item.content || ""}
+              onChange={e => setItem({ ...item, content: e.target.value })}
+            />
           </div>
         </div>
       )}
