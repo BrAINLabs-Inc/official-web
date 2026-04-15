@@ -17,10 +17,11 @@ export default function SelectSupervisor() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiClient.get("/public/researchers")
+    apiClient.get("/me/supervisors")
       .then(r => {
-        setResearchers(r.data);
-        setFilteredResearchers(r.data);
+        const list = Array.isArray(r.data) ? r.data : [];
+        setResearchers(list);
+        setFilteredResearchers(list);
       })
       .catch(() => {});
   }, []);
@@ -163,7 +164,7 @@ export default function SelectSupervisor() {
                           ? "bg-zinc-900 text-white"
                           : "bg-zinc-100 text-zinc-600"
                       }`}>
-                        {r.first_name[0]}{r.second_name[0]}
+                        {r.first_name?.[0] ?? "?"}{r.second_name?.[0] ?? ""}
                       </div>
                       <div className="flex-1">
                         <p className={`text-sm font-semibold ${selectedId === String(r.id) ? "text-zinc-900" : "text-zinc-900"}`}>

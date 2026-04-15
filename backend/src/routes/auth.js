@@ -9,12 +9,11 @@ export const authRouter = Router();
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
 
 const RegisterSchema = z.object({
-  first_name:                z.string().min(1).max(100),
-  second_name:               z.string().min(1).max(100),
-  contact_email:             z.string().email().max(150),
-  password:                  z.string().min(8).max(255),
-  role:                      z.enum(['researcher', 'research_assistant']),
-  assigned_by_researcher_id: z.coerce.number().int().min(1).nullable().optional(),
+  first_name:    z.string().min(1).max(100),
+  second_name:   z.string().min(1).max(100),
+  contact_email: z.string().email().max(150),
+  password:      z.string().min(8).max(255),
+  role:          z.enum(['researcher', 'research_assistant']),
 });
 
 
@@ -75,18 +74,18 @@ authRouter.post('/register', async (req, res) => {
     return res.status(500).json({ error: 'Failed to create member profile.' });
   }
 
-  // 4. Insert role-specific row (skip for RA without supervisor — they'll complete setup post-login)
-  if (role === 'researcher') {
-    const roleData = { member_id: member.id };
-    const { error: roleError } = await supabase.from('researcher').insert(roleData);
-    if (roleError) {
-      console.error('[RegistrationError] Researcher Insert:', roleError);
-      await supabase.auth.admin.deleteUser(authUserId);
-      return res.status(500).json({ error: 'An unexpected error occurred while assigning your role.' });
-    }
+  // 4. Insert role-specific row
+  const roleTable = role === 'researcher' ? 'researcher' : 'research_assistant';
+  const roleData = role === 'research_assistant'
+    ? { member_id: member.id, assigned_by_researcher_id: null, approval_status: 'PENDING_ADMIN' }
+    : { member_id: member.id };
+
+  const { error: roleError } = await supabase.from(roleTable).insert(roleData);
+  if (roleError) {
+    console.error('[RegistrationError] Role Insert:', roleError);
+    await supabase.auth.admin.deleteUser(authUserId);
+    return res.status(500).json({ error: 'An unexpected error occurred while assigning your role.' });
   }
-  // For research_assistant we defer the row insertion until they select a supervisor
-  // via POST /setup/supervisor after first login.
 
   return res.status(201).json({
     message: 'Registration successful. Your account is pending admin approval.',

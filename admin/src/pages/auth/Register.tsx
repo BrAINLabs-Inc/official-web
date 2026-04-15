@@ -31,7 +31,6 @@ export default function Register() {
     contact_email: "",
     password: "",
     role: "researcher",
-    assigned_by_researcher_id: "",
   });
 
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -66,8 +65,11 @@ export default function Register() {
 
     try {
       await apiClient.post("/auth/register", {
-        ...formData,
-        assigned_by_researcher_id: null,
+        first_name: formData.first_name,
+        second_name: formData.second_name,
+        contact_email: formData.contact_email,
+        password: formData.password,
+        role: formData.role,
       });
       setSuccess(true);
     } catch (err: any) {

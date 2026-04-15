@@ -6,7 +6,6 @@ import { RoleGuard } from "./components/auth/RoleGuard";
 import { AppLayout } from "./components/layout/AppLayout";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import SelectSupervisor from "./pages/auth/SelectSupervisor";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Publications from "./pages/content/Publications";
 import Blog from "./pages/content/Blog";
@@ -54,15 +53,6 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route
-            path="/setup/supervisor"
-            element={
-              <ProtectedRoute>
-                <SelectSupervisor />
-              </ProtectedRoute>
-            }
-          />
-
           {/* Protected admin routes */}
           <Route
             path="/"

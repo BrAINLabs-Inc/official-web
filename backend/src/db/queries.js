@@ -41,7 +41,7 @@ export async function getMemberWithRoleByAuthId(authUserId) {
 
   if (error || !data) throw httpError(404, 'Member not found');
 
-  let role = 'pending_setup';
+  let role = 'no_role';
   let roleRow = null;
 
   const adminRow = getJoined(data.admin);
@@ -57,11 +57,6 @@ export async function getMemberWithRoleByAuthId(authUserId) {
   } else if (raRow) {
     role = 'research_assistant';
     roleRow = raRow;
-  }
-
-  if (role === 'pending_setup') {
-    const { admin, researcher, research_assistant, ...member } = data;
-    return { member, role: 'pending_setup', roleRow: null };
   }
 
   const { admin, researcher, research_assistant, ...member } = data;

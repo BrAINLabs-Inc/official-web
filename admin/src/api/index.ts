@@ -80,6 +80,11 @@ export const api = {
     changePassword: (payload: any) => apiClient.post('/me/change-password', payload).then(data),
     updateSupervisor: (assigned_by_researcher_id: number) =>
       apiClient.patch('/me/supervisor', { assigned_by_researcher_id }).then(data),
+    mySupervisor: () => apiClient.get('/me/my-supervisor').then(data),
+    myAssistants: () => apiClient.get<any[]>('/me/my-assistants').then(data),
+    removeAssistant: (raId: number) => apiClient.delete(`/me/my-assistants/${raId}`).then(data),
+    availableAssistants: (q?: string) => apiClient.get<any[]>(`/me/available-assistants${q ? `?q=${encodeURIComponent(q)}` : ''}`).then(data),
+    assignAssistant: (ra_member_id: number) => apiClient.post('/me/my-assistants', { ra_member_id }).then(data),
   },
   admin: {
     getMembers: () => apiClient.get<BaseMember[]>('/admin/members').then(data),
