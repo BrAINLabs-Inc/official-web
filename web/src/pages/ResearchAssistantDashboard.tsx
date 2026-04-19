@@ -3,12 +3,14 @@ import { motion } from 'framer-motion';
 import { SEO } from '@/components/shared/SEO';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Calendar, CheckCircle2, ClipboardList, Clock, Library, AlertCircle, FileText, Sparkles, GraduationCap } from 'lucide-react';
+import { BookOpen, CheckCircle2, ClipboardList, Clock, Library, AlertCircle, FileText, Sparkles, GraduationCap } from 'lucide-react';
 import { NeuralBrainIcon } from '@/components/ui/PageIcons';
 import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const ResearchAssistantDashboard: React.FC = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const isPending = user?.approval_status === 'PENDING';
 
     return (
@@ -54,24 +56,34 @@ export const ResearchAssistantDashboard: React.FC = () => {
                 >
                     {!isPending && (
                         <>
-                            <Button variant="outline" size="sm" className="gap-2 border-primary/20 hover:bg-primary/5 text-primary">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-2 border-primary/20 hover:bg-primary/5 text-primary"
+                                onClick={() => navigate('/dashboard/articles/new')}
+                            >
                                 <FileText size={16} />
-                                Post Blog
+                                Articles
                             </Button>
-                            <Button variant="outline" size="sm" className="gap-2 border-primary/20 hover:bg-primary/5 text-primary">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-2 border-primary/20 hover:bg-primary/5 text-primary"
+                                onClick={() => navigate('/dashboard/tutorials/new')}
+                            >
                                 <GraduationCap size={16} />
-                                New Tutorial
+                                Tutorials
                             </Button>
-                            <Button size="sm" className="bg-primary hover:bg-primary/90 gap-2 shadow-lg shadow-primary/20">
+                            <Button 
+                                size="sm" 
+                                className="bg-primary hover:bg-primary/90 gap-2 shadow-lg shadow-primary/20"
+                                onClick={() => navigate('/dashboard/projects/new')}
+                            >
                                 <Sparkles size={16} />
                                 New Project
                             </Button>
                         </>
                     )}
-                    <Button variant="outline" size="sm" className="gap-2 border-border/60">
-                        <Calendar size={16} />
-                        Schedule
-                    </Button>
                 </motion.div>
             </div>
 

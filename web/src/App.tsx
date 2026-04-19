@@ -15,6 +15,11 @@ import { SignUp } from './pages/SignUp';
 import { ResearcherDashboard } from './pages/ResearcherDashboard';
 import { ResearchAssistantDashboard } from './pages/ResearchAssistantDashboard';
 import { AdminDashboard } from '@/pages/AdminDashboard';
+import { CreateEvent } from './pages/CreateEvent';
+import { NewGrant } from './pages/NewGrant';
+import { NewProject } from './pages/NewProject';
+import { CreateTutorial } from './pages/CreateTutorial';
+import { CreateArticle } from './pages/CreateArticle';
 
 import { AuthProvider } from './context/AuthContext';
 
@@ -39,6 +44,13 @@ function App() {
             <Route path="dashboard/researcher" element={<ResearcherDashboard />} />
             <Route path="dashboard/assistant" element={<ResearchAssistantDashboard />} />
             <Route path="dashboard/admin" element={<AdminDashboard />} />
+            
+            {/* Dashboard Action Routes */}
+            <Route path="dashboard/events/new" element={<CreateEvent />} />
+            <Route path="dashboard/grants/new" element={<NewGrant />} />
+            <Route path="dashboard/projects/new" element={<NewProject />} />
+            <Route path="dashboard/tutorials/new" element={<CreateTutorial />} />
+            <Route path="dashboard/articles/new" element={<CreateArticle />} />
           </Route>
         </Routes>
       </BrowserRouter>
