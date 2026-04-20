@@ -152,10 +152,18 @@
 - [x] **backend**: `/public/tutorials` list missing `title` field — added to select query
 - [x] **admin**: `api/index.ts` defaulted to `http://localhost:5173` (Vite's own port) → fixed to `3001`
 - [x] **web**: `lib/api.ts` wrong default port `3000` → now points to backend correctly via proxy
+- [x] **backend/web**: Fixed DB schema mismatch `event_date`/`time` → `event_datetime` across endpoints and UI components
+- [x] **admin**: Fixed invalid `cv={profile}` prop in `Account.tsx` causing TypeScript errors
+
+### Seeding & DB Initialization
+- [x] Generated `backend/data_seed/execute-team-seed.js` to create Supabase Auth users for all Team members
+- [x] Mapped team members automatically to `member` and `researcher` profiles based on roles
+- [x] Seeded relational schema data (`educational_background` and `ongoing_research`) for all researchers
+- [x] Directly seeded all legacy static content (Blogs, Events, Grants, Projects, Publications) via `backend/data_seed/execute-seed.js`
 
 ### TODO
 - [ ] `web/` SEO: add sitemap.xml, robots.txt
-- [ ] `web/Home.tsx` — replace hardcoded stats with live counts from API
+- [x] `web/Home.tsx` — replace hardcoded stats with live counts from API
 - [ ] End-to-end smoke test: RA draft → researcher approval → admin approval → visible on web
 
 ---
