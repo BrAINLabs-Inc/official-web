@@ -65,7 +65,10 @@ export interface PublicEvent {
   premises: string | null;
   host: string | null;
   created_at: string;
-  researcher: { member_id: number; member: { first_name: string; second_name: string; slug: string } } | null;
+  researcher: {
+    member_id: number;
+    member: { first_name: string; second_name: string; slug: string };
+  } | null;
   event_image: { image_url: string }[];
 }
 
@@ -74,7 +77,11 @@ export interface PublicPublication {
   title: string;
   created_at: string;
   member: PublicMember | null;
-  conference_paper: { paper_id: string | null; link: string | null; description: string | null } | null;
+  conference_paper: {
+    paper_id: string | null;
+    link: string | null;
+    description: string | null;
+  } | null;
   book: { isbn: string | null; link: string | null; description: string | null } | null;
   journal: { issn: string | null; link: string | null; description: string | null } | null;
   article: { doi: string | null; link: string | null; description: string | null } | null;

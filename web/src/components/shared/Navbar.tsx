@@ -33,7 +33,7 @@ export const Navbar: React.FC = () => {
   return (
     <>
       {/* ── Floating Pill Nav ─────────────────────────────────────── */}
-      <div className="fixed left-0 right-0 top-0 z-50 flex justify-center px-4 pt-4 pointer-events-none">
+      <div className="pointer-events-none fixed left-0 right-0 top-0 z-50 flex justify-center px-4 pt-4">
         <motion.nav
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -44,43 +44,48 @@ export const Navbar: React.FC = () => {
           style={{ borderRadius: '1.25rem' }}
         >
           <div className="flex h-[60px] items-center justify-between px-4 md:px-6">
-
             {/* ── Logo ─────────────────────────────────────────────── */}
-            <Link to="/" className="flex items-center gap-2.5 group shrink-0" aria-label="BrAIN Labs Home">
+            <Link
+              to="/"
+              className="group flex shrink-0 items-center gap-2.5"
+              aria-label="BrAIN Labs Home"
+            >
               <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
                 <img
                   src="/icon.png"
                   alt="BrAIN Labs icon"
-                  className="h-8 w-8 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                  className="h-8 w-8 object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-110"
                 />
               </div>
-              <div className="hidden sm:flex flex-col leading-none">
-                <span className="text-[13px] font-bold tracking-tight text-foreground">BrAIN Labs</span>
-                <span className="text-[9px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70">
+              <div className="hidden flex-col leading-none sm:flex">
+                <span className="text-[13px] font-bold tracking-tight text-foreground">
+                  BrAIN Labs
+                </span>
+                <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
                   AI &amp; Neuroinformatics
                 </span>
               </div>
             </Link>
 
             {/* ── Desktop Links ─────────────────────────────────────── */}
-            <div className="hidden md:flex items-center gap-0.5">
+            <div className="hidden items-center gap-0.5 md:flex">
               {navLinks.map((link) => {
                 const active = isActive(link.path);
                 return (
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`relative px-3 py-1.5 text-[13px] font-medium rounded-xl transition-all duration-200 ${
+                    className={`relative rounded-xl px-3 py-1.5 text-[13px] font-medium transition-all duration-200 ${
                       active
-                        ? 'text-foreground nav-pill-active'
-                        : 'text-foreground/60 hover:text-foreground hover:bg-white/10'
+                        ? 'nav-pill-active text-foreground'
+                        : 'text-foreground/60 hover:bg-white/10 hover:text-foreground'
                     }`}
                   >
                     {link.label}
                     {active && (
                       <motion.span
                         layoutId="nav-dot"
-                        className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-[3px] w-[3px] rounded-full bg-foreground"
+                        className="absolute bottom-0.5 left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-foreground"
                       />
                     )}
                   </Link>
@@ -92,7 +97,7 @@ export const Navbar: React.FC = () => {
             <button
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
-              className="md:hidden flex h-8 w-8 items-center justify-center rounded-xl glass-btn text-foreground/80 transition-all"
+              className="glass-btn flex h-8 w-8 items-center justify-center rounded-xl text-foreground/80 transition-all md:hidden"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
@@ -103,7 +108,11 @@ export const Navbar: React.FC = () => {
                   transition={{ duration: 0.18, ease: 'easeOut' }}
                   className="flex"
                 >
-                  {isOpen ? <X size={17} strokeWidth={2.5} /> : <Menu size={17} strokeWidth={2.5} />}
+                  {isOpen ? (
+                    <X size={17} strokeWidth={2.5} />
+                  ) : (
+                    <Menu size={17} strokeWidth={2.5} />
+                  )}
                 </motion.span>
               </AnimatePresence>
             </button>
@@ -119,7 +128,7 @@ export const Navbar: React.FC = () => {
                 transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
                 className="overflow-hidden md:hidden"
               >
-                <div className="border-t border-white/10 px-4 py-3 flex flex-col gap-1">
+                <div className="flex flex-col gap-1 border-t border-white/10 px-4 py-3">
                   {navLinks.map((link, i) => (
                     <motion.div
                       key={link.path}
@@ -136,7 +145,7 @@ export const Navbar: React.FC = () => {
                         }`}
                       >
                         {isActive(link.path) && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-foreground shrink-0" />
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
                         )}
                         {link.label}
                       </Link>
