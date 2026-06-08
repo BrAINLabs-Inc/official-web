@@ -88,7 +88,7 @@ export const Blog = () => {
 
                     {error && (
                         <div className="text-center py-20">
-                            <p className="text-destructive text-sm">{error}</p>
+                            <p className="text-destructive text-sm">Unable to load articles. Please try again later.</p>
                         </div>
                     )}
 

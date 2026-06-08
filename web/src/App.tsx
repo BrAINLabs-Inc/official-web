@@ -10,6 +10,7 @@ import { Contact } from './pages/Contact';
 import { Blog } from './pages/Blog';
 import { BlogPost } from './pages/BlogPost';
 import { TeamMemberProfile } from './pages/TeamMemberProfile';
+import { Careers } from './pages/Careers';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="contact" element={<Contact />} />
           <Route path="blog" element={<Blog />} />
           <Route path="blog/:id" element={<BlogPost />} />
+          <Route path="careers" element={<Careers />} />
         </Route>
       </Routes>
     </BrowserRouter>

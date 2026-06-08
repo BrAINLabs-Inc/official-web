@@ -66,11 +66,13 @@ export const Footer: React.FC = () => {
                         <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground/70 mb-4">Quick Links</h3>
                         <div className="flex flex-col gap-2.5">
                             <Link to="/" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-0.5 transition-all duration-200">Home</Link>
+                            <Link to="/about" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-0.5 transition-all duration-200">About</Link>
                             <Link to="/projects" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-0.5 transition-all duration-200">Projects</Link>
                             <Link to="/team" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-0.5 transition-all duration-200">Team</Link>
                             <Link to="/publications" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-0.5 transition-all duration-200">Publications</Link>
                             <Link to="/events" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-0.5 transition-all duration-200">Events</Link>
                             <Link to="/blog" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-0.5 transition-all duration-200">Blog</Link>
+                            <Link to="/careers" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-0.5 transition-all duration-200">Careers</Link>
                         </div>
                     </div>
 
@@ -78,7 +80,6 @@ export const Footer: React.FC = () => {
                     <div>
                         <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground/70 mb-4">More</h3>
                         <div className="flex flex-col gap-2.5">
-                            <Link to="/about" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-0.5 transition-all duration-200">About Us</Link>
                             <Link to="/contact" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-0.5 transition-all duration-200">Contact</Link>
                         </div>
                     </div>

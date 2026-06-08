@@ -100,17 +100,20 @@ export const BrainNetwork = () => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        const handleResize = () => {
-            const parent = canvas.parentElement;
-            if (parent) {
-                canvas.width = parent.clientWidth * (window.devicePixelRatio || 1);
-                canvas.height = parent.clientHeight * (window.devicePixelRatio || 1);
-                ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect;
+                if (width === 0 || height === 0) continue;
+                
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.resetTransform();
+                ctx.scale(dpr, dpr);
             }
-        };
+        });
 
-        window.addEventListener('resize', handleResize);
-        handleResize();
+        resizeObserver.observe(canvas);
 
         const render = () => {
             // Use canvas.width/height to clear full buffer correctly
@@ -213,13 +216,22 @@ export const BrainNetwork = () => {
                 const y = p1.y + (p2.y - p1.y) * pulse.progress;
 
                 ctx.globalAlpha = 1;
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = PULSE_COLOR;
                 ctx.fillStyle = PULSE_COLOR;
                 ctx.beginPath();
-                ctx.arc(x, y, 2, 0, Math.PI * 2);
+                ctx.arc(x, y, 2.5, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.shadowBlur = 0;
+
+                // Glow ring 1
+                ctx.fillStyle = 'rgba(190, 190, 190, 0.4)';
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Glow ring 2
+                ctx.fillStyle = 'rgba(190, 190, 190, 0.15)';
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                ctx.fill();
             }
             ctx.globalAlpha = 1;
 
@@ -229,7 +241,7 @@ export const BrainNetwork = () => {
         render();
 
         return () => {
-            window.removeEventListener('resize', handleResize);
+            resizeObserver.disconnect();
             if (animationRef.current) cancelAnimationFrame(animationRef.current);
         };
     }, []);

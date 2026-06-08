@@ -1,86 +1,156 @@
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { BrainLabsHorizontalLogo } from '@/components/ui/BrainLabsLogo';
-import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const navLinks = [
+  { label: 'Home', path: '/' },
+  { label: 'About', path: '/about' },
+  { label: 'Projects', path: '/projects' },
+  { label: 'Team', path: '/team' },
+  { label: 'Publications', path: '/publications' },
+  { label: 'Events', path: '/events' },
+  { label: 'Blog', path: '/blog' },
+  { label: 'Careers', path: '/careers' },
+  { label: 'Contact', path: '/contact' },
+];
 
 export const Navbar: React.FC = () => {
-    const [isOpen, setIsOpen] = React.useState(false);
-    const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
 
-    const navLinks = [
-        { label: 'Home', path: '/' },
-        { label: 'Projects', path: '/projects' },
-        { label: 'Team', path: '/team' },
-        { label: 'Publications', path: '/publications' },
-        { label: 'Events', path: '/events' },
-        { label: 'Blog', path: '/blog' },
-        { label: 'About', path: '/about' },
-        { label: 'Contact', path: '/contact' },
-    ];
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-    const isActive = (path: string) => location.pathname === path;
+  useEffect(() => setIsOpen(false), [location.pathname]);
 
-    return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 transition-all duration-300">
-            <div className="container mx-auto px-4">
-                <div className="flex items-center justify-between h-20">
-                    {/* Logo */}
-                    <Link to="/" className="flex items-center gap-1 group" onClick={() => setIsOpen(false)}>
-                        <BrainLabsHorizontalLogo width={220} height={55} className="group-hover:opacity-80 transition-opacity" />
-                    </Link>
+  const isActive = (path: string) => location.pathname === path;
 
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center gap-6">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.path}
-                                to={link.path}
-                                className={`text-sm font-medium transition-all relative group ${
-                                    isActive(link.path)
-                                        ? 'text-primary'
-                                        : 'text-foreground/70 hover:text-primary'
-                                }`}
-                            >
-                                {link.label}
-                                {isActive(link.path) && (
-                                    <span className="absolute -bottom-[20px] left-0 right-0 h-0.5 bg-primary" />
-                                )}
-                                <span className="absolute -bottom-[20px] left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform" />
-                            </Link>
-                        ))}
-                    </div>
+  return (
+    <>
+      {/* ── Floating Pill Nav ─────────────────────────────────────── */}
+      <div className="fixed left-0 right-0 top-0 z-50 flex justify-center px-4 pt-4 pointer-events-none">
+        <motion.nav
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className={`pointer-events-auto w-full max-w-5xl transition-all duration-500 ${
+            scrolled ? 'liquid-glass-scrolled' : 'liquid-glass'
+          }`}
+          style={{ borderRadius: '1.25rem' }}
+        >
+          <div className="flex h-[60px] items-center justify-between px-4 md:px-6">
 
-                    {/* Mobile Menu Button */}
-                    <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="md:hidden p-2 text-foreground hover:text-primary transition-colors"
-                    >
-                        {isOpen ? <X size={24} /> : <Menu size={24} />}
-                    </button>
-                </div>
+            {/* ── Logo ─────────────────────────────────────────────── */}
+            <Link to="/" className="flex items-center gap-2.5 group shrink-0" aria-label="BrAIN Labs Home">
+              <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
+                <img
+                  src="/icon.png"
+                  alt="BrAIN Labs icon"
+                  className="h-8 w-8 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                />
+              </div>
+              <div className="hidden sm:flex flex-col leading-none">
+                <span className="text-[13px] font-bold tracking-tight text-foreground">BrAIN Labs</span>
+                <span className="text-[9px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70">
+                  AI &amp; Neuroinformatics
+                </span>
+              </div>
+            </Link>
 
-                {/* Mobile Navigation */}
-                {isOpen && (
-                    <div className="md:hidden py-6 bg-background border-t border-border/50 animate-in fade-in slide-in-from-top-4 duration-300">
-                        <div className="flex flex-col gap-4">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.path}
-                                    to={link.path}
-                                    onClick={() => setIsOpen(false)}
-                                    className={`text-lg font-medium px-4 py-2 rounded-lg transition-colors ${
-                                        isActive(link.path)
-                                            ? 'bg-primary/5 text-primary'
-                                            : 'text-foreground/70 hover:bg-secondary'
-                                    }`}
-                                >
-                                    {link.label}
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
-                )}
+            {/* ── Desktop Links ─────────────────────────────────────── */}
+            <div className="hidden md:flex items-center gap-0.5">
+              {navLinks.map((link) => {
+                const active = isActive(link.path);
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`relative px-3 py-1.5 text-[13px] font-medium rounded-xl transition-all duration-200 ${
+                      active
+                        ? 'text-foreground nav-pill-active'
+                        : 'text-foreground/60 hover:text-foreground hover:bg-white/10'
+                    }`}
+                  >
+                    {link.label}
+                    {active && (
+                      <motion.span
+                        layoutId="nav-dot"
+                        className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-[3px] w-[3px] rounded-full bg-foreground"
+                      />
+                    )}
+                  </Link>
+                );
+              })}
             </div>
-        </nav>
-    );
+
+            {/* ── Mobile Toggle ─────────────────────────────────────── */}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? 'Close menu' : 'Open menu'}
+              className="md:hidden flex h-8 w-8 items-center justify-center rounded-xl glass-btn text-foreground/80 transition-all"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={isOpen ? 'x' : 'menu'}
+                  initial={{ rotate: -90, opacity: 0, scale: 0.6 }}
+                  animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                  exit={{ rotate: 90, opacity: 0, scale: 0.6 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className="flex"
+                >
+                  {isOpen ? <X size={17} strokeWidth={2.5} /> : <Menu size={17} strokeWidth={2.5} />}
+                </motion.span>
+              </AnimatePresence>
+            </button>
+          </div>
+
+          {/* ── Mobile Drawer ─────────────────────────────────────── */}
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                className="overflow-hidden md:hidden"
+              >
+                <div className="border-t border-white/10 px-4 py-3 flex flex-col gap-1">
+                  {navLinks.map((link, i) => (
+                    <motion.div
+                      key={link.path}
+                      initial={{ x: -10, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: i * 0.035, duration: 0.22 }}
+                    >
+                      <Link
+                        to={link.path}
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all ${
+                          isActive(link.path)
+                            ? 'bg-white/15 text-foreground'
+                            : 'text-foreground/65 hover:bg-white/10 hover:text-foreground'
+                        }`}
+                      >
+                        {isActive(link.path) && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-foreground shrink-0" />
+                        )}
+                        {link.label}
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.nav>
+      </div>
+
+      {/* Spacer so page content starts below the floating nav */}
+      <div className="h-[76px]" />
+    </>
+  );
 };

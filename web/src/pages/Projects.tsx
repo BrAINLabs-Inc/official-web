@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ResearchLabIcon } from '@/components/ui/PageIcons';
-import { Layers, Loader2, ImageOff } from 'lucide-react';
+import { Layers, Loader2 } from 'lucide-react';
 import { SEO } from '@/components/shared/SEO';
 import { api, type PublicProject } from '@/lib/api';
 
@@ -81,7 +81,7 @@ export const Projects = () => {
 
                     {error && (
                         <div className="text-center py-20">
-                            <p className="text-destructive text-sm">{error}</p>
+                            <p className="text-destructive text-sm">Unable to load projects. Please try again later.</p>
                         </div>
                     )}
 

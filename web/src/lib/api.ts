@@ -1,20 +1,18 @@
 // web/src/lib/api.ts
-// Public-only API client — no auth, no tokens.
-// All requests go to /public/* which is proxied to the backend in dev
-// and to VITE_API_URL in production.
+// Public-only read-only API client pointing to production API.
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.brainlabsinc.org/api/v1';
 
 async function request<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${API_URL}${endpoint}`);
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error((err as any).error || response.statusText);
+    throw new Error((err as any).error || response.statusText || 'API Request failed');
   }
   return response.json() as Promise<T>;
 }
 
-// ── Type shapes returned by the backend /public/* routes ─────────────────────
+// ── Type definitions ─────────────────────────────────────────────────────────
 
 export interface PublicMember {
   id: number;
@@ -98,34 +96,33 @@ export interface PublicStats {
   publications: number;
 }
 
-
 // ── API surface ───────────────────────────────────────────────────────────────
 
 export const api = {
   researchers: {
-    list: () => request<PublicResearcher[]>('/public/researchers'),
-    get: (slug: string) => request<PublicResearcher>(`/public/researchers/${slug}`),
+    list: () => request<PublicResearcher[]>('/researchers'),
+    get: (slug: string) => request<PublicResearcher>(`/researchers/${slug}`),
   },
   blogs: {
-    list: () => request<PublicBlog[]>('/public/blogs'),
-    get: (id: string | number) => request<PublicBlog>(`/public/blogs/${id}`),
+    list: () => request<PublicBlog[]>('/blogs'),
+    get: (id: string | number) => request<PublicBlog>(`/blogs/${id}`),
   },
   projects: {
-    list: () => request<PublicProject[]>('/public/projects'),
-    get: (id: string | number) => request<PublicProject>(`/public/projects/${id}`),
+    list: () => request<PublicProject[]>('/projects'),
+    get: (id: string | number) => request<PublicProject>(`/projects/${id}`),
   },
   events: {
-    list: () => request<PublicEvent[]>('/public/events'),
-    get: (id: string | number) => request<PublicEvent>(`/public/events/${id}`),
+    list: () => request<PublicEvent[]>('/events'),
+    get: (id: string | number) => request<PublicEvent>(`/events/${id}`),
   },
   publications: {
-    list: () => request<PublicPublication[]>('/public/publications'),
-    get: (id: string | number) => request<PublicPublication>(`/public/publications/${id}`),
+    list: () => request<PublicPublication[]>('/publications'),
+    get: (id: string | number) => request<PublicPublication>(`/publications/${id}`),
   },
   grants: {
-    list: () => request<PublicGrant[]>('/public/grants'),
+    list: () => request<PublicGrant[]>('/grants'),
   },
   stats: {
-    get: () => request<PublicStats>('/public/stats'),
+    get: () => request<PublicStats>('/stats'),
   },
 };

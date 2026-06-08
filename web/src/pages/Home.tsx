@@ -3,7 +3,6 @@ import { motion, type Variants } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { intro } from '@/data/general';
 import { ArrowRight, Brain, Sparkles, Award, BookOpen, Users, Loader2 } from 'lucide-react';
-import { NeuralBrainIcon } from '@/components/ui/PageIcons';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BrainNetwork } from '@/components/ui/BrainNetwork';
@@ -24,13 +23,17 @@ export const Home = () => {
     const [stats, setStats] = useState<PublicStats | null>(null);
     const [grants, setGrants] = useState<PublicGrant[]>([]);
     const [loadingGrants, setLoadingGrants] = useState(true);
+    const [statsError, setStatsError] = useState<string | null>(null);
+    const [grantsError, setGrantsError] = useState<string | null>(null);
 
     useEffect(() => {
-        api.stats.get().then(setStats).catch(console.error);
+        api.stats.get()
+            .then(setStats)
+            .catch((e) => setStatsError(e.message));
         
         api.grants.list()
             .then(setGrants)
-            .catch(console.error)
+            .catch((e) => setGrantsError(e.message))
             .finally(() => setLoadingGrants(false));
     }, []);
 
@@ -41,10 +44,41 @@ export const Home = () => {
             {/* ── Hero ─────────────────────────────────────────────── */}
             <section className="relative min-h-[calc(100vh-5rem)] flex items-center justify-center overflow-hidden py-10 md:py-0">
                 {/* layered background */}
-                <div className="absolute inset-0 bg-background" />
-                <div className="absolute top-1/4 right-10 w-[36rem] h-[36rem] bg-primary/6 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute bottom-1/4 left-10 w-[44rem] h-[44rem] bg-foreground/3 rounded-full blur-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/[0.03]" />
+                
+                {/* Animated gradient orbs */}
+                <motion.div 
+                    animate={{ 
+                        x: [0, 30, -20, 0],
+                        y: [0, -20, 30, 0],
+                        scale: [1, 1.1, 0.95, 1]
+                    }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-1/4 right-10 w-[36rem] h-[36rem] bg-primary/8 rounded-full blur-[100px] opacity-60"
+                />
+                <motion.div 
+                    animate={{ 
+                        x: [0, -25, 15, 0],
+                        y: [0, 25, -15, 0],
+                        scale: [1, 0.9, 1.05, 1]
+                    }}
+                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                    className="absolute bottom-1/4 left-10 w-[44rem] h-[44rem] bg-foreground/4 rounded-full blur-[120px] opacity-40"
+                />
+                <motion.div 
+                    animate={{ 
+                        x: [0, 15, -30, 0],
+                        y: [0, -15, 20, 0],
+                        scale: [1, 1.05, 0.95, 1]
+                    }}
+                    transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-primary/5 rounded-full blur-[80px] opacity-50"
+                />
+                
+                {/* Subtle grid pattern overlay */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[length:32px_32px] opacity-40" />
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
 
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -56,11 +90,6 @@ export const Home = () => {
                             animate="visible"
                             className="space-y-8"
                         >
-                            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 border border-border bg-card/80 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-sm">
-                                <NeuralBrainIcon size={14} className="text-primary" />
-                                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">AI Research Laboratory</span>
-                            </motion.div>
-
                             <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight leading-tight overflow-visible">
                                 <span className="block text-foreground">Brain-Inspired</span>
                                 <span className="block text-muted-foreground">Intelligence.</span>
@@ -86,7 +115,9 @@ export const Home = () => {
 
                             {/* Quick stats row */}
                             <motion.div variants={itemVariants} className="flex flex-wrap gap-6 pt-4 border-t border-border/40 min-h-[60px]">
-                                {stats ? [
+                                {statsError ? (
+                                    <div className="text-destructive text-sm">Unable to load stats.</div>
+                                ) : stats ? [
                                     { value: stats.researchers, label: 'Researchers' },
                                     { value: stats.projects, label: 'Active Projects' },
                                     { value: stats.publications, label: 'Publications' },
@@ -112,8 +143,9 @@ export const Home = () => {
                             className="relative hidden lg:flex justify-center items-center h-full w-full"
                         >
                             <div className="relative w-full h-[520px] max-w-lg flex items-center justify-center">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-primary/8 to-transparent rounded-full blur-3xl" />
-                                <div className="absolute inset-8 border border-border/20 rounded-full" />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent rounded-full blur-3xl" />
+                                <div className="absolute inset-8 border border-border/30 rounded-full" />
+                                <div className="absolute inset-16 border border-border/20 rounded-full" />
                                 <div className="relative z-10 w-full h-full">
                                     <BrainNetwork />
                                 </div>
@@ -202,6 +234,10 @@ export const Home = () => {
                     {loadingGrants ? (
                         <div className="flex justify-center py-10">
                             <Loader2 size={24} className="animate-spin text-primary" />
+                        </div>
+                    ) : grantsError ? (
+                        <div className="text-center py-10">
+                            <p className="text-destructive text-sm">Unable to load grants at this time.</p>
                         </div>
                     ) : grants.length === 0 ? (
                         <div className="text-center py-10 text-muted-foreground">

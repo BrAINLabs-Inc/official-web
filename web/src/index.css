@@ -170,3 +170,164 @@
 .animate-fade-in {
   animation: fade-in 0.4s ease-out;
 }
+
+/* Fade in + scale for modals / success states */
+@keyframes fade-in-scale {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.35s ease-out;
+}
+
+/* Thin, styled scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
+
+/* Smooth focus ring */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Liquid Glass Navbar ───────────────────────────────────────────── */
+/* Base glass — used when at top of page */
+.liquid-glass {
+  position: relative;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(255, 255, 255, 0.55) 30%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.55) 70%,
+    rgba(255, 255, 255, 0.92) 100%
+  );
+  backdrop-filter: blur(24px) saturate(200%) brightness(105%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%) brightness(105%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-top-color: rgba(255, 255, 255, 0.9);
+  border-left-color: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 8px 32px -8px rgba(0, 0, 0, 0.1),
+    0 2px 12px -4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 45%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.35) 55%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0.4;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Denser glass after scrolling */
+.liquid-glass-scrolled {
+  position: relative;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.78) 30%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0.78) 70%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+  backdrop-filter: blur(32px) saturate(220%) brightness(108%);
+  -webkit-backdrop-filter: blur(32px) saturate(220%) brightness(108%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  border-left-color: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 12px 40px -12px rgba(0, 0, 0, 0.14),
+    0 4px 20px -6px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.4);
+  overflow: hidden;
+}
+.liquid-glass-scrolled::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 45%,
+    rgba(255, 255, 255, 0.85) 50%,
+    rgba(255, 255, 255, 0.4) 55%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0.3;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Active nav pill */
+.nav-pill-active {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 0.75rem;
+}
+
+/* Glass button (mobile toggle) */
+.glass-btn {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* Dark-mode glass overrides */
+.dark .liquid-glass,
+.dark .liquid-glass-scrolled {
+  background: rgba(12, 14, 20, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 8px 32px -8px rgba(0, 0, 0, 0.6),
+    0 2px 12px -4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.02);
+}
+.dark .liquid-glass::before,
+.dark .liquid-glass-scrolled::before {
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.06) 55%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0.25;
+}
+.dark .liquid-glass-scrolled {
+  background: rgba(8, 10, 16, 0.82);
+  box-shadow:
+    0 12px 40px -12px rgba(0, 0, 0, 0.8),
+    0 4px 20px -6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.02);
+}
+.dark .nav-pill-active {
+  background: rgba(255, 255, 255, 0.12);
+}
+.dark .glass-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+}

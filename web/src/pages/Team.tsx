@@ -177,7 +177,7 @@ export const Team = () => {
 
                     {error && (
                         <div className="text-center py-20">
-                            <p className="text-destructive text-sm">{error}</p>
+                            <p className="text-destructive text-sm">Unable to load team members. Please try again later.</p>
                         </div>
                     )}
 

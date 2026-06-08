@@ -49,11 +49,15 @@ export const TeamMemberProfile = () => {
 
     if (!isLoading && notFound) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center space-y-4">
+            <div className="min-h-screen flex items-center justify-center px-4">
+                <div className="text-center space-y-6 max-w-md">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted/50 mb-2">
+                        <span className="text-4xl">👤</span>
+                    </div>
                     <h2 className="text-2xl font-bold">Researcher not found</h2>
+                    <p className="text-muted-foreground">The profile you're looking for doesn't exist or has been removed.</p>
                     <Link to="/team">
-                        <Button variant="outline">Back to Team</Button>
+                        <Button variant="outline" className="rounded-full px-6">Back to Team</Button>
                     </Link>
                 </div>
             </div>

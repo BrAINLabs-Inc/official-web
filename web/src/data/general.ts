@@ -59,3 +59,45 @@ export const contact = {
     linkedin: "#",
     email: "mailto:mahima.w@sliit.lk"
 };
+
+export const careersBenefits = [
+    {
+        iconName: "Lightbulb",
+        title: "Cutting-Edge Research",
+        description: "Work on breakthrough projects in LLMs, neuromorphic computing, and brain-inspired AI with real-world impact.",
+    },
+    {
+        iconName: "Users",
+        title: "Collaborative Environment",
+        description: "Join a multidisciplinary team of researchers, engineers, and scientists pushing the boundaries of intelligence.",
+    },
+    {
+        iconName: "GraduationCap",
+        title: "Growth & Mentorship",
+        description: "Receive guidance from leading experts and access to conferences, workshops, and continuous learning.",
+    },
+    {
+        iconName: "Globe",
+        title: "Global Impact",
+        description: "Contribute to research that shapes the future of AI and neuroscience with international collaborations.",
+    },
+];
+
+export const careersFaqs = [
+    {
+        q: "Do you offer internships?",
+        a: "Yes, we regularly accept interns for 3–6 month research projects. Check this page for current openings or send us your CV and research interests.",
+    },
+    {
+        q: "What qualifications are required?",
+        a: "We look for candidates with strong backgrounds in computer science, neuroscience, mathematics, or related fields. Research experience and publications are a plus.",
+    },
+    {
+        q: "Are remote positions available?",
+        a: "Yes, we offer flexible remote and hybrid arrangements for qualified candidates worldwide.",
+    },
+    {
+        q: "How do I apply?",
+        a: "Send your CV and a brief cover letter or research statement to mahima.w@sliit.lk with the position title in the subject line.",
+    },
+];

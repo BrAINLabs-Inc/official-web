@@ -1,97 +1,103 @@
-# BrAIN Labs Inc. Official Platform
+# BrAIN Labs Inc. — Official Website
 
-## 🧠 Brain-Inspired AI and Neuroinformatics Lab
-
-Welcome to the **BrAIN Labs Inc.** official ecosystem. This repository contains the source code for our research platform, including the administrative console and the core research API.
+Welcome to the official public website repository for **BrAIN Labs Inc.** This project powers our public web presence, showcasing our research team, publications, projects, events, blogs, and other initiatives.
 
 ---
 
-## 🚀 System Overview
+## Tech Stack
 
-The platform is designed to facilitate research collaboration, content moderation, and public visibility for our lab's initiatives in **Large Language Models (LLM)** and **Neuromorphic Computing**.
-
-### 🛠️ Technology Stack
-
-- **Frontend**: React 18, Vite, Tailwind CSS, Lucide Icons.
-- **Backend**: Node.js, Express.js (Restful API).
-- **Database**: PostgreSQL (Managed by Supabase).
-- **Auth**: Supabase Auth + Custom JWT Authorization.
+- **Framework**: [React 19](https://react.dev/)
+- **Build Tool**: [Vite](https://vite.dev/)
+- **Routing**: [React Router v7](https://reactrouter.com/)
+- **Styling**: [Tailwind CSS v3](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Metadata**: [React Helmet Async](https://github.com/staylor/react-helmet-async)
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
-BrAINLabsInc/
-├── admin/          # Admin Console (React + Vite)
-├── backend/        # Express.js API & Database Seeds
-├── docs/           # System Documentation
-├── web/            # Public Content Portal (React + Vite)
-├── schema.sql      # Canonical Database Schema
-└── README.md       # High-level project entry point
+official-web/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml          # GitHub Actions CI/CD Deployment Workflow
+├── web/
+│   ├── public/                 # Static assets
+│   ├── src/
+│   │   ├── assets/             # Images & design assets
+│   │   ├── components/         # Shared & UI components (PageLayout, SEO, Nav/Footer)
+│   │   ├── data/               # General static configuration data
+│   │   ├── lib/
+│   │   │   └── api.ts          # Public-only API Fetch Client
+│   │   ├── pages/              # Page modules (Home, Projects, Team, Blog, etc.)
+│   │   ├── App.tsx             # Main router configuration
+│   │   └── main.tsx            # App initialization
+│   ├── package.json            # Web app dependencies & scripts
+│   ├── tsconfig.json           # TS configuration
+│   └── wrangler.jsonc          # Cloudflare Pages deployment configuration
+└── README.md
 ```
 
 ---
 
-## ⚙️ Getting Started
+## ⚡ Getting Started
 
 ### 1. Prerequisites
-- **Node.js** (v18+)
-- **Supabase Account** (with a project initialized)
+- [Node.js](https://nodejs.org/) v20+
+- npm v10+
 
-### 2. Backend Setup
-Navigate to the `backend/` directory:
+### 2. Installation & Dev Server
+All frontend commands should be executed from within the `web` directory:
+
 ```bash
-cp .env.example .env
+# Clone the repository
+git clone https://github.com/BrAINLabs-Inc/official-web.git
+cd official-web/web
+
+# Install dependencies
 npm install
-npm run dev
-```
-Initialize the database using `schema.sql` in the Supabase SQL editor and run the seeders:
-```bash
 
-# 1. Seed Team Members (Creates Auth Users & Member profiles)
-node data_seed/execute-team-seed.js
-
-# 2. Seed Legacy Content (Blogs, Projects, Publications, etc.)
-node data_seed/execute-seed.js
-```
-
-### 3. Web Portal Setup
-Navigate to the `web/` directory:
-```bash
-cp .env.example .env
-npm install
+# Start the local development server
 npm run dev
 ```
 
-### 4. Admin Console Setup
-Navigate to the `admin/` directory:
+### 3. Build for Production
+To bundle the site locally:
+
 ```bash
-cp .env.example .env
-npm install
-npm run dev
+cd web
+npm run build
 ```
+The output directory will be `web/dist`.
 
 ---
 
-## 📚 Documentation
+## API Configuration
 
-Detailed documentation is available in the [docs/](file:///home/hasithaerandika/Documents/Projects/BrAINLabsInc/docs) directory:
+The website fetches content dynamically from the **BrAIN Labs Portal API**:
+- **Production API base URL**: `https://api.brainlabsinc.org/api/v1`
 
-- [System Architecture](file:///home/hasithaerandika/Documents/Projects/BrAINLabsInc/docs/architecture.md)
-- [API Reference](file:///home/hasithaerandika/Documents/Projects/BrAINLabsInc/docs/api.md)
-- [Database Schema](file:///home/hasithaerandika/Documents/Projects/BrAINLabsInc/docs/database.md)
-- [Auth Flow](file:///home/hasithaerandika/Documents/Projects/BrAINLabsInc/docs/auth-flow.md)
-- [Deployment Guide](file:///home/hasithaerandika/Documents/Projects/BrAINLabsInc/docs/deployment.md)
+In local development, you can point to a local backend instance by setting the environment variable in a `web/.env` file:
+```env
+VITE_API_URL=http://localhost:3001
+```
+If `VITE_API_URL` is omitted, the client defaults to fetching from `https://api.brainlabsinc.org/api/v1`.
 
 ---
 
-## 🤝 Contributing
+## Deployment (Cloudflare Pages)
 
-We welcome contributions from our multidisciplinary team! Please refer to the [CONTRIBUTING.md](file:///home/hasithaerandika/Documents/Projects/BrAINLabsInc/CONTRIBUTING.md) for our workflow and coding standards.
+The website is designed for zero-config deployment to **Cloudflare Pages**. 
 
-**Contact**: info@brainlabs.inc
-**GitHub**: [https://github.com/BrAINLabs-Inc](https://github.com/BrAINLabs-Inc)
+### CI/CD Deployment via GitHub Actions
+A GitHub Actions workflow is set up in `.github/workflows/deploy.yml`. Upon pushing to the `main` or `develop` branch, the codebase is validated (linting & TypeScript check) and automatically deployed to Cloudflare Pages.
+
+To enable deployment, configure the following secrets in your GitHub Repository Settings (`Settings` -> `Secrets and variables` -> `Actions`):
+
+1. **`CLOUDFLARE_API_TOKEN`**: A Cloudflare API token with `Cloudflare Pages (Edit)` permissions.
+2. **`CLOUDFLARE_ACCOUNT_ID`**: Your Cloudflare account ID.
 
 ---
 
