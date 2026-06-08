@@ -10,6 +10,10 @@ import { Contact } from './pages/Contact';
 import { Blog } from './pages/Blog';
 import { BlogPost } from './pages/BlogPost';
 import { TeamMemberProfile } from './pages/TeamMemberProfile';
+import { Careers } from './pages/Careers';
+import { ComingSoon } from './pages/ComingSoon';
+import { NotFound } from './pages/NotFound';
+import { ServerError } from './pages/ServerError';
 
 function App() {
   return (
@@ -26,7 +30,12 @@ function App() {
           <Route path="contact" element={<Contact />} />
           <Route path="blog" element={<Blog />} />
           <Route path="blog/:id" element={<BlogPost />} />
+          <Route path="careers" element={<Careers />} />
+          <Route path="coming-soon" element={<ComingSoon />} />
         </Route>
+        <Route path="/404" element={<NotFound />} />
+        <Route path="/error" element={<ServerError />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

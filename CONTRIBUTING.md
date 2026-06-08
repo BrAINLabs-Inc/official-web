@@ -4,7 +4,7 @@ Thank you for your interest in contributing to the **BrAIN Labs Inc.** official 
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Reporting an Issue](#-reporting-an-issue)
 2. [Branching Strategy](#-branching-strategy)
@@ -15,7 +15,7 @@ Thank you for your interest in contributing to the **BrAIN Labs Inc.** official 
 
 ---
 
-## 🐛 Reporting an Issue
+## Reporting an Issue
 
 Before opening a new issue, please **search existing issues** to avoid duplicates: [View Open Issues](https://github.com/BrAINLabs-Inc/official-web/issues)
 
@@ -26,7 +26,7 @@ If you find a bug:
 
 ---
 
-## 🌿 Branching Strategy
+## Branching Strategy
 
 Our repository follows a structured branching model to maintain stability:
 
@@ -39,7 +39,7 @@ Our repository follows a structured branching model to maintain stability:
 
 ---
 
-## 🔄 Professional Workflow
+## Professional Workflow
 
 To contribute effectively, follow these steps:
 
@@ -53,7 +53,7 @@ To contribute effectively, follow these steps:
 
 ---
 
-## 📜 Coding Standards
+## Coding Standards
 
 We maintain a high bar for code quality:
 
@@ -69,7 +69,7 @@ We maintain a high bar for code quality:
 
 ---
 
-## 🔀 Pull Request Process
+## Pull Request Process
 
 1.  Target **`development`** — never `main`.
 2.  Fill in the **PR template** with a detailed summary and evidence of testing.
@@ -78,7 +78,7 @@ We maintain a high bar for code quality:
 
 ---
 
-## 🤝 Code of Conduct
+## Code of Conduct
 
 We are committed to a respectful and inclusive community. Unacceptable behavior includes:
 -   Harassment or discrimination.
