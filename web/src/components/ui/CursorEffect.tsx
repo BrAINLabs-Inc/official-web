@@ -52,7 +52,7 @@ export const CursorEffect = () => {
 
   return (
     <motion.div
-      className="pointer-events-none fixed left-0 top-0 z-[9999] flex items-center justify-center"
+      className="pointer-events-none fixed left-0 top-0 z-[9999999] flex items-center justify-center"
       style={{
         x: cursorXSpring,
         y: cursorYSpring,

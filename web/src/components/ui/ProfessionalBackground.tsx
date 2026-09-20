@@ -3,8 +3,8 @@ import { useEffect, useRef } from 'react';
 // Configuration
 const PARTICLE_COUNT = 100;
 const CONNECTION_DISTANCE = 160;
-const BASE_COLOR = 'rgba(79, 70, 229, 0.25)';
-const DARK_MODE_COLOR = 'rgba(147, 197, 253, 0.3)';
+const BASE_COLOR = 'rgba(0, 0, 0, 0.22)';
+const DARK_MODE_COLOR = 'rgba(255, 255, 255, 0.18)';
 
 interface Particle {
   x: number;
@@ -45,7 +45,7 @@ export const ProfessionalBackground = () => {
           y: Math.random() * height,
           vx: (Math.random() - 0.5) * 0.5,
           vy: (Math.random() - 0.5) * 0.5,
-          size: Math.random() * 2 + 0.5,
+          size: Math.random() * 1.5 + 0.5,
         });
       }
     };
@@ -68,7 +68,7 @@ export const ProfessionalBackground = () => {
 
       ctx.fillStyle = color;
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5; // Thicker lines
+      ctx.lineWidth = 0.6; // Thin lines
 
       particles.forEach((p, i) => {
         p.x += p.vx;

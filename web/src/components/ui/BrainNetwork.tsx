@@ -163,7 +163,7 @@ export const BrainNetwork = () => {
       });
 
       // Draw Connections
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 0.6;
       pointsRef.current.forEach((p, i) => {
         const pp1 = projectedPoints[i];
         if (pp1.alpha < 0.1) return;

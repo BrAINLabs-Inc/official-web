@@ -147,8 +147,10 @@ export const Home = () => (
             alt="BrAIN Labs Neural Dynamics Artwork"
             className="absolute inset-0 h-full w-full object-cover object-center opacity-90"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-neutral-950/40 to-neutral-950/20" />
-          <div className="absolute inset-0 bg-indigo-950/20 mix-blend-overlay" />
+          {/* Balanced Navy Blue color layer - hero image visible */}
+          <div className="absolute inset-0 bg-[#0a192f]/45 mix-blend-color pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-[#020617]/50 via-[#172554]/40 to-[#1e3a8a]/30 mix-blend-multiply pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/75 via-neutral-950/20 to-transparent pointer-events-none" />
 
           {/* Interactive 3D Canvas */}
           <div className="relative z-10 h-[280px] w-full sm:h-[360px] md:h-[440px]">

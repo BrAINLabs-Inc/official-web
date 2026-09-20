@@ -3,7 +3,6 @@ import {
   Mail,
   Github,
   Linkedin,
-  Twitter,
   MapPin,
   Phone,
   Send,
@@ -24,10 +23,9 @@ const inputCls =
   'w-full rounded-none border border-neutral-300 bg-transparent px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-indigo-600 focus:outline-none dark:border-neutral-800 dark:text-white dark:focus:border-indigo-400 transition-colors';
 
 const channels = [
-  { icon: Mail, label: 'Email', value: 'mahima.w@sliit.lk', href: contact.email },
+  { icon: Mail, label: 'Email', value: 'contact@brainlabs.inc', href: contact.email },
   { icon: Github, label: 'GitHub', value: 'BrAINLabs-Inc', href: contact.github },
-  { icon: Linkedin, label: 'LinkedIn', value: 'BrAIN Labs', href: contact.linkedin },
-  { icon: Twitter, label: 'Twitter / X', value: '@brainlabs', href: contact.twitter },
+  { icon: Linkedin, label: 'LinkedIn', value: 'BrAIN Labs Inc.', href: contact.linkedin },
 ];
 
 type FormStatus = 'idle' | 'sending' | 'sent';

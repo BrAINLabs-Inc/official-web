@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Github } from 'lucide-react';
+import { Github, Linkedin } from 'lucide-react';
 import { contact } from '@/data/general';
 
 const footerLinks = [
@@ -30,7 +30,7 @@ export const Footer = () => (
               href={contact.email}
               className="inline-block text-sm font-semibold text-neutral-800 transition-colors hover:text-indigo-600 dark:text-neutral-200 dark:hover:text-indigo-400"
             >
-              mahima.w@sliit.lk
+              contact@brainlabs.inc
             </a>
           </div>
 
@@ -44,15 +44,26 @@ export const Footer = () => (
                 {link.label}
               </Link>
             ))}
-            <a
-              href={contact.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-9 w-9 items-center justify-center border border-neutral-300 text-neutral-600 transition-colors hover:border-indigo-600 hover:text-indigo-600 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
-              aria-label="GitHub"
-            >
-              <Github size={16} />
-            </a>
+            <div className="flex items-center gap-2">
+              <a
+                href={contact.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-9 w-9 items-center justify-center border border-neutral-300 text-neutral-600 transition-colors hover:border-indigo-600 hover:text-indigo-600 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
+                aria-label="GitHub"
+              >
+                <Github size={16} />
+              </a>
+              <a
+                href={contact.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-9 w-9 items-center justify-center border border-neutral-300 text-neutral-600 transition-colors hover:border-indigo-600 hover:text-indigo-600 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
+                aria-label="LinkedIn"
+              >
+                <Linkedin size={16} />
+              </a>
+            </div>
           </nav>
         </div>
 

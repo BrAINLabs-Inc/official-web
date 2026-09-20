@@ -12,7 +12,6 @@ const navLinks = [
   { label: 'Events', path: '/events' },
   { label: 'Blog', path: '/blog' },
   { label: 'Careers', path: '/careers' },
-  { label: 'Contact', path: '/contact' },
 ];
 
 export const Navbar: React.FC = () => {

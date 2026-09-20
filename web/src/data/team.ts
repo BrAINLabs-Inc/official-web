@@ -208,8 +208,8 @@ export const researchers: Researcher[] = [
     member_id: 9,
     country: 'Sri Lanka',
     image_url: '/assets/images/hasitha-erandika.jpeg',
-    bio: 'Research Assistant focusing on Bio-Inspired Computing, EEG-Based Cognitive Analysis, and AI for Human Wellbeing.',
-    occupation: 'Research Assistant',
+    bio: 'Research Assistant & Developer focusing on Bio-Inspired Computing, EEG-Based Cognitive Analysis, and AI for Human Wellbeing.',
+    occupation: 'Research Assistant / Developer',
     workplace: 'Sri Lanka Institute of Information Technology',
     status: 'current',
     research_areas: [
@@ -217,6 +217,7 @@ export const researchers: Researcher[] = [
       'Bio-Inspired Computing',
       'EEG-Based Cognitive Analysis',
       'AI for Human Wellbeing',
+      'Software & Platform Development',
     ],
     member: {
       id: 9,
