@@ -11,11 +11,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5174,
-    proxy: {
-      // Proxy all /public/* requests to the backend — avoids CORS in dev
-      '/public': 'http://localhost:3001',
-    },
+    port: 5173,
   },
   build: {
     sourcemap: false,

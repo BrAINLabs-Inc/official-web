@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 
 // Configuration
-const PARTICLE_COUNT = 80;
-const CONNECTION_DISTANCE = 150;
-const BASE_COLOR = 'rgba(0, 0, 0, 0.05)';
-const DARK_MODE_COLOR = 'rgba(255, 255, 255, 0.05)';
+const PARTICLE_COUNT = 100;
+const CONNECTION_DISTANCE = 160;
+const BASE_COLOR = 'rgba(79, 70, 229, 0.25)';
+const DARK_MODE_COLOR = 'rgba(147, 197, 253, 0.3)';
 
 interface Particle {
   x: number;

@@ -1,159 +1,79 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { Twitter, Github, Mail, Linkedin } from 'lucide-react';
+import { Github } from 'lucide-react';
 import { contact } from '@/data/general';
-import { BrainLabsLogoIcon } from '@/components/ui/BrainLabsLogo';
 
-export const Footer: React.FC = () => {
-  return (
-    <footer className="relative mt-auto overflow-hidden border-t border-border/50 bg-card/30 backdrop-blur-sm">
-      {/* Subtle decorative gradient */}
-      <div className="absolute bottom-0 left-0 h-80 w-80 -translate-x-1/2 translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
-      <div className="bg-primary/3 absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/2 rounded-full blur-[100px]" />
+const footerLinks = [
+  { label: 'About', path: '/about' },
+  { label: 'Projects', path: '/projects' },
+  { label: 'Team', path: '/team' },
+  { label: 'Publications', path: '/publications' },
+  { label: 'Events', path: '/events' },
+  { label: 'Blog', path: '/blog' },
+  { label: 'Careers', path: '/careers' },
+  { label: 'Contact', path: '/contact' },
+];
 
-      <div className="container relative z-10 mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
-          {/* About */}
-          <div className="md:col-span-2">
-            <Link to="/" className="group mb-4 inline-flex items-center gap-2.5">
-              <BrainLabsLogoIcon
-                width={32}
-                height={32}
-                className="transition-transform group-hover:scale-105"
-              />
-              <span className="text-lg font-bold transition-colors group-hover:text-primary">
-                BrAIN Labs
-              </span>
+export const Footer = () => (
+  <footer className="bg-white dark:bg-neutral-950">
+    <div className="mx-auto max-w-[1280px] px-6">
+      <div className="border-x border-t border-dashed border-neutral-300 px-6 dark:border-neutral-800 sm:px-10 md:px-14">
+        <div className="flex flex-col gap-8 py-12 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-md space-y-3">
+            <Link to="/" className="inline-flex items-center" aria-label="BrAIN Labs home">
+              <img src="/brainlabs-logo.webp" alt="BrAIN Labs" className="h-[32px] w-auto" />
             </Link>
-            <p className="mb-5 max-w-md text-sm leading-relaxed text-muted-foreground">
-              Research laboratory dedicated to exploring the intersection of AI, ML, and
-              Neuroscience. Developing intelligent systems through brain-inspired approaches.
+            <p className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+              Brain-Inspired AI &amp; Neuroinformatics Research Laboratory pushing the frontiers of
+              intelligence.
             </p>
-            <div className="flex gap-2">
-              <a
-                href={contact.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg border border-border/50 p-2.5 text-muted-foreground transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
-                aria-label="Twitter"
-              >
-                <Twitter size={16} />
-              </a>
-              <a
-                href={contact.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg border border-border/50 p-2.5 text-muted-foreground transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
-                aria-label="GitHub"
-              >
-                <Github size={16} />
-              </a>
-              <a
-                href={contact.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg border border-border/50 p-2.5 text-muted-foreground transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
-                aria-label="LinkedIn"
-              >
-                <Linkedin size={16} />
-              </a>
-              <a
-                href={contact.email}
-                className="rounded-lg border border-border/50 p-2.5 text-muted-foreground transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
-                aria-label="Email"
-              >
-                <Mail size={16} />
-              </a>
-            </div>
+            <a
+              href={contact.email}
+              className="inline-block text-sm font-semibold text-neutral-800 transition-colors hover:text-indigo-600 dark:text-neutral-200 dark:hover:text-indigo-400"
+            >
+              mahima.w@sliit.lk
+            </a>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-foreground/70">
-              Quick Links
-            </h3>
-            <div className="flex flex-col gap-2.5">
+          <nav className="flex flex-wrap items-center gap-x-6 gap-y-3" aria-label="Footer">
+            {footerLinks.map((link) => (
               <Link
-                to="/"
-                className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
+                key={link.path}
+                to={link.path}
+                className="text-[14px] font-medium text-neutral-600 transition-colors hover:text-indigo-600 dark:text-neutral-400 dark:hover:text-indigo-400"
               >
-                Home
+                {link.label}
               </Link>
-              <Link
-                to="/about"
-                className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
-              >
-                About
-              </Link>
-              <Link
-                to="/projects"
-                className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
-              >
-                Projects
-              </Link>
-              <Link
-                to="/team"
-                className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
-              >
-                Team
-              </Link>
-              <Link
-                to="/publications"
-                className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
-              >
-                Publications
-              </Link>
-              <Link
-                to="/events"
-                className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
-              >
-                Events
-              </Link>
-              <Link
-                to="/blog"
-                className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
-              >
-                Blog
-              </Link>
-              <Link
-                to="/careers"
-                className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
-              >
-                Careers
-              </Link>
-            </div>
-          </div>
-
-          {/* More */}
-          <div>
-            <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-foreground/70">
-              More
-            </h3>
-            <div className="flex flex-col gap-2.5">
-              <Link
-                to="/contact"
-                className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
-              >
-                Contact
-              </Link>
-            </div>
-          </div>
+            ))}
+            <a
+              href={contact.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-9 w-9 items-center justify-center border border-neutral-300 text-neutral-600 transition-colors hover:border-indigo-600 hover:text-indigo-600 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
+              aria-label="GitHub"
+            >
+              <Github size={16} />
+            </a>
+          </nav>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border/40 pt-6 sm:flex-row">
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} BrAIN Labs. All rights reserved.
-          </p>
-          {/* <div className="flex items-center gap-3">
-                        <img
-                            src="/assets/images/sliit-uni-logo-black.jpg"
-                            alt="SLIIT"
-                            className="h-8 opacity-80 hover:opacity-100 transition-opacity mix-blend-multiply dark:mix-blend-screen"
-                        />
-                    </div> */}
+        <div className="flex flex-col gap-3 border-t border-dashed border-neutral-300 py-6 text-xs text-neutral-500 dark:border-neutral-800 sm:flex-row sm:items-center sm:justify-between">
+          <p>&copy; {new Date().getFullYear()} BrAIN Labs Inc. All rights reserved.</p>
+          <div className="flex gap-6">
+            <Link
+              to="/about"
+              className="transition-colors hover:text-neutral-900 dark:hover:text-white"
+            >
+              About Us
+            </Link>
+            <Link
+              to="/contact"
+              className="transition-colors hover:text-neutral-900 dark:hover:text-white"
+            >
+              Contact
+            </Link>
+          </div>
         </div>
       </div>
-    </footer>
-  );
-};
+    </div>
+  </footer>
+);

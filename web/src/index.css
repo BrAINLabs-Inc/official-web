@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,104 +6,48 @@
 
 @layer base {
   :root {
-    /* ── Core shadcn/ui tokens ────────────────────────────── */
     --background: 0 0% 100%;
-    /* page background        */
-    --foreground: 0 0% 10%;
-    /* primary text           */
+    --foreground: 224 25% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 224 25% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 0 0% 9%;
-    /* accent / brand colour   */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --popover-foreground: 224 25% 11%;
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 97%;
+    --secondary-foreground: 224 25% 11%;
+    --muted: 220 16% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 234 100% 97%;
+    --accent-foreground: 243 65% 46%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --border: 220 14% 90%;
+    --input: 220 14% 90%;
+    --ring: 243 75% 59%;
     --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-
-    /* ── Page Palette — edit here to retheme all pages ───── */
-
-    /* Subtle tinted surfaces used on cards, badges, icon boxes */
-    --surface: 0 0% 97%;
-    /* card/section bg tint    */
-    --surface-hover: 0 0% 94%;
-    /* hovered surface         */
-
-    /* Hero & section gradient stops (HSL — hue sat% light%)   */
-    --hero-glow-hue: 220;
-    /* change hue to shift orbs*/
-    --hero-glow-sat: 80%;
-    --hero-glow-light: 60%;
-
-    /* Highlight — the primary tint used for icon boxes,
-       active badges, bordered tags, etc.
-       Change these 3 values to retheme the whole site.         */
-    --highlight: var(--primary);
-    /* HSL triplet             */
-    --highlight-fg: var(--primary-foreground);
-
-    /* Named channel colours — Contact page social cards.
-       Swap these to retheme each channel independently.        */
-    --brand-email-h: 214;
-    --brand-email-s: 80%;
-    --brand-email-l: 55%;
-
-    --brand-github-h: 0;
-    --brand-github-s: 0%;
-    --brand-github-l: 15%;
-
-    --brand-linkedin-h: 201;
-    --brand-linkedin-s: 100%;
-    --brand-linkedin-l: 35%;
-
-    --brand-twitter-h: 197;
-    --brand-twitter-s: 100%;
-    --brand-twitter-l: 47%;
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    /* Deep Black */
-    --foreground: 0 0% 98%;
-    /* White text */
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    /* White */
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 224 32% 6%;
+    --foreground: 220 25% 97%;
+    --card: 224 28% 8%;
+    --card-foreground: 220 25% 97%;
+    --popover: 224 28% 8%;
+    --popover-foreground: 220 25% 97%;
+    --primary: 234 89% 74%;
+    --primary-foreground: 224 32% 8%;
+    --secondary: 222 24% 14%;
+    --secondary-foreground: 220 25% 97%;
+    --muted: 222 22% 14%;
+    --muted-foreground: 220 12% 65%;
+    --accent: 234 40% 18%;
+    --accent-foreground: 231 96% 84%;
+    --destructive: 0 62.8% 45%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --border: 222 20% 17%;
+    --input: 222 20% 17%;
+    --ring: 234 89% 74%;
   }
 
   * {
@@ -133,9 +77,52 @@
     border: 1px solid rgba(0, 0, 0, 0.1);
   }
 
-  /* Gradient text - simplified to just bold/black/white or subtle gradient if essential, but keeping minimal */
+  /* Vertex Labs Architectural Frame Plus Corners */
+  .frame-plus {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .frame-plus::before,
+  .frame-plus::after {
+    content: '';
+    position: absolute;
+    background-color: currentColor;
+  }
+  .frame-plus::before {
+    top: 4px;
+    left: 0;
+    width: 9px;
+    height: 1px;
+  }
+  .frame-plus::after {
+    top: 0;
+    left: 4px;
+    width: 1px;
+    height: 9px;
+  }
+  .frame-plus--tl {
+    top: -5px;
+    left: -5px;
+  }
+  .frame-plus--tr {
+    top: -5px;
+    right: -5px;
+  }
+  .frame-plus--bl {
+    bottom: -5px;
+    left: -5px;
+  }
+  .frame-plus--br {
+    bottom: -5px;
+    right: -5px;
+  }
+
+  /* Gradient text */
   .gradient-text {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--foreground)));
+    background: linear-gradient(135deg, #000000, #4b5563);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

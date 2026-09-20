@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react';
 const PARTICLE_COUNT = 150;
 const CONNECTION_DISTANCE = 110;
 const ROTATION_SPEED = 0.002;
-const BASE_COLOR = 'rgba(0, 0, 0, 0.2)';
-const PULSE_COLOR = '#bebebeff';
+const BASE_COLOR = 'rgba(165, 180, 252, 0.35)';
+const PULSE_COLOR = '#38bdf8';
 
 interface Point {
   x: number;
@@ -139,7 +139,7 @@ export const BrainNetwork = () => {
       const projectedPoints = pointsRef.current.map((p) => {
         // Rotation Matrix Application
         // 1. Rotate around Y (horizontal spin)
-        let x = p.x * cosY - p.z * sinY;
+        const x = p.x * cosY - p.z * sinY;
         let z = p.x * sinY + p.z * cosY;
         let y = p.y;
 
@@ -173,12 +173,22 @@ export const BrainNetwork = () => {
           if (pp2.alpha < 0.1) return;
 
           ctx.strokeStyle = BASE_COLOR;
-          ctx.globalAlpha = Math.min(pp1.alpha, pp2.alpha) * 0.5;
+          ctx.globalAlpha = Math.min(pp1.alpha, pp2.alpha) * 0.6;
           ctx.beginPath();
           ctx.moveTo(pp1.x, pp1.y);
           ctx.lineTo(pp2.x, pp2.y);
           ctx.stroke();
         });
+      });
+
+      // Draw Point Nodes
+      projectedPoints.forEach((pp) => {
+        if (pp.alpha < 0.15) return;
+        ctx.globalAlpha = pp.alpha * 0.85;
+        ctx.fillStyle = '#a5b4fc';
+        ctx.beginPath();
+        ctx.arc(pp.x, pp.y, 1.8, 0, Math.PI * 2);
+        ctx.fill();
       });
 
       // Spawn Pulses
@@ -223,13 +233,13 @@ export const BrainNetwork = () => {
         ctx.fill();
 
         // Glow ring 1
-        ctx.fillStyle = 'rgba(190, 190, 190, 0.4)';
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
         ctx.fill();
 
         // Glow ring 2
-        ctx.fillStyle = 'rgba(190, 190, 190, 0.15)';
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.2)';
         ctx.beginPath();
         ctx.arc(x, y, 8, 0, Math.PI * 2);
         ctx.fill();
@@ -251,7 +261,6 @@ export const BrainNetwork = () => {
     <canvas
       ref={canvasRef}
       className="h-full w-full cursor-grab active:cursor-grabbing"
-      style={{ minHeight: '500px' }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

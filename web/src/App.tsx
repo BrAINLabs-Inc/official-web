@@ -32,10 +32,9 @@ function App() {
           <Route path="blog/:id" element={<BlogPost />} />
           <Route path="careers" element={<Careers />} />
           <Route path="coming-soon" element={<ComingSoon />} />
+          <Route path="error" element={<ServerError />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
-        <Route path="/404" element={<NotFound />} />
-        <Route path="/error" element={<ServerError />} />
-        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

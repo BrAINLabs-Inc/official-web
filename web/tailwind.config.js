@@ -7,6 +7,10 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
@@ -47,23 +51,6 @@ export default {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
-        chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))'
-        },
-
-        // ── Page Palette tokens (edit values in index.css) ───────
-        surface: 'hsl(var(--surface))',
-        'surface-hover': 'hsl(var(--surface-hover))',
-
-        // Social / contact channel accent colours
-        'brand-email': 'hsl(var(--brand-email-h) var(--brand-email-s) var(--brand-email-l))',
-        'brand-github': 'hsl(var(--brand-github-h) var(--brand-github-s) var(--brand-github-l))',
-        'brand-linkedin': 'hsl(var(--brand-linkedin-h) var(--brand-linkedin-s) var(--brand-linkedin-l))',
-        'brand-twitter': 'hsl(var(--brand-twitter-h) var(--brand-twitter-s) var(--brand-twitter-l))',
       }
     }
   },
