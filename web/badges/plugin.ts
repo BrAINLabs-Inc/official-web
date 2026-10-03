@@ -7,6 +7,7 @@
 
 import type { Plugin } from 'vite';
 import {
+  BADGES_LIVE,
   ISSUER_NAME,
   SITE_URL,
   badgeCardPath,
@@ -71,6 +72,7 @@ export function badgesPlugin(): Plugin {
 
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
+        if (!BADGES_LIVE) return next();
         const match = req.url?.match(/^\/badges\/([A-Za-z0-9-]+)\.png(?:\?.*)?$/);
         const badge = match && findBadge(match[1]);
         if (!badge) return next();
@@ -81,6 +83,7 @@ export function badgesPlugin(): Plugin {
     },
 
     generateBundle(_options, bundle) {
+      if (!BADGES_LIVE) return;
       const index = bundle['index.html'];
       const indexHtml = index?.type === 'asset' ? String(index.source) : null;
 

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 import { PageLayout } from './components/shared/PageLayout';
 import { Home } from './pages/Home';
+import { BADGES_LIVE } from './lib/badges';
 
 // Every page except Home is code-split so the landing page loads only what it needs.
 const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) =>
@@ -43,8 +44,8 @@ function App() {
             <Route path="blog" element={<Blog />} />
             <Route path="blog/:id" element={<BlogPost />} />
             <Route path="careers" element={<Careers />} />
-            <Route path="badges" element={<Badges />} />
-            <Route path="badges/:id" element={<BadgeVerify />} />
+            <Route path="badges" element={BADGES_LIVE ? <Badges /> : <ComingSoon />} />
+            <Route path="badges/:id" element={BADGES_LIVE ? <BadgeVerify /> : <ComingSoon />} />
             <Route path="coming-soon" element={<ComingSoon />} />
           </Route>
           <Route path="/404" element={<Standalone page={<NotFound />} />} />

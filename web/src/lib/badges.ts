@@ -11,6 +11,12 @@ import {
   type BadgeRecipient,
 } from '../data/badges';
 
+/**
+ * Launch switch for badge verification. While false, /badges and /badges/:id show the
+ * Coming Soon page and the build skips the per-badge share pages and images.
+ */
+export const BADGES_LIVE = false;
+
 export const SITE_URL = 'https://brainlabsinc.org';
 export const ISSUER_NAME = 'BrAIN Labs';
 
