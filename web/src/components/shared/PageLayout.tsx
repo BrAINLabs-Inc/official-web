@@ -1,6 +1,7 @@
 import { Suspense, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { NeuralBackground } from '@/components/ui/NeuralBackground';
+import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 
@@ -21,6 +22,7 @@ export const PageLayout = () => {
         </Suspense>
       </main>
       <Footer />
+      <ScrollToTop />
     </div>
   );
 };

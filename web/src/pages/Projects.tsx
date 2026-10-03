@@ -1,28 +1,38 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ResearchLabIcon } from '@/components/ui/PageIcons';
 import {
+  ArrowRight,
   BrainCircuit,
+  ChevronLeft,
+  ChevronRight,
   Cpu,
   ExternalLink,
   Github,
+  Info,
   Layers,
+  Maximize2,
+  Play,
   Radio,
   Smartphone,
+  Users,
   X,
 } from 'lucide-react';
 import { SEO } from '@/components/shared/SEO';
 import { PageHero } from '@/components/shared/PageHero';
+import { cn } from '@/lib/utils';
 import { projects, projectCategories, type Project } from '@/data/projects';
 
 type Filter = 'All' | Project['category'];
 
-interface SelectedImage {
-  url: string;
+type MediaItem = { type: 'video' | 'image'; src: string };
+
+interface Lightbox {
   title: string;
+  images: string[];
+  index: number;
 }
 
 const filters: { id: Filter; label: string; icon: typeof Cpu }[] = [
@@ -50,6 +60,11 @@ const titleCase = (s: string) =>
 
 const categoryIcon = (id: Filter) => filters.find((f) => f.id === id)?.icon ?? Cpu;
 
+const mediaOf = (p: Project): MediaItem[] => [
+  ...(p.videoUrl ? [{ type: 'video' as const, src: p.videoUrl }] : []),
+  ...(p.images ?? []).map((src) => ({ type: 'image' as const, src })),
+];
+
 /** Video that always stays muted, even if the user un-mutes it via the controls. */
 const MutedVideo = ({ src, className }: { src: string; className?: string }) => (
   <video
@@ -73,139 +88,288 @@ const MutedVideo = ({ src, className }: { src: string; className?: string }) => 
   />
 );
 
-const ProjectCard = ({
+// ── Media gallery (main view + thumbnails) ────────────────────────────────────
+
+const ProjectGallery = ({
   project,
-  idx,
   onOpenImage,
 }: {
   project: Project;
-  idx: number;
-  onOpenImage: (img: SelectedImage) => void;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ delay: idx * 0.08, duration: 0.5 }}
-  >
-    <Card className="group flex h-full flex-col border-border/50 bg-card/80 transition-all duration-300 hover:border-primary/40 hover:shadow-md">
-      <CardHeader className="pb-2">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              variant="secondary"
-              className="bg-primary/8 rounded-full border border-primary/15 px-2.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
+  onOpenImage: (lightbox: Lightbox) => void;
+}) => {
+  const media = mediaOf(project);
+  const images = project.images ?? [];
+  const [active, setActive] = useState(0);
+  const current = media[active];
+
+  return (
+    <div className="flex flex-col gap-3 bg-muted/40 p-4 md:w-1/2 md:shrink-0">
+      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-neutral-950">
+        {current.type === 'video' ? (
+          <MutedVideo src={current.src} className="h-full w-full object-contain" />
+        ) : (
+          <button
+            type="button"
+            onClick={() =>
+              onOpenImage({
+                title: project.title,
+                images,
+                index: images.indexOf(current.src),
+              })
+            }
+            className="group/zoom relative h-full w-full cursor-zoom-in bg-muted"
+            aria-label="View image full screen"
+          >
+            <img
+              src={current.src}
+              alt={`${project.title} screenshot`}
+              loading="lazy"
+              className="h-full w-full object-contain"
+            />
+            <span className="absolute right-3 top-3 rounded-lg bg-black/60 p-1.5 text-white opacity-0 transition-opacity group-hover/zoom:opacity-100">
+              <Maximize2 size={14} />
+            </span>
+          </button>
+        )}
+      </div>
+
+      {media.length > 1 && (
+        <div className="flex gap-2">
+          {media.map((item, i) => (
+            <button
+              key={item.src}
+              type="button"
+              onClick={() => setActive(i)}
+              aria-label={item.type === 'video' ? 'Show video' : `Show image ${i + 1}`}
+              aria-pressed={i === active}
+              className={cn(
+                'relative h-14 w-20 overflow-hidden rounded-lg border-2 bg-muted transition-colors',
+                i === active
+                  ? 'border-foreground'
+                  : 'border-transparent opacity-70 hover:opacity-100'
+              )}
             >
+              {item.type === 'video' ? (
+                <span className="flex h-full w-full items-center justify-center bg-neutral-900 text-white">
+                  <Play size={16} />
+                </span>
+              ) : (
+                <img src={item.src} alt="" loading="lazy" className="h-full w-full object-cover" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── Project card ──────────────────────────────────────────────────────────────
+
+const ProjectCard = ({
+  project,
+  onOpenImage,
+}: {
+  project: Project;
+  onOpenImage: (lightbox: Lightbox) => void;
+}) => {
+  const hasMedia = mediaOf(project).length > 0;
+
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.4 }}
+      className={cn(
+        'flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-colors hover:border-foreground/25',
+        hasMedia && 'md:col-span-2 md:flex-row'
+      )}
+    >
+      {hasMedia && <ProjectGallery project={project} onOpenImage={onOpenImage} />}
+
+      <div className="flex flex-1 flex-col p-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-border bg-secondary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/80">
               {project.badge || project.category}
-            </Badge>
+            </span>
             {project.logoUrl && (
-              <div className="flex items-center gap-1.5 rounded-full border border-border/60 bg-white px-2.5 py-0.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-2.5 py-0.5">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-700">
                   Partner
                 </span>
-                <img
-                  src={project.logoUrl}
-                  alt="Partner logo"
-                  className="h-4 w-auto object-contain"
-                />
-              </div>
+                <img src={project.logoUrl} alt="Partner logo" className="h-4 w-auto" />
+              </span>
             )}
           </div>
-          <span className="text-[11px] font-medium text-muted-foreground/50">
-            #{String(project.id).padStart(2, '0')}
-          </span>
-        </div>
-        <div className="flex items-start gap-3">
-          <div className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary transition-transform group-hover:scale-150" />
-          <CardTitle className="text-base font-semibold leading-snug transition-colors group-hover:text-primary">
-            {project.title}
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col">
-        <CardDescription className="pl-4 text-sm leading-relaxed">
-          {project.description}
-        </CardDescription>
-
-        {project.notice && (
-          <div className="bg-primary/6 ml-4 mt-4 rounded-lg border border-primary/15 px-3 py-2 text-xs font-medium text-primary">
-            {project.notice}
-          </div>
-        )}
-
-        {project.videoUrl && (
-          <div className="ml-4 mt-4 overflow-hidden rounded-lg border border-border/50 bg-muted">
-            <MutedVideo src={project.videoUrl} className="max-h-72 w-full object-contain" />
-          </div>
-        )}
-
-        {project.images && project.images.length > 0 && (
-          <div
-            className={`ml-4 mt-4 grid gap-3 ${
-              project.images.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'
-            }`}
-          >
-            {project.images.map((img, i) => (
-              <button
-                key={img}
-                type="button"
-                onClick={() =>
-                  onOpenImage({
-                    url: img,
-                    title: `${project.title} (${i + 1}/${project.images?.length})`,
-                  })
-                }
-                className="flex cursor-zoom-in items-center justify-center overflow-hidden rounded-lg border border-border/50 bg-muted"
-              >
-                <img
-                  src={img}
-                  alt={`${project.title} screenshot ${i + 1}`}
-                  className="max-h-72 w-full object-contain transition-transform duration-500 hover:scale-105"
-                />
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pl-4 pt-5 text-[11px] text-muted-foreground/60">
-          <span>{project.author || 'BrAIN Labs Research Group'}</span>
           {project.githubUrl && (
             <a
               href={project.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 font-medium text-primary transition-opacity hover:opacity-70"
+              aria-label={`${project.title} on GitHub`}
+              className="shrink-0 rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
             >
-              <Github size={13} />
-              GitHub Repo
-              <ExternalLink size={11} />
+              <Github size={15} />
             </a>
           )}
         </div>
-      </CardContent>
-    </Card>
-  </motion.div>
-);
 
-export const Projects = () => {
-  const [activeFilter, setActiveFilter] = useState<Filter>('All');
-  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
+        <h3 className="text-lg font-semibold leading-snug tracking-tight">{project.title}</h3>
+        <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
+          {project.description}
+        </p>
+
+        {project.notice && (
+          <div className="mt-4 flex items-start gap-2 rounded-lg border border-border bg-secondary/60 px-3 py-2.5 text-xs font-medium text-foreground/80">
+            <Info size={14} className="mt-px shrink-0" />
+            {project.notice}
+          </div>
+        )}
+
+        <div className="mt-auto pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-4 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <Users size={13} />
+              {project.author || 'BrAIN Labs Research Group'}
+            </span>
+            {project.githubUrl && (
+              <a
+                href={project.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-medium text-foreground transition-opacity hover:opacity-70"
+              >
+                View repository
+                <ExternalLink size={12} />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.article>
+  );
+};
+
+// ── Lightbox ──────────────────────────────────────────────────────────────────
+
+const ImageLightbox = ({
+  lightbox,
+  onChange,
+  onClose,
+}: {
+  lightbox: Lightbox;
+  onChange: (index: number) => void;
+  onClose: () => void;
+}) => {
+  const { images, index, title } = lightbox;
+  const count = images.length;
+  const go = useCallback(
+    (delta: number) => onChange((index + delta + count) % count),
+    [index, count, onChange]
+  );
 
   useEffect(() => {
-    if (!selectedImage) return;
-    const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && setSelectedImage(null);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowRight') go(1);
+      else if (e.key === 'ArrowLeft') go(-1);
+    };
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [selectedImage]);
+  }, [go, onClose]);
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      className="fixed inset-0 z-[100] flex flex-col bg-black/90 p-4 sm:p-6"
+      onClick={onClose}
+    >
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 pb-4 text-white">
+        <p className="truncate text-sm font-medium">
+          {title}
+          {count > 1 && (
+            <span className="ml-2 text-white/50">
+              {index + 1} / {count}
+            </span>
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="rounded-lg border border-white/20 p-2 transition-colors hover:bg-white/10"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      <div className="relative mx-auto flex w-full max-w-6xl flex-1 items-center justify-center overflow-hidden">
+        <img
+          src={images[index]}
+          alt={`${title} (${index + 1} of ${count})`}
+          className="max-h-full max-w-full rounded-lg object-contain"
+          onClick={(e) => e.stopPropagation()}
+        />
+        {count > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="Previous image"
+              onClick={(e) => {
+                e.stopPropagation();
+                go(-1);
+              }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20"
+            >
+              <ChevronLeft size={22} />
+            </button>
+            <button
+              type="button"
+              aria-label="Next image"
+              onClick={(e) => {
+                e.stopPropagation();
+                go(1);
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20"
+            >
+              <ChevronRight size={22} />
+            </button>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export const Projects = () => {
+  const [activeFilter, setActiveFilter] = useState<Filter>('All');
+  const [lightbox, setLightbox] = useState<Lightbox | null>(null);
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+  const changeImage = useCallback(
+    (index: number) => setLightbox((lb) => (lb ? { ...lb, index } : lb)),
+    []
+  );
 
   const visibleCategories =
     activeFilter === 'All'
       ? projectCategories
       : projectCategories.filter((cat) => cat.id === activeFilter);
+
+  const selectFilter = (id: Filter) => {
+    setActiveFilter(id);
+    document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
     <div className="min-h-screen">
@@ -234,10 +398,13 @@ export const Projects = () => {
         ]}
       />
 
-      {/* ── Filters + Projects ────────────────────────────────── */}
-      <section className="py-8 md:py-12">
+      {/* ── Sticky filter bar ─────────────────────────────────── */}
+      <div
+        id="projects"
+        className="sticky top-20 z-30 scroll-mt-20 border-y border-border/70 bg-background"
+      >
         <div className="container mx-auto px-4">
-          <div className="mb-12 flex flex-wrap gap-2">
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none]">
             {filters.map((filter) => {
               const active = activeFilter === filter.id;
               const count =
@@ -248,109 +415,93 @@ export const Projects = () => {
                 <button
                   key={filter.id}
                   type="button"
-                  onClick={() => setActiveFilter(filter.id)}
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition-all duration-200 ${
+                  aria-pressed={active}
+                  onClick={() => selectFilter(filter.id)}
+                  className={cn(
+                    'inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors duration-150',
                     active
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground'
-                  }`}
+                      ? 'border-foreground bg-foreground text-background'
+                      : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
+                  )}
                 >
-                  <filter.icon size={13} />
+                  <filter.icon size={14} />
                   {filter.label}
-                  <span className={active ? 'opacity-70' : 'opacity-50'}>({count})</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="space-y-16">
-            {visibleCategories.map((category) => {
-              const categoryProjects = projects.filter((p) => p.category === category.id);
-              const hasMedia = categoryProjects.some((p) => p.images?.length || p.videoUrl);
-              const Icon = categoryIcon(category.id);
-
-              return (
-                <motion.div
-                  key={category.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="mx-auto mb-8 max-w-7xl">
-                    <div className="mb-2 flex flex-wrap items-center gap-3">
-                      <div className="rounded-xl border border-primary/15 bg-primary/10 p-2">
-                        <Icon size={18} className="text-primary" />
-                      </div>
-                      <h2 className="text-xl font-bold tracking-tight md:text-2xl">
-                        {titleCase(category.name)}
-                      </h2>
-                      <Badge
-                        variant="secondary"
-                        className="bg-primary/8 rounded-full border border-primary/15 px-2.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
-                      >
-                        {categoryProjects.length}{' '}
-                        {categoryProjects.length === 1 ? 'project' : 'projects'}
-                      </Badge>
-                    </div>
-                    <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-                      {category.description}
-                    </p>
-                  </div>
-
-                  <div
-                    className={`mx-auto grid max-w-7xl gap-5 md:grid-cols-2 ${
-                      hasMedia ? '' : 'lg:grid-cols-3'
-                    }`}
+                  <span
+                    className={cn(
+                      'rounded-full px-1.5 text-[11px]',
+                      active ? 'bg-background/20' : 'bg-secondary'
+                    )}
                   >
-                    {categoryProjects.map((project, idx) => (
-                      <ProjectCard
-                        key={project.id}
-                        project={project}
-                        idx={idx}
-                        onOpenImage={setSelectedImage}
-                      />
-                    ))}
-                  </div>
-                </motion.div>
+                    {count}
+                  </span>
+                </button>
               );
             })}
           </div>
         </div>
+      </div>
+
+      {/* ── Categories ────────────────────────────────────────── */}
+      <div className="container mx-auto px-4">
+        {visibleCategories.map((category) => {
+          const categoryProjects = projects.filter((p) => p.category === category.id);
+          const Icon = categoryIcon(category.id);
+          return (
+            <section
+              key={category.id}
+              className="grid gap-8 border-b border-border/60 py-14 last:border-b-0 lg:grid-cols-12 lg:gap-12"
+            >
+              <div className="lg:col-span-4">
+                <div className="lg:sticky lg:top-44">
+                  <div className="mb-4 inline-flex rounded-xl border border-border bg-secondary p-2.5">
+                    <Icon size={20} />
+                  </div>
+                  <h2 className="text-2xl font-bold tracking-tight">{titleCase(category.name)}</h2>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    {category.description}
+                  </p>
+                  <p className="mt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {categoryProjects.length}{' '}
+                    {categoryProjects.length === 1 ? 'project' : 'projects'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid content-start gap-5 md:grid-cols-2 lg:col-span-8">
+                {categoryProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} onOpenImage={setLightbox} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      {/* ── CTA ──────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-foreground py-20 text-background md:py-24">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
+        <div className="container relative mx-auto flex flex-col items-start justify-between gap-8 px-4 md:flex-row md:items-center">
+          <div className="max-w-2xl space-y-3">
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+              Interested in our research projects?
+            </h2>
+            <p className="text-base leading-relaxed text-background/70">
+              Get in touch with our research team or explore opportunities to collaborate.
+            </p>
+          </div>
+          <Link
+            to="/contact"
+            className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-background px-7 text-sm font-medium text-foreground transition-opacity hover:opacity-90"
+          >
+            Contact Researchers
+            <ArrowRight size={15} />
+          </Link>
+        </div>
       </section>
 
-      {/* ── Image lightbox ───────────────────────────────────── */}
-      {selectedImage &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[100] flex cursor-zoom-out items-center justify-center bg-black/85 p-4 sm:p-6"
-            onClick={() => setSelectedImage(null)}
-          >
-            <div
-              className="relative flex max-h-[92vh] w-full max-w-6xl cursor-default flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-950 p-4 shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mb-3 flex items-center justify-between gap-4 border-b border-white/10 pb-3">
-                <h4 className="truncate text-sm font-semibold text-white">{selectedImage.title}</h4>
-                <button
-                  type="button"
-                  onClick={() => setSelectedImage(null)}
-                  aria-label="Close"
-                  className="rounded-full border border-white/15 p-1.5 text-neutral-300 transition-colors hover:text-white"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              <div className="flex flex-1 items-center justify-center overflow-auto p-2">
-                <img
-                  src={selectedImage.url}
-                  alt={selectedImage.title}
-                  className="max-h-[78vh] w-auto rounded-lg object-contain"
-                />
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      {lightbox && (
+        <ImageLightbox lightbox={lightbox} onChange={changeImage} onClose={closeLightbox} />
+      )}
     </div>
   );
 };

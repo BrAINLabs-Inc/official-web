@@ -298,7 +298,7 @@ export const Home = () => {
       </section>
 
       {/* ── Methodology ──────────────────────────────────────── */}
-      <section className="border-t border-border/40 bg-muted/20 py-24">
+      <section className="relative border-y border-zinc-300/70 bg-zinc-200/70 py-24">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -318,7 +318,7 @@ export const Home = () => {
             </h2>
           </motion.div>
 
-          <div className="mx-auto max-w-5xl divide-y divide-border/50 border-y border-border/50">
+          <div className="mx-auto max-w-5xl divide-y divide-zinc-300 border-y border-zinc-300">
             {methodology.steps.map((step, idx) => (
               <motion.div
                 key={step.num}
@@ -328,7 +328,7 @@ export const Home = () => {
                 transition={{ delay: idx * 0.08, duration: 0.5 }}
                 className="group grid grid-cols-[auto_1fr] items-start gap-6 py-7 md:gap-10"
               >
-                <span className="text-4xl font-bold leading-none text-foreground/15 transition-colors duration-300 group-hover:text-primary md:text-5xl">
+                <span className="text-4xl font-bold leading-none text-zinc-400 transition-colors duration-300 group-hover:text-primary md:text-5xl">
                   {step.num}
                 </span>
                 <div className="md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] md:items-baseline md:gap-12">
@@ -410,9 +410,8 @@ export const Home = () => {
       </section>
 
       {/* ── CTA ──────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden py-24">
-        <div className="from-primary/8 to-primary/4 absolute inset-0 bg-gradient-to-br via-background" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
+      <section className="relative overflow-hidden bg-foreground py-24 text-background">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
 
         <div className="container relative z-10 mx-auto px-4">
           <motion.div
@@ -422,18 +421,16 @@ export const Home = () => {
             transition={{ duration: 0.8 }}
             className="mx-auto max-w-3xl space-y-8 text-center"
           >
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-4 py-1.5">
-              <Sparkles size={14} className="text-primary" />
-              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Get involved
-              </span>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-background/20 bg-background/10 px-4 py-1.5">
+              <Sparkles size={14} />
+              <span className="text-xs font-medium uppercase tracking-wider">Get involved</span>
             </div>
             <h2 className="text-3xl font-bold leading-tight tracking-tight md:text-4xl lg:text-5xl">
               Ready to explore the
               <br />
-              <span className="text-muted-foreground">future of AI?</span>
+              <span className="text-background/60">future of AI?</span>
             </h2>
-            <p className="mx-auto max-w-xl text-lg text-muted-foreground">
+            <p className="mx-auto max-w-xl text-lg text-background/70">
               Discover our cutting-edge research and join us in pushing the boundaries of artificial
               intelligence.
             </p>
@@ -441,7 +438,7 @@ export const Home = () => {
               <Link to="/team">
                 <Button
                   size="lg"
-                  className="h-12 rounded-full bg-foreground px-8 text-sm font-medium text-background shadow-lg transition-all hover:bg-foreground/90 hover:shadow-xl"
+                  className="h-12 rounded-full bg-background px-8 text-sm font-medium text-foreground transition-opacity hover:bg-background hover:opacity-90"
                 >
                   Meet the Team
                   <ArrowRight className="ml-2" size={16} />
@@ -451,7 +448,7 @@ export const Home = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-12 rounded-full border-border px-8 text-sm font-medium transition-colors hover:border-primary/30 hover:bg-secondary"
+                  className="h-12 rounded-full border-background/30 bg-transparent px-8 text-sm font-medium text-background transition-colors hover:bg-background/10 hover:text-background"
                 >
                   Get in Touch
                 </Button>
