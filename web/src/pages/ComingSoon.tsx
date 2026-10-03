@@ -24,15 +24,12 @@ export const ComingSoon = ({
   const email = contact.email.replace('mailto:', '');
 
   return (
-    <section className="relative flex min-h-[calc(100vh-5rem)] items-center overflow-hidden bg-foreground py-20 text-background">
+    <section className="relative flex min-h-[calc(100vh-5rem)] items-center overflow-hidden py-20">
       <SEO
         title={feature ? `${feature} | Coming Soon` : 'Coming Soon'}
         description={description}
         keywords={['Coming Soon', 'BrAIN Labs', 'Upcoming']}
       />
-
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--background)/0.08),transparent_60%)]" />
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -40,11 +37,11 @@ export const ComingSoon = ({
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className="container relative mx-auto flex max-w-3xl flex-col items-center px-4 text-center"
       >
-        <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-background/20 bg-background/10">
+        <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-background shadow-sm">
           <Rocket size={28} />
         </div>
 
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-background/20 bg-background/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wide">
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-foreground/80">
           <Clock size={13} />
           {feature ? `${feature} · In Development` : 'In Development'}
         </div>
@@ -52,10 +49,10 @@ export const ComingSoon = ({
         <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
           Something Amazing
           <br />
-          <span className="text-background/60">is on the Way</span>
+          <span className="text-muted-foreground">is on the Way</span>
         </h1>
 
-        <p className="mt-5 max-w-xl text-base leading-relaxed text-background/70 md:text-lg">
+        <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
           {description}
         </p>
 
@@ -68,7 +65,7 @@ export const ComingSoon = ({
                   aria-hidden
                   className={cn(
                     'absolute right-1/2 top-4 h-px w-full -translate-y-1/2',
-                    step.done ? 'bg-background/60' : 'bg-background/20'
+                    step.done ? 'bg-foreground/60' : 'bg-border'
                   )}
                 />
               )}
@@ -76,9 +73,9 @@ export const ComingSoon = ({
                 className={cn(
                   'relative z-10 flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold',
                   step.done
-                    ? 'border-background bg-background text-foreground'
-                    : 'border-background/30 bg-foreground text-background/60',
-                  step.current && 'ring-4 ring-background/15'
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-border bg-background text-muted-foreground',
+                  step.current && 'ring-4 ring-foreground/10'
                 )}
               >
                 {step.done && !step.current ? <Check size={14} /> : i + 1}
@@ -86,7 +83,7 @@ export const ComingSoon = ({
               <span
                 className={cn(
                   'text-xs font-medium',
-                  step.done ? 'text-background' : 'text-background/50'
+                  step.done ? 'text-foreground' : 'text-muted-foreground'
                 )}
               >
                 {step.label}
@@ -98,14 +95,14 @@ export const ComingSoon = ({
         <div className="mt-10 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
           <Link
             to="/"
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-background px-7 text-sm font-medium text-foreground transition-opacity hover:opacity-90"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-foreground px-7 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
             Back to Home
             <ArrowRight size={15} />
           </Link>
           <Link
             to="/contact"
-            className="inline-flex h-12 items-center justify-center rounded-full border border-background/30 px-7 text-sm font-medium transition-colors hover:bg-background/10"
+            className="inline-flex h-12 items-center justify-center rounded-full border border-border bg-background px-7 text-sm font-medium transition-colors hover:bg-secondary"
           >
             Get in Touch
           </Link>
@@ -113,7 +110,7 @@ export const ComingSoon = ({
 
         <a
           href={contact.email}
-          className="mt-8 inline-flex items-center gap-2 text-sm text-background/60 transition-colors hover:text-background"
+          className="mt-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <Mail size={14} />
           Questions? {email}
