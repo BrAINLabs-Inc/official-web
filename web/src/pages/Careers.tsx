@@ -1,175 +1,225 @@
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Briefcase, ArrowRight, CheckCircle2, GraduationCap } from 'lucide-react';
-import { iconMap } from '@/lib/icons';
-import { SEO } from '@/components/shared/SEO';
-import { PageHero } from '@/components/shared/PageHero';
+import { Link } from 'react-router-dom';
+import {
+  ArrowRight,
+  Briefcase,
+  CheckCircle2,
+  FileText,
+  HelpCircle,
+  Mail,
+  MessageCircle,
+  Send,
+  Sparkles,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { SEO } from '@/components/shared/SEO';
+import { PageHero } from '@/components/shared/PageHero';
+import { SectionLabel } from '@/components/shared/SectionLabel';
 import { careersBenefits, careersFaqs, contact } from '@/data/general';
+import { iconMap } from '@/lib/icons';
+import { fadeUp, fadeUpAt } from '@/lib/motion';
 
-export const Careers = () => {
-  return (
-    <div className="min-h-screen">
-      <SEO
-        title="Careers at BrAIN Labs"
-        description="Join BrAIN Labs and contribute to cutting-edge AI and neuroscience research. Explore open positions and opportunities."
-        keywords={[
-          'BrAIN Labs Careers',
-          'AI Research Jobs',
-          'Neuroscience Jobs',
-          'Research Positions',
-          'Internships',
-        ]}
-      />
+const contactAddress = contact.email.replace(/^mailto:/, '');
 
-      <PageHero
-        icon={<Briefcase size={14} />}
-        eyebrow="Join Our Team"
-        title="Build the Future of"
-        highlight="AI Research"
-        description="Join a world-class team of researchers and engineers working at the intersection of artificial intelligence and neuroscience."
-      />
+const applySteps: { title: string; description: string; icon: LucideIcon }[] = [
+  {
+    title: 'Prepare your application',
+    description: 'Your CV plus a short cover letter or research statement covering your interests.',
+    icon: FileText,
+  },
+  {
+    title: 'Send it to us',
+    description: `Email ${contactAddress} with the position title (or "Open Application") in the subject line.`,
+    icon: Send,
+  },
+  {
+    title: 'Start a conversation',
+    description: 'We review every application and reach out when there is a fit with our research.',
+    icon: MessageCircle,
+  },
+];
 
-      {/* ── Benefits ─────────────────────────────────────────── */}
-      <section className="py-16 md:py-20">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-5xl">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="mb-12"
-            >
-              <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-xl border border-primary/15 bg-primary/10 p-2.5">
-                  <CheckCircle2 className="text-primary" size={22} />
+export const Careers = () => (
+  <div className="min-h-screen">
+    <SEO
+      title="Careers at BrAIN Labs"
+      description="Join BrAIN Labs and contribute to cutting-edge AI and neuroscience research. Explore open positions and opportunities."
+      keywords={[
+        'BrAIN Labs Careers',
+        'AI Research Jobs',
+        'Neuroscience Jobs',
+        'Research Positions',
+        'Internships',
+      ]}
+    />
+
+    <PageHero
+      icon={<Briefcase size={14} />}
+      eyebrow="Join Our Team"
+      title="Build the Future of"
+      highlight="AI Research"
+      description="Join a world-class team of researchers and engineers working at the intersection of artificial intelligence and neuroscience."
+    />
+
+    {/* ── Why join ─────────────────────────────────────────── */}
+    <section className="py-16 md:py-20">
+      <div className="container mx-auto grid gap-10 px-4 lg:grid-cols-12 lg:gap-14">
+        <motion.div {...fadeUp} className="lg:col-span-5">
+          <SectionLabel icon={Sparkles}>Why Join Us</SectionLabel>
+          <h2 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
+            Where curiosity meets real impact.
+          </h2>
+          <p className="mt-5 text-base leading-relaxed text-muted-foreground md:text-lg">
+            We offer an environment where ambitious research questions get the time, mentorship and
+            collaboration they deserve. Here's what makes our team special.
+          </p>
+        </motion.div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
+          {careersBenefits.map((benefit, idx) => {
+            const Icon = iconMap[benefit.iconName] ?? CheckCircle2;
+            return (
+              <motion.div
+                key={benefit.title}
+                {...fadeUpAt(idx)}
+                className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 transition-colors hover:border-foreground/25"
+              >
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-foreground text-background">
+                  <Icon size={20} />
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
-                  Why Join BrAIN Labs
-                </h2>
-              </div>
-              <p className="max-w-3xl border-l-2 border-primary/30 pl-4 text-base leading-relaxed text-muted-foreground md:text-lg">
-                We offer an environment where curiosity meets impact. Here's what makes our team
-                special.
-              </p>
-            </motion.div>
+                <h3 className="text-lg font-semibold leading-snug">{benefit.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {benefit.description}
+                </p>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
 
-            <div className="grid gap-5 md:grid-cols-2">
-              {careersBenefits.map((benefit, idx) => {
-                const BenefitIcon = iconMap[benefit.iconName] ?? CheckCircle2;
-                return (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.1, duration: 0.6 }}
-                  >
-                    <Card className="group h-full border-border/50 bg-card/60 transition-all duration-300 hover:border-primary/40 hover:shadow-md">
-                      <CardHeader className="space-y-4 pb-4">
-                        <div className="bg-primary/8 group-hover:bg-primary/14 w-fit rounded-xl p-3 transition-colors">
-                          <BenefitIcon className="text-primary" size={22} />
-                        </div>
-                        <p className="text-base font-semibold leading-snug text-foreground/90">
-                          {benefit.title}
-                        </p>
-                        <p className="text-sm leading-relaxed text-muted-foreground">
-                          {benefit.description}
-                        </p>
-                      </CardHeader>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
+    {/* ── Open positions + how to apply ────────────────────── */}
+    <section className="border-t border-border/60 py-16 md:py-20">
+      <div className="container mx-auto grid gap-10 px-4 lg:grid-cols-12 lg:gap-14">
+        <motion.div {...fadeUp} className="lg:col-span-5">
+          <SectionLabel icon={Briefcase}>Open Positions</SectionLabel>
+          <h2 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+            No open roles right now, but we're always listening.
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            New research positions and internships are posted here as they open. Talented
+            researchers and engineers are welcome to send an open application at any time.
+          </p>
+        </motion.div>
+
+        <div className="grid gap-4 lg:col-span-7">
+          {applySteps.map(({ title, description, icon: Icon }, idx) => (
+            <motion.div
+              key={title}
+              {...fadeUpAt(idx)}
+              className="flex items-start gap-4 rounded-2xl border border-border bg-card p-5 transition-colors hover:border-foreground/25 sm:p-6"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary">
+                <Icon size={20} />
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Step {String(idx + 1).padStart(2, '0')}
+                </div>
+                <h3 className="mt-1 text-base font-semibold">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{description}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* ── Apply CTA ────────────────────────────────────────── */}
+    <section className="border-y border-zinc-300/70 bg-zinc-200/70 py-16 md:py-20">
+      <motion.div
+        {...fadeUp}
+        className="container mx-auto flex flex-col gap-8 px-4 md:flex-row md:items-center md:justify-between"
+      >
+        <div className="flex max-w-2xl items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+            <Mail size={22} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Ready to join the lab?
+            </h2>
+            <p className="mt-3 text-base leading-relaxed text-foreground/70">
+              Send us your CV and research interests. We'd love to hear what you want to work on.
+            </p>
           </div>
         </div>
-      </section>
-
-      {/* ── Current Openings ─────────────────────────────────── */}
-      <section className="border-y border-border/40 bg-muted/30 py-16">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mx-auto max-w-4xl"
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+          <a
+            href={`${contact.email}?subject=${encodeURIComponent('Open Application')}`}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
-            <div className="mb-10 flex flex-col items-center gap-3">
-              <div className="rounded-xl border border-primary/15 bg-primary/10 p-2.5">
-                <Briefcase className="text-primary" size={22} />
-              </div>
-              <h2 className="text-center text-2xl font-bold tracking-tight md:text-3xl">
-                Current Openings
-              </h2>
-            </div>
-
-            <Card className="border-border/50 bg-card/60">
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="bg-primary/8 mb-6 rounded-full border border-primary/15 p-4">
-                  <Briefcase size={32} className="text-primary" />
-                </div>
-                <h3 className="mb-2 text-xl font-bold">No positions listed yet</h3>
-                <p className="mb-6 max-w-md text-sm text-muted-foreground">
-                  We're always looking for talented researchers and engineers. Check back soon for
-                  new opportunities, or send us your CV for future consideration.
-                </p>
-                <a href={contact.email}>
-                  <Button className="h-10 rounded-full bg-foreground px-6 text-sm font-medium text-background shadow-md transition-all hover:bg-foreground/90 hover:shadow-lg">
-                    Send Your CV
-                    <ArrowRight size={14} className="ml-2" />
-                  </Button>
-                </a>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── FAQ ──────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-foreground py-20 text-background md:py-24">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
-        <div className="container relative mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mx-auto max-w-2xl"
+            Send Your CV
+            <ArrowRight size={15} />
+          </a>
+          <Link
+            to="/team"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-foreground/20 bg-background px-6 text-sm font-medium transition-colors hover:border-foreground/40"
           >
-            <div className="mb-8 flex flex-col items-center gap-3">
-              <div className="rounded-xl border border-background/20 bg-background/10 p-2.5">
-                <GraduationCap size={22} />
-              </div>
-              <h2 className="text-center text-3xl font-bold tracking-tight md:text-4xl">
-                Common Questions
-              </h2>
-            </div>
-
-            <Accordion type="single" collapsible className="space-y-3">
-              {careersFaqs.map((item, idx) => (
-                <AccordionItem
-                  key={idx}
-                  value={`item-${idx}`}
-                  className="rounded-xl border border-background/15 bg-background/5 px-5 transition-colors hover:border-background/30"
-                >
-                  <AccordionTrigger className="py-4 text-base font-medium transition-colors hover:text-background/80 hover:no-underline">
-                    {item.q}
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-5 text-sm leading-relaxed text-background/70">
-                    {item.a}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </motion.div>
+            <Users size={15} />
+            Meet the Team
+          </Link>
         </div>
-      </section>
-    </div>
-  );
-};
+      </motion.div>
+    </section>
+
+    {/* ── FAQ ──────────────────────────────────────────────── */}
+    <section className="relative overflow-hidden bg-foreground py-16 text-background md:py-24">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
+      <div className="container relative mx-auto grid gap-10 px-4 lg:grid-cols-12 lg:gap-14">
+        <motion.div {...fadeUp} className="lg:col-span-5">
+          <SectionLabel icon={HelpCircle} inverted>
+            FAQ
+          </SectionLabel>
+          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Common Questions</h2>
+          <p className="mt-4 text-base leading-relaxed text-background/70">
+            Have a question about joining us that isn't covered here? Get in touch.
+          </p>
+          <Link
+            to="/contact"
+            className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-background px-6 text-sm font-medium text-foreground transition-opacity hover:opacity-90"
+          >
+            <Mail size={15} />
+            Contact Us
+          </Link>
+        </motion.div>
+
+        <motion.div {...fadeUp} className="lg:col-span-7">
+          <Accordion type="single" collapsible className="space-y-3">
+            {careersFaqs.map((item, idx) => (
+              <AccordionItem
+                key={item.q}
+                value={`item-${idx}`}
+                className="rounded-xl border border-background/15 bg-background/5 px-5 transition-colors hover:border-background/30"
+              >
+                <AccordionTrigger className="py-4 text-left text-base font-medium hover:text-background/80 hover:no-underline">
+                  {item.q}
+                </AccordionTrigger>
+                <AccordionContent className="pb-5 text-sm leading-relaxed text-background/70">
+                  {item.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </motion.div>
+      </div>
+    </section>
+  </div>
+);

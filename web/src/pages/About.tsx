@@ -25,16 +25,11 @@ import {
 import { MissionCompassIcon } from '@/components/ui/PageIcons';
 import { SEO } from '@/components/shared/SEO';
 import { PageHero } from '@/components/shared/PageHero';
+import { SectionLabel } from '@/components/shared/SectionLabel';
 import { collaborations, faq, futureDirections, intro, mission } from '@/data/general';
 import { statsData } from '@/data/grants';
 import { iconMap } from '@/lib/icons';
-
-const fadeUp = {
-  initial: { opacity: 0, y: 16 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-60px' },
-  transition: { duration: 0.45 },
-} as const;
+import { fadeUp, fadeUpAt } from '@/lib/motion';
 
 const glance: { value: string | number; label: string; icon: LucideIcon }[] = [
   { value: statsData.researchers, label: 'Researchers', icon: Users },
@@ -52,13 +47,6 @@ const splitPoint = (point: string) => {
     ? { title: point, description: '' }
     : { title: point.slice(0, i).trim(), description: point.slice(i + 1).trim() };
 };
-
-const SectionLabel = ({ icon: Icon, children }: { icon: LucideIcon; children: string }) => (
-  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium uppercase tracking-wide text-foreground/80">
-    <Icon size={13} />
-    {children}
-  </div>
-);
 
 export const About = () => (
   <div className="min-h-screen">
@@ -124,8 +112,7 @@ export const About = () => (
             return (
               <motion.div
                 key={point.text}
-                {...fadeUp}
-                transition={{ ...fadeUp.transition, delay: idx * 0.06 }}
+                {...fadeUpAt(idx)}
                 className="flex items-start gap-4 rounded-2xl border border-border bg-card p-5 transition-colors hover:border-foreground/25 sm:p-6"
               >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
@@ -164,8 +151,7 @@ export const About = () => (
             return (
               <motion.div
                 key={point}
-                {...fadeUp}
-                transition={{ ...fadeUp.transition, delay: idx * 0.06 }}
+                {...fadeUpAt(idx)}
                 className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 transition-colors hover:border-foreground/25"
               >
                 <div className="mb-4 inline-flex w-fit rounded-xl border border-border bg-secondary p-2.5">
@@ -226,10 +212,9 @@ export const About = () => (
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
       <div className="container relative mx-auto grid gap-10 px-4 lg:grid-cols-12 lg:gap-14">
         <motion.div {...fadeUp} className="lg:col-span-5">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-background/20 bg-background/10 px-3 py-1 text-xs font-medium uppercase tracking-wide">
-            <HelpCircle size={13} />
+          <SectionLabel icon={HelpCircle} inverted>
             FAQ
-          </div>
+          </SectionLabel>
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
             Frequently Asked Questions
           </h2>
