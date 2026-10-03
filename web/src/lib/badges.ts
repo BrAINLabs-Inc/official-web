@@ -7,6 +7,7 @@ import {
   badgeRecipients,
   type BadgeDesign,
   type BadgeEvent,
+  type BadgeEventType,
   type BadgeLevel,
   type BadgeRecipient,
 } from '../data/badges';
@@ -75,6 +76,22 @@ export const formatBadgeDate = (iso: string) =>
     year: 'numeric',
     timeZone: 'UTC',
   });
+
+/** "March 2, 2026" or "March 2, 2026 – June 30, 2026" for activities with an end date. */
+export const formatEventDates = (e: Pick<BadgeEvent, 'date' | 'endDate'>) =>
+  e.endDate && e.endDate !== e.date
+    ? `${formatBadgeDate(e.date)} – ${formatBadgeDate(e.endDate)}`
+    : formatBadgeDate(e.date);
+
+const EVENT_TYPE_LABEL: Record<BadgeEventType, string> = {
+  programme: 'Programme',
+  event: 'Event',
+  workshop: 'Workshop',
+  research: 'Research',
+  competition: 'Competition',
+};
+
+export const eventTypeLabel = (type: BadgeEventType) => EVENT_TYPE_LABEL[type];
 
 const designsById = new Map(badgeDesigns.map((d) => [d.id, d]));
 const eventsById = new Map(badgeEvents.map((e) => [e.id, e]));
