@@ -6,8 +6,10 @@ import { Home } from './pages/Home';
 import { BADGES_LIVE } from './lib/badges';
 
 // Every page except Home is code-split so the landing page loads only what it needs.
-const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) =>
-  lazy(() => load().then((m) => ({ default: m[name] })));
+const page = <K extends string, P extends object>(
+  load: () => Promise<Record<K, ComponentType<P>>>,
+  name: K
+) => lazy(() => load().then((m) => ({ default: m[name] })));
 
 const Projects = page(() => import('./pages/Projects'), 'Projects');
 const Team = page(() => import('./pages/Team'), 'Team');
@@ -44,8 +46,32 @@ function App() {
             <Route path="blog" element={<Blog />} />
             <Route path="blog/:id" element={<BlogPost />} />
             <Route path="careers" element={<Careers />} />
-            <Route path="badges" element={BADGES_LIVE ? <Badges /> : <ComingSoon />} />
-            <Route path="badges/:id" element={BADGES_LIVE ? <BadgeVerify /> : <ComingSoon />} />
+            <Route
+              path="badges"
+              element={
+                BADGES_LIVE ? (
+                  <Badges />
+                ) : (
+                  <ComingSoon
+                    feature="Badge Verification"
+                    description="Verified achievement badges from BrAIN Labs, with one-click sharing to LinkedIn, are on the way."
+                  />
+                )
+              }
+            />
+            <Route
+              path="badges/:id"
+              element={
+                BADGES_LIVE ? (
+                  <BadgeVerify />
+                ) : (
+                  <ComingSoon
+                    feature="Badge Verification"
+                    description="Verified achievement badges from BrAIN Labs, with one-click sharing to LinkedIn, are on the way."
+                  />
+                )
+              }
+            />
             <Route path="coming-soon" element={<ComingSoon />} />
           </Route>
           <Route path="/404" element={<Standalone page={<NotFound />} />} />
