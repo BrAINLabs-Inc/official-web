@@ -1,212 +1,220 @@
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { CollaborationIcon } from '@/components/ui/PageIcons';
-import { Globe, Linkedin, Mail, MapPin, UserPlus } from 'lucide-react';
-import { useCallback } from 'react';
+import {
+  ArrowRight,
+  ArrowUpRight,
+  FlaskConical,
+  GraduationCap,
+  History,
+  Mail,
+  MapPin,
+  Search,
+  UserPlus,
+  Users,
+  X,
+} from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { CollaborationIcon } from '@/components/ui/PageIcons';
 import { MemberModal } from '@/components/team/MemberModal';
 import { SEO } from '@/components/shared/SEO';
 import { PageHero } from '@/components/shared/PageHero';
+import { SectionLabel } from '@/components/shared/SectionLabel';
 import { researchers, type Researcher } from '@/data/team';
+import { fadeUp, fadeUpAt } from '@/lib/motion';
 import { memberInitials } from '@/lib/utils';
+
+const fullName = (r: Researcher) => `${r.member.first_name} ${r.member.second_name}`;
+
+/** Assistants are anyone whose role is an assistant position; everyone else leads research. */
+const isAssistant = (r: Researcher) => /assistant/i.test(r.occupation ?? '');
 
 const currentMembers = researchers.filter((r) => r.status === 'current');
 const formerMembers = researchers.filter((r) => r.status === 'former');
+const leads = currentMembers.filter((r) => !isAssistant(r));
+const assistants = currentMembers.filter(isAssistant);
 
-// ── Shared card component ─────────────────────────────────────────────────────
-const MemberCard = ({ researcher, idx }: { researcher: Researcher; idx: number }) => {
-  const name = `${researcher.member.first_name} ${researcher.member.second_name}`;
-  const isFormer = researcher.status === 'former';
+/** Members in display order, used for next / previous in the modal. */
+const orderedMembers = [...leads, ...assistants, ...formerMembers];
 
+/** Research areas shared by at least two members, most common first. */
+const areaCounts = researchers
+  .flatMap((r) => r.research_areas)
+  .reduce((m, a) => m.set(a, (m.get(a) ?? 0) + 1), new Map<string, number>());
+const filterAreas = [...areaCounts]
+  .filter(([, n]) => n > 1)
+  .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  .map(([a]) => a);
+
+const matches = (r: Researcher, query: string, area: string | null) => {
+  if (area && !r.research_areas.includes(area)) return false;
+  if (!query) return true;
+  const haystack = [fullName(r), r.occupation, r.workplace, ...r.research_areas]
+    .join(' ')
+    .toLowerCase();
+  return haystack.includes(query);
+};
+
+// ── Avatar ────────────────────────────────────────────────────────────────────
+const Avatar = ({ researcher, className }: { researcher: Researcher; className: string }) => {
+  const [failed, setFailed] = useState(false);
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: idx * 0.07, duration: 0.5 }}
-      className="h-full"
-    >
-      <Card className="group relative flex h-full flex-col border-border/50 bg-card/80 transition-all duration-300 hover:border-primary/40 hover:shadow-lg">
-        {/* Whole-card link to the profile; action links below sit above it */}
-        <Link
-          to={`/team/${researcher.member.slug}`}
-          className="absolute inset-0 z-0 rounded-[inherit]"
-          aria-label={`View ${name}'s profile`}
-          aria-haspopup="dialog"
+    <div className={`relative overflow-hidden bg-secondary ${className}`}>
+      {researcher.image_url && !failed ? (
+        <img
+          src={researcher.image_url}
+          alt={fullName(researcher)}
+          loading="lazy"
+          onError={() => setFailed(true)}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
         />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-muted-foreground">
+          {memberInitials(researcher)}
+        </div>
+      )}
+    </div>
+  );
+};
 
-        <CardHeader className="px-6 pb-3 pt-6">
+// ── Cards ─────────────────────────────────────────────────────────────────────
+const MemberCard = ({
+  researcher,
+  idx,
+  activeArea,
+}: {
+  researcher: Researcher;
+  idx: number;
+  activeArea: string | null;
+}) => {
+  const areas = researcher.research_areas;
+  return (
+    <motion.div {...fadeUpAt(idx % 8)} className="h-full">
+      <Link
+        to={`/team/${researcher.member.slug}`}
+        aria-haspopup="dialog"
+        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-foreground/25"
+      >
+        <div className="flex flex-1 flex-col p-5">
           <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="relative h-16 w-16 shrink-0">
-              <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 ring-1 ring-border">
-                <span className="text-xl font-bold text-primary/80">
-                  {memberInitials(researcher)}
-                </span>
-              </div>
-              {researcher.image_url && (
-                <img
-                  src={researcher.image_url}
-                  alt={name}
-                  className={`relative h-16 w-16 rounded-2xl object-cover ring-2 ring-border transition-all duration-300 group-hover:ring-primary/40 ${isFormer ? 'grayscale-[40%]' : ''}`}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
+            <Avatar
+              researcher={researcher}
+              className="h-16 w-16 shrink-0 rounded-xl ring-1 ring-border [&_div]:text-lg"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-base font-semibold leading-snug">{fullName(researcher)}</h3>
+                <ArrowUpRight
+                  size={16}
+                  className="mt-0.5 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
                 />
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1 pt-0.5">
-              <div className="mb-1 flex items-start justify-between gap-2">
-                <CardTitle className="text-base font-semibold leading-snug transition-colors group-hover:text-primary">
-                  {name}
-                </CardTitle>
-                {isFormer && (
-                  <Badge
-                    variant="secondary"
-                    className="shrink-0 rounded-full px-2 py-0 text-[9px] font-semibold uppercase tracking-wider"
-                  >
-                    Alumni
-                  </Badge>
-                )}
               </div>
               {researcher.occupation && (
-                <CardDescription className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-primary">
+                <p className="mt-1 text-sm leading-snug text-foreground/80">
                   {researcher.occupation}
-                </CardDescription>
-              )}
-              {researcher.workplace && (
-                <p className="text-xs text-muted-foreground/80">{researcher.workplace}</p>
+                </p>
               )}
             </div>
           </div>
-        </CardHeader>
-
-        <CardContent className="flex flex-1 flex-col space-y-4 px-6 pb-6">
-          {researcher.bio && (
-            <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">
-              {researcher.bio}
-            </p>
+          {researcher.workplace && (
+            <p className="mt-3 text-xs text-muted-foreground">{researcher.workplace}</p>
           )}
-
-          {researcher.research_areas.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                Research Areas
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {researcher.research_areas.map((area) => (
-                  <Badge
-                    key={area}
-                    variant="secondary"
-                    className="bg-primary/6 border border-primary/10 px-2 py-0.5 text-[10px] font-medium text-foreground/80"
-                  >
-                    {area}
-                  </Badge>
-                ))}
-              </div>
+          {areas.length > 0 && (
+            <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
+              {areas.slice(0, 3).map((area) => (
+                <span
+                  key={area}
+                  className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${
+                    area === activeArea
+                      ? 'border-foreground bg-foreground text-background'
+                      : 'border-border bg-secondary text-foreground/80'
+                  }`}
+                >
+                  {area}
+                </span>
+              ))}
+              {areas.length > 3 && (
+                <span className="rounded-full px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  +{areas.length - 3}
+                </span>
+              )}
             </div>
           )}
-
-          {researcher.educational_background && researcher.educational_background.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                Education
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {researcher.educational_background.slice(0, 2).map((ed) => (
-                  <Badge
-                    key={ed.id}
-                    variant="secondary"
-                    className="bg-primary/6 border border-primary/10 px-2 py-0.5 text-[10px] font-medium text-foreground/80"
-                  >
-                    {ed.degree}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Links */}
-          <div className="relative z-10 mt-auto flex flex-wrap gap-x-4 gap-y-2 border-t border-border/40 pt-3">
-            {researcher.member.contact_email && (
-              <a
-                href={`mailto:${researcher.member.contact_email}`}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Mail size={13} />
-                Email
-              </a>
-            )}
-            {researcher.member.linkedin && (
-              <a
-                href={researcher.member.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Linkedin size={13} />
-                LinkedIn
-              </a>
-            )}
-            {researcher.member.website && (
-              <a
-                href={researcher.member.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Globe size={13} />
-                Website
-              </a>
-            )}
-            {researcher.country && (
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
-                <MapPin size={13} />
-                {researcher.country}
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Link>
     </motion.div>
   );
 };
 
-const GroupHeading = ({
-  title,
-  count,
-  active,
-}: {
-  title: string;
-  count: number;
-  active?: boolean;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    className="mb-8 flex items-center gap-3"
-  >
-    <span
-      className={`h-2 w-2 rounded-full ${active ? 'animate-pulse bg-primary' : 'bg-muted-foreground/40'}`}
-    />
-    <h2 className="text-xl font-bold tracking-tight md:text-2xl">{title}</h2>
-    <span className="bg-primary/8 ml-1 rounded-full border border-primary/15 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-      {count}
-    </span>
+const AlumniCard = ({ researcher, idx }: { researcher: Researcher; idx: number }) => (
+  <motion.div {...fadeUpAt(idx)}>
+    <Link
+      to={`/team/${researcher.member.slug}`}
+      aria-haspopup="dialog"
+      className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-foreground/25"
+    >
+      <Avatar
+        researcher={researcher}
+        className="h-14 w-14 shrink-0 rounded-xl grayscale-[40%] [&_div]:text-base"
+      />
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-sm font-semibold">{fullName(researcher)}</h3>
+        {researcher.occupation && (
+          <p className="truncate text-xs text-muted-foreground">{researcher.occupation}</p>
+        )}
+        {researcher.country && (
+          <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground/80">
+            <MapPin size={11} />
+            {researcher.country}
+          </p>
+        )}
+      </div>
+      <ArrowUpRight
+        size={16}
+        className="shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
+      />
+    </Link>
   </motion.div>
 );
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-/** Members in display order (current, then former), used for next / previous in the modal. */
-const orderedMembers = [...currentMembers, ...formerMembers];
+const Group = ({
+  icon,
+  label,
+  title,
+  members,
+  activeArea,
+}: {
+  icon: typeof Users;
+  label: string;
+  title: string;
+  members: Researcher[];
+  activeArea: string | null;
+}) =>
+  members.length === 0 ? null : (
+    <div>
+      <motion.div {...fadeUp} className="mb-6 flex items-end justify-between gap-4">
+        <div>
+          <SectionLabel icon={icon}>{label}</SectionLabel>
+          <h2 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{title}</h2>
+        </div>
+        <span className="pb-1 text-sm tabular-nums text-muted-foreground">
+          {members.length} {members.length === 1 ? 'member' : 'members'}
+        </span>
+      </motion.div>
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {members.map((r, idx) => (
+          <MemberCard key={r.member_id} researcher={r} idx={idx} activeArea={activeArea} />
+        ))}
+      </div>
+    </div>
+  );
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export const Team = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+  const [area, setArea] = useState<string | null>(null);
+
   const index = slug ? orderedMembers.findIndex((r) => r.member.slug === slug) : -1;
   const selected = index >= 0 ? orderedMembers[index] : undefined;
 
@@ -215,6 +223,22 @@ export const Team = () => {
     (i: number) => navigate(`/team/${orderedMembers[i].member.slug}`, { replace: true }),
     [navigate]
   );
+
+  const q = query.trim().toLowerCase();
+  const filtered = useMemo(
+    () => ({
+      leads: leads.filter((r) => matches(r, q, area)),
+      assistants: assistants.filter((r) => matches(r, q, area)),
+      former: formerMembers.filter((r) => matches(r, q, area)),
+    }),
+    [q, area]
+  );
+  const isFiltering = q !== '' || area !== null;
+  const resultCount = filtered.leads.length + filtered.assistants.length + filtered.former.length;
+  const clearFilters = () => {
+    setQuery('');
+    setArea(null);
+  };
 
   // Unknown member in the URL: fall back to the team list
   if (slug && !selected) return <Navigate to="/team" replace />;
@@ -234,31 +258,135 @@ export const Team = () => {
         highlight="Researchers"
         description="A multidisciplinary team of experts pushing the boundaries of AI and neuroscience research."
         stats={[
-          { value: currentMembers.length, label: 'Current Members' },
-          { value: formerMembers.length, label: 'Former Members' },
+          { value: leads.length, label: 'Researchers' },
+          { value: assistants.length, label: 'Research Assistants' },
+          { value: formerMembers.length, label: 'Alumni' },
         ]}
       />
 
-      {/* ── Current members ───────────────────────────────────── */}
-      <section className="py-8 md:py-14">
-        <div className="container mx-auto px-4">
-          <GroupHeading title="Current Members" count={currentMembers.length} active />
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {currentMembers.map((researcher, idx) => (
-              <MemberCard key={researcher.member_id} researcher={researcher} idx={idx} />
+      {/* ── Filters ──────────────────────────────────────────── */}
+      <section className="border-y border-border/60 bg-secondary/40 py-5">
+        <div className="container mx-auto flex flex-col gap-4 px-4 lg:flex-row lg:items-center">
+          <div className="relative w-full lg:max-w-xs">
+            <Search
+              size={16}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name, role or area"
+              aria-label="Search team members"
+              className="h-11 w-full rounded-full border border-border bg-background pl-11 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-foreground/40"
+            />
+          </div>
+          <div
+            role="group"
+            aria-label="Filter by research area"
+            className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:pb-0"
+          >
+            <button
+              type="button"
+              onClick={() => setArea(null)}
+              aria-pressed={area === null}
+              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                area === null
+                  ? 'border-foreground bg-foreground text-background'
+                  : 'border-border bg-background text-foreground/80 hover:border-foreground/40'
+              }`}
+            >
+              All areas
+            </button>
+            {filterAreas.map((a) => (
+              <button
+                key={a}
+                type="button"
+                onClick={() => setArea(area === a ? null : a)}
+                aria-pressed={area === a}
+                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                  area === a
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-border bg-background text-foreground/80 hover:border-foreground/40'
+                }`}
+              >
+                {a}
+              </button>
             ))}
           </div>
         </div>
+        {isFiltering && (
+          <div className="container mx-auto mt-3 flex items-center gap-3 px-4 text-sm text-muted-foreground">
+            <span aria-live="polite">
+              {resultCount} {resultCount === 1 ? 'member' : 'members'} found
+            </span>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex items-center gap-1 font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              <X size={13} />
+              Clear
+            </button>
+          </div>
+        )}
       </section>
 
-      {/* ── Former members ────────────────────────────────────── */}
-      {formerMembers.length > 0 && (
-        <section className="border-t border-border/40 bg-muted/20 py-8 md:py-14">
+      {/* ── Current members ───────────────────────────────────── */}
+      <section className="py-14 md:py-20">
+        <div className="container mx-auto space-y-16 px-4 md:space-y-20">
+          <Group
+            icon={FlaskConical}
+            label="Research Leads"
+            title="Researchers & mentors."
+            members={filtered.leads}
+            activeArea={area}
+          />
+          <Group
+            icon={GraduationCap}
+            label="Research Assistants"
+            title="The people running the experiments."
+            members={filtered.assistants}
+            activeArea={area}
+          />
+
+          {resultCount === 0 && (
+            <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-secondary">
+                <Users size={22} />
+              </div>
+              <p className="font-semibold">No members match your search</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Try a different name or research area.
+              </p>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-5 inline-flex h-10 items-center rounded-full border border-border px-5 text-sm font-medium transition-colors hover:border-foreground/40"
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Alumni ───────────────────────────────────────────── */}
+      {filtered.former.length > 0 && (
+        <section className="border-t border-border/60 py-14 md:py-20">
           <div className="container mx-auto px-4">
-            <GroupHeading title="Former Members" count={formerMembers.length} />
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {formerMembers.map((researcher, idx) => (
-                <MemberCard key={researcher.member_id} researcher={researcher} idx={idx} />
+            <motion.div {...fadeUp} className="mb-6 max-w-3xl">
+              <SectionLabel icon={History}>Alumni</SectionLabel>
+              <h2 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+                Former members.
+              </h2>
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                Researchers who have been part of BrAIN Labs and moved on to new chapters.
+              </p>
+            </motion.div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.former.map((r, idx) => (
+                <AlumniCard key={r.member_id} researcher={r} idx={idx} />
               ))}
             </div>
           </div>
@@ -266,32 +394,39 @@ export const Team = () => {
       )}
 
       {/* ── CTA ──────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-foreground py-20 text-background md:py-24">
+      <section className="relative overflow-hidden bg-foreground py-16 text-background md:py-24">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
-        <div className="container relative mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="mx-auto max-w-2xl space-y-6 text-center"
-          >
-            <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-background/20 bg-background/10">
-              <UserPlus size={24} />
-            </div>
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Join Our Team</h2>
-            <p className="mx-auto max-w-lg text-base leading-relaxed text-background/70">
-              We regularly accept interns and PhD candidates. Check out our open positions or get in
-              touch regarding opportunities.
+        <motion.div
+          {...fadeUp}
+          className="container relative mx-auto flex flex-col gap-8 px-4 md:flex-row md:items-center md:justify-between"
+        >
+          <div className="max-w-2xl">
+            <SectionLabel icon={UserPlus} inverted>
+              Join Us
+            </SectionLabel>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Join our team.</h2>
+            <p className="mt-4 text-base leading-relaxed text-background/70">
+              We regularly accept interns, research assistants and postgraduate candidates. See our
+              open positions or get in touch about opportunities.
             </p>
-            <Link to="/contact">
-              <Button className="h-11 rounded-full bg-background px-7 text-sm text-foreground transition-opacity hover:bg-background hover:opacity-90">
-                <Mail className="mr-2" size={15} />
-                Contact Us
-              </Button>
+          </div>
+          <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+            <Link
+              to="/careers"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-background px-6 text-sm font-medium text-foreground transition-opacity hover:opacity-90"
+            >
+              Open Positions
+              <ArrowRight size={15} />
             </Link>
-          </motion.div>
-        </div>
+            <Link
+              to="/contact"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-background/25 px-6 text-sm font-medium transition-colors hover:border-background/50"
+            >
+              <Mail size={15} />
+              Contact Us
+            </Link>
+          </div>
+        </motion.div>
       </section>
 
       {selected && (
