@@ -67,7 +67,7 @@ export const Blog = () => (
 
     {/* ── Featured post ────────────────────────────────────── */}
     {featured && (
-      <section className="py-16 md:py-20">
+      <section className="py-12 md:py-16">
         <div className="container mx-auto px-4">
           <motion.div {...fadeUp}>
             <SectionLabel icon={Star}>Latest Post</SectionLabel>
@@ -78,29 +78,29 @@ export const Blog = () => (
               to={postPath(featured)}
               className="group grid overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-foreground/25 lg:grid-cols-12"
             >
-              <div className="flex items-center justify-center border-b border-border bg-secondary/60 p-4 sm:p-6 lg:col-span-6 lg:border-b-0 lg:border-r">
+              <div className="flex items-center justify-center border-b border-border bg-secondary/60 p-4 sm:p-5 lg:col-span-5 lg:border-b-0 lg:border-r">
                 <img
                   src={featured.imageUrl}
                   alt={featured.title}
-                  className="max-h-[26rem] w-full rounded-lg object-contain shadow-sm transition-transform duration-500 group-hover:scale-[1.02]"
+                  className="max-h-56 w-full rounded-lg object-contain shadow-sm transition-transform duration-500 group-hover:scale-[1.02] sm:max-h-64"
                 />
               </div>
-              <div className="flex flex-col p-6 sm:p-8 lg:col-span-6 lg:p-10">
+              <div className="flex flex-col justify-center p-6 sm:p-7 lg:col-span-7">
                 <PostMeta post={featured} />
-                <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+                <h2 className="mt-3 text-xl font-bold leading-snug tracking-tight sm:text-2xl">
                   {featured.title}
                 </h2>
                 {featured.description && (
-                  <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                  <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
                     {featured.description}
                   </p>
                 )}
-                <div className="mt-6">
+                <div className="mt-4">
                   <Tags tags={featured.keywords.slice(0, 4)} />
                 </div>
-                <div className="mt-8 flex items-center justify-between gap-4 border-t border-border pt-6 lg:mt-auto">
+                <div className="mt-5 flex items-center justify-between gap-4 border-t border-border pt-4">
                   <span className="text-sm font-medium text-foreground/80">{featured.author}</span>
-                  <span className="inline-flex h-10 items-center gap-2 rounded-full bg-foreground px-5 text-sm font-medium text-background transition-opacity group-hover:opacity-90">
+                  <span className="inline-flex h-9 items-center gap-2 rounded-full bg-foreground px-4 text-sm font-medium text-background transition-opacity group-hover:opacity-90">
                     Read Article
                     <ArrowRight
                       size={15}
