@@ -1,14 +1,25 @@
-name: CI — Lint & Format
+name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, development]
   pull_request:
-    branches: [main, develop]
+    branches: [main, development]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ./web
 
 jobs:
-  lint-and-format:
-    name: Lint & Format Check
+  check:
+    name: Lint, Format, Type Check & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -18,22 +29,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
-        working-directory: ./web
 
       - name: Run ESLint
         run: npm run lint
-        working-directory: ./web
 
       - name: Check Prettier Formatting
         run: npm run format:check
-        working-directory: ./web
 
-      - name: TypeScript Type Check
-        run: npx tsc --noEmit
-        working-directory: ./web
+      # `tsc -b` type-checks the app and Vite config; then Vite builds the site
+      # (including the generated badge pages) exactly as Cloudflare does.
+      - name: Type Check & Build
+        run: npm run build
