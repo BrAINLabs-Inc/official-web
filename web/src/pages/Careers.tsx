@@ -1,9 +1,8 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Users, ArrowRight, CheckCircle2, GraduationCap } from 'lucide-react';
+import { Briefcase, ArrowRight, CheckCircle2, GraduationCap } from 'lucide-react';
 import { iconMap } from '@/lib/icons';
-import { Link } from 'react-router-dom';
 import { SEO } from '@/components/shared/SEO';
 import { PageHero } from '@/components/shared/PageHero';
 import {
@@ -133,39 +132,10 @@ export const Careers = () => {
         </div>
       </section>
 
-      {/* ── CTA ──────────────────────────────────────────────── */}
-      <section className="py-20">
-        <div className="container relative z-10 mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="mx-auto max-w-3xl space-y-6 text-center"
-          >
-            <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10">
-              <Users size={24} className="text-primary" />
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Ready to Shape the Future?
-            </h2>
-            <p className="mx-auto max-w-lg text-sm leading-relaxed text-muted-foreground">
-              Whether you're a PhD student, postdoc, or experienced researcher, we'd love to hear
-              from you. Drop us a line and let's explore how you can contribute.
-            </p>
-            <Link to="/contact">
-              <Button className="h-10 rounded-full bg-foreground px-7 text-sm text-background shadow-md transition-all hover:bg-foreground/90 hover:shadow-lg">
-                Get in Touch
-                <ArrowRight size={14} className="ml-2" />
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
       {/* ── FAQ ──────────────────────────────────────────────── */}
-      <section className="border-t border-border/50 bg-muted/30 py-16">
-        <div className="container mx-auto px-4">
+      <section className="relative overflow-hidden bg-foreground py-20 text-background md:py-24">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
+        <div className="container relative mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -173,10 +143,10 @@ export const Careers = () => {
             className="mx-auto max-w-2xl"
           >
             <div className="mb-8 flex flex-col items-center gap-3">
-              <div className="rounded-xl border border-primary/15 bg-primary/10 p-2.5">
-                <GraduationCap className="text-primary" size={22} />
+              <div className="rounded-xl border border-background/20 bg-background/10 p-2.5">
+                <GraduationCap size={22} />
               </div>
-              <h2 className="text-center text-2xl font-bold tracking-tight md:text-3xl">
+              <h2 className="text-center text-3xl font-bold tracking-tight md:text-4xl">
                 Common Questions
               </h2>
             </div>
@@ -186,12 +156,12 @@ export const Careers = () => {
                 <AccordionItem
                   key={idx}
                   value={`item-${idx}`}
-                  className="rounded-xl border border-border/60 bg-background/60 px-5 transition-colors hover:border-primary/30"
+                  className="rounded-xl border border-background/15 bg-background/5 px-5 transition-colors hover:border-background/30"
                 >
-                  <AccordionTrigger className="py-4 text-base font-medium transition-colors hover:text-primary hover:no-underline">
+                  <AccordionTrigger className="py-4 text-base font-medium transition-colors hover:text-background/80 hover:no-underline">
                     {item.q}
                   </AccordionTrigger>
-                  <AccordionContent className="pb-5 text-sm leading-relaxed text-muted-foreground">
+                  <AccordionContent className="pb-5 text-sm leading-relaxed text-background/70">
                     {item.a}
                   </AccordionContent>
                 </AccordionItem>

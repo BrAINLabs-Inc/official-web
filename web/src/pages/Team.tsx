@@ -245,8 +245,9 @@ export const Team = () => (
     )}
 
     {/* ── CTA ──────────────────────────────────────────────── */}
-    <section className="border-t border-border/40 py-20">
-      <div className="container mx-auto px-4">
+    <section className="relative overflow-hidden bg-foreground py-20 text-background md:py-24">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
+      <div className="container relative mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -254,17 +255,17 @@ export const Team = () => (
           transition={{ duration: 0.6 }}
           className="mx-auto max-w-2xl space-y-6 text-center"
         >
-          <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10">
-            <UserPlus size={24} className="text-primary" />
+          <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-background/20 bg-background/10">
+            <UserPlus size={24} />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Join Our Team</h2>
-          <p className="mx-auto max-w-lg text-sm leading-relaxed text-muted-foreground">
+          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Join Our Team</h2>
+          <p className="mx-auto max-w-lg text-base leading-relaxed text-background/70">
             We regularly accept interns and PhD candidates. Check out our open positions or get in
             touch regarding opportunities.
           </p>
           <Link to="/contact">
-            <Button className="h-10 rounded-full bg-foreground px-7 text-sm text-background shadow-md transition-all hover:bg-foreground/90 hover:shadow-lg">
-              <Mail className="mr-2" size={14} />
+            <Button className="h-11 rounded-full bg-background px-7 text-sm text-foreground transition-opacity hover:bg-background hover:opacity-90">
+              <Mail className="mr-2" size={15} />
               Contact Us
             </Button>
           </Link>
