@@ -12,6 +12,7 @@ import {
   ExternalLink,
   FileText,
   FolderGit2,
+  Github,
   MapPin,
   Sparkles,
   Users,
@@ -73,39 +74,38 @@ export const Events = () => (
     )}
 
     {/* ── Resources banner ──────────────────────────────────── */}
-    <section className="pb-20 pt-6">
-      <div className="container mx-auto px-4">
+    <section className="relative overflow-hidden bg-foreground py-20 text-background md:py-24">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
+      <div className="container relative mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 md:p-12"
+          transition={{ duration: 0.5 }}
+          className="mx-auto flex max-w-5xl flex-col gap-8 md:flex-row md:items-center md:justify-between"
         >
-          <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="max-w-2xl space-y-2">
-              <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-primary">
-                <Sparkles size={14} />
-                {tinyMLWorkshopInfo.title}
-              </div>
-              <h3 className="text-2xl font-bold tracking-tight">
-                Open Source Workshop Materials & Repositories
-              </h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {tinyMLWorkshopInfo.description}
-              </p>
+          <div className="max-w-2xl space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-background/20 bg-background/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wide">
+              <Sparkles size={14} />
+              {tinyMLWorkshopInfo.title}
             </div>
-            <a
-              href={tinyMLWorkshopInfo.resourcesUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0"
-            >
-              <Button className="gap-2 rounded-full px-6">
-                {tinyMLWorkshopInfo.buttonText}
-                <ExternalLink size={14} />
-              </Button>
-            </a>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+              Open Source Workshop Materials & Repositories
+            </h2>
+            <p className="text-base leading-relaxed text-background/70">
+              {tinyMLWorkshopInfo.description}
+            </p>
           </div>
+          <a
+            href={tinyMLWorkshopInfo.resourcesUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-background px-7 text-sm font-medium text-foreground transition-opacity hover:opacity-90"
+          >
+            <Github size={16} />
+            {tinyMLWorkshopInfo.buttonText}
+            <ExternalLink size={14} />
+          </a>
         </motion.div>
       </div>
     </section>
