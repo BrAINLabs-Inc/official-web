@@ -82,31 +82,36 @@ export const eventsData: EventItem[] = [
       {
         session: 'Session 1 - Part 1',
         description: 'Izhikevich Neuron Model',
-        notebookUrl: 'https://colab.research.google.com/github/BrAINLabs-Inc/ICAC_2024_SNN_workshop',
+        notebookUrl:
+          'https://colab.research.google.com/github/BrAINLabs-Inc/ICAC_2024_SNN_workshop',
         notebookLabel: 'Open in Colab',
       },
       {
         session: 'Session 1 - Part 2',
         description: 'LIF (Leaky Integrate-and-Fire) Neuron Model',
-        notebookUrl: 'https://colab.research.google.com/github/BrAINLabs-Inc/ICAC_2024_SNN_workshop',
+        notebookUrl:
+          'https://colab.research.google.com/github/BrAINLabs-Inc/ICAC_2024_SNN_workshop',
         notebookLabel: 'Open in Colab',
       },
       {
         session: 'Session 2',
         description: 'STDP Learning Algorithm',
-        notebookUrl: 'https://colab.research.google.com/github/BrAINLabs-Inc/ICAC_2024_SNN_workshop',
+        notebookUrl:
+          'https://colab.research.google.com/github/BrAINLabs-Inc/ICAC_2024_SNN_workshop',
         notebookLabel: 'Open in Colab',
       },
       {
         session: 'Session 3 - Part 1',
         description: 'SNN Implementation with MNIST Dataset',
-        notebookUrl: 'https://colab.research.google.com/github/BrAINLabs-Inc/ICAC_2024_SNN_workshop',
+        notebookUrl:
+          'https://colab.research.google.com/github/BrAINLabs-Inc/ICAC_2024_SNN_workshop',
         notebookLabel: 'Open in Colab',
       },
       {
         session: 'Session 3 - Part 2',
         description: 'ANN Implementation with MNIST Dataset',
-        notebookUrl: 'https://colab.research.google.com/github/BrAINLabs-Inc/ICAC_2024_SNN_workshop',
+        notebookUrl:
+          'https://colab.research.google.com/github/BrAINLabs-Inc/ICAC_2024_SNN_workshop',
         notebookLabel: 'Open in Colab',
       },
     ],
@@ -166,7 +171,8 @@ export const eventsData: EventItem[] = [
       },
       {
         type: 'Slides',
-        description: 'When CL Fails, When CL Wins: Disentangling Scoring and Pacing (ICML GlobalSouthML)',
+        description:
+          'When CL Fails, When CL Wins: Disentangling Scoring and Pacing (ICML GlobalSouthML)',
         link: 'https://github.com/BrAINLabs-Inc/MERcon_2026_CL_Workshop',
       },
       {

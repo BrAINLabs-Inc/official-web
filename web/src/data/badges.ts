@@ -10,8 +10,6 @@
 //
 // Each recipient automatically gets a verification page, a downloadable badge card,
 // and "Add to LinkedIn profile" / "Share on LinkedIn" buttons.
-//
-// NOTE: the recipients below are TEST entries. Replace them before deploying.
 
 export type BadgeLevel = 'gold' | 'silver' | 'bronze' | 'standard';
 
@@ -94,40 +92,6 @@ export const badgeDesigns: BadgeDesign[] = [
   },
 ];
 
-export const badgeEvents: BadgeEvent[] = [
-  {
-    id: 'test-programme-2026',
-    name: 'Test Programme 2026',
-    organizer: 'BrAIN Labs',
-    date: '2026-10-01',
-    location: 'SLIIT, Malabe, Sri Lanka',
-    description: 'Test entries for previewing the badge pages. Replace with real programmes.',
-  },
-];
+export const badgeEvents: BadgeEvent[] = [];
 
-export const badgeRecipients: BadgeRecipient[] = [
-  {
-    credentialId: 'BL-TEST26-001',
-    designId: 'community-research-gold',
-    eventId: 'test-programme-2026',
-    name: 'Test Recipient One',
-  },
-  {
-    credentialId: 'BL-TEST26-002',
-    designId: 'community-research-silver',
-    eventId: 'test-programme-2026',
-    name: 'Test Recipient Two',
-  },
-  {
-    credentialId: 'BL-TEST26-003',
-    designId: 'community-research-bronze',
-    eventId: 'test-programme-2026',
-    name: 'Test Recipient Three',
-  },
-  {
-    credentialId: 'BL-TEST26-004',
-    designId: 'ai-native-engineering',
-    eventId: 'test-programme-2026',
-    name: 'Test Recipient Four',
-  },
-];
+export const badgeRecipients: BadgeRecipient[] = [];
