@@ -1,225 +1,301 @@
 import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { SEO } from '@/components/shared/SEO';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   ArrowLeft,
-  Mail,
-  GraduationCap,
-  Zap,
-  MapPin,
   Briefcase,
-  User,
-  Linkedin,
   Globe,
-  Users,
+  GraduationCap,
+  Linkedin,
+  Mail,
+  MapPin,
+  Search,
+  UserX,
+  Zap,
 } from 'lucide-react';
-import { Section } from '@/components/sections/Section';
-import { CTASection } from '@/components/sections/CTASection';
-import { Tag } from '@/components/ui/Tag';
-import { LinkButton } from '@/components/ui/LinkButton';
-import { researchers, type Researcher } from '@/data/team';
+import { researchers } from '@/data/team';
+import { memberInitials } from '@/lib/utils';
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+};
+
+const InsightHeading = ({ icon: Icon, children }: { icon: typeof Zap; children: string }) => (
+  <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+    <Icon size={14} strokeWidth={3} />
+    {children}
+  </h3>
+);
 
 export const TeamMemberProfile = () => {
   const { slug } = useParams<{ slug: string }>();
+  const researcher = researchers.find((r) => r.member.slug === slug);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [slug]);
 
-  const researcher: Researcher | undefined =
-    researchers.find((r) => r.member.slug === slug) || researchers[0];
-
   if (!researcher) {
     return (
-      <div className="min-h-screen bg-white transition-colors dark:bg-neutral-950">
-        <div className="mx-auto max-w-[1280px] px-6 py-24 text-center">
-          <h2 className="font-display text-3xl font-bold text-neutral-900 dark:text-white">
-            Researcher not found
-          </h2>
-          <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="max-w-md space-y-6 text-center">
+          <div className="mb-2 inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted/50">
+            <UserX size={36} className="text-muted-foreground" />
+          </div>
+          <h2 className="text-2xl font-bold">Researcher not found</h2>
+          <p className="text-muted-foreground">
             The profile you're looking for doesn't exist or has been removed.
           </p>
-          <div className="mt-6">
-            <LinkButton to="/team" icon={<ArrowLeft size={14} />}>
+          <Link to="/team">
+            <Button variant="outline" className="rounded-full px-6">
               Back to Team
-            </LinkButton>
-          </div>
+            </Button>
+          </Link>
         </div>
       </div>
     );
   }
 
   const name = `${researcher.member.first_name} ${researcher.member.second_name}`;
-  const initials = `${researcher.member.first_name.replace(/^(Dr\.|Mr\.|Ms\.|Mrs\.)\s*/, '')[0] || ''}${researcher.member.second_name[0] || ''}`;
+  const isFormer = researcher.status === 'former';
+  const links = [
+    researcher.member.contact_email && {
+      href: `mailto:${researcher.member.contact_email}`,
+      label: 'Email',
+      icon: Mail,
+    },
+    researcher.member.linkedin && {
+      href: researcher.member.linkedin,
+      label: 'LinkedIn',
+      icon: Linkedin,
+    },
+    researcher.member.website && {
+      href: researcher.member.website,
+      label: 'Website',
+      icon: Globe,
+    },
+  ].filter(Boolean) as { href: string; label: string; icon: typeof Mail }[];
 
   return (
-    <div className="bg-transparent transition-colors">
+    <div className="relative min-h-screen bg-background">
       <SEO
         title={`${name} | BrAIN Labs Team`}
-        description={`${researcher.occupation ?? 'Researcher'} at BrAIN Labs - ${researcher.workplace ?? ''}`}
+        description={`${researcher.occupation ?? 'Researcher'} at BrAIN Labs, ${researcher.workplace ?? ''}`}
       />
 
-      <Section topBorder={false} corners className="pb-14 pt-12 md:pt-16">
-        <div className="mb-8">
-          <Link
-            to="/team"
-            className="inline-flex items-center gap-2 border border-neutral-300 bg-neutral-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-neutral-700 transition-colors hover:border-indigo-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-indigo-400"
-          >
-            <ArrowLeft size={14} />
-            <span>Back to Team</span>
-          </Link>
-        </div>
+      {/* ── Hero Section ──────────────────────────────────────── */}
+      <section className="relative flex min-h-[60vh] flex-col justify-center overflow-hidden border-b border-border/40 pb-16 pt-24 md:pt-32">
+        <div className="from-primary/6 absolute inset-0 bg-gradient-to-br via-background to-background" />
 
-        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[auto_1fr_360px] lg:gap-14">
-          <div className="flex shrink-0 flex-col items-start gap-3">
-            <Tag tone="indigo" className="inline-flex items-center gap-2 py-1">
-              <Zap size={11} />
-              {researcher.status === 'former' ? 'ALUMNI' : 'ACTIVE RESEARCHER'}
-            </Tag>
-            <div className="relative h-44 w-44 overflow-hidden border border-neutral-200 bg-slate-50 p-2 dark:border-neutral-800 dark:bg-neutral-900 md:h-52 md:w-52">
-              {researcher.image_url ? (
-                <img
-                  src={researcher.image_url}
-                  alt={name}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    const img = e.target as HTMLImageElement;
-                    img.style.display = 'none';
-                    if (img.nextElementSibling)
-                      (img.nextElementSibling as HTMLElement).style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <div
-                style={{ display: researcher.image_url ? 'none' : 'flex' }}
-                className="flex h-full w-full items-center justify-center bg-indigo-50 text-4xl font-extrabold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
-              >
-                {initials}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white md:text-4xl lg:text-5xl">
-                {name}
-              </h1>
-              {researcher.occupation && (
-                <p className="mt-2 text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                  {researcher.occupation}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2.5 text-sm text-neutral-600 dark:text-neutral-400">
-              {researcher.workplace && (
-                <div className="flex items-center gap-2.5">
-                  <Briefcase size={16} className="shrink-0 text-indigo-600 dark:text-indigo-400" />
-                  <span>{researcher.workplace}</span>
-                </div>
-              )}
-              {researcher.country && (
-                <div className="flex items-center gap-2.5">
-                  <MapPin size={16} className="shrink-0 text-indigo-600 dark:text-indigo-400" />
-                  <span>{researcher.country}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-3 pt-2">
-              {researcher.member.contact_email && (
-                <a
-                  href={`mailto:${researcher.member.contact_email}`}
-                  className="inline-flex items-center gap-2 border border-neutral-300 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-neutral-900 transition-colors hover:border-indigo-600 dark:border-neutral-700 dark:text-white dark:hover:border-indigo-400"
-                >
-                  <Mail size={14} />
-                  <span>Email</span>
-                </a>
-              )}
-              {researcher.member.linkedin && (
-                <a
-                  href={researcher.member.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 border border-neutral-300 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-neutral-900 transition-colors hover:border-indigo-600 dark:border-neutral-700 dark:text-white dark:hover:border-indigo-400"
-                >
-                  <Linkedin size={14} />
-                  <span>LinkedIn</span>
-                </a>
-              )}
-              {researcher.member.website && (
-                <a
-                  href={researcher.member.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 border border-neutral-300 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-neutral-900 transition-colors hover:border-indigo-600 dark:border-neutral-700 dark:text-white dark:hover:border-indigo-400"
-                >
-                  <Globe size={14} />
-                  <span>Website</span>
-                </a>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-6 border border-neutral-200 bg-slate-50/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-            {researcher.research_areas && researcher.research_areas.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400">
-                  <Zap size={14} />
-                  RESEARCH AREAS
-                </h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {researcher.research_areas.map((area, idx) => (
-                    <Tag key={idx}>{area}</Tag>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {researcher.educational_background && researcher.educational_background.length > 0 && (
-              <div className="border-t border-neutral-200 pt-4 dark:border-neutral-800">
-                <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400">
-                  <GraduationCap size={14} />
-                  EDUCATION
-                </h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {researcher.educational_background.map((ed) => (
-                    <Tag key={ed.id}>{ed.degree}</Tag>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </Section>
-
-      {researcher.bio && (
-        <Section className="py-16 md:py-20">
+        <div className="container relative z-10 mx-auto px-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-4xl"
+            key={slug}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mx-auto max-w-7xl"
           >
-            <div className="mb-6 flex items-center gap-3 border-b border-neutral-200 pb-3 dark:border-neutral-800">
-              <User size={18} className="text-indigo-600 dark:text-indigo-400" />
-              <h2 className="font-display text-xl font-bold text-neutral-900 dark:text-white">
-                Biography &amp; Research Statement
-              </h2>
+            <motion.div variants={itemVariants} className="mb-8">
+              <Link to="/team">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 rounded-full bg-primary/5 px-4 text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <ArrowLeft size={16} />
+                  Back to Team
+                </Button>
+              </Link>
+            </motion.div>
+
+            <div className="grid items-start gap-12 lg:grid-cols-[auto_1fr_400px] lg:gap-16">
+              {/* Column 1: Avatar */}
+              <motion.div
+                variants={itemVariants}
+                className="group relative flex shrink-0 flex-col items-start gap-3"
+              >
+                <div className="bg-primary/8 inline-flex items-center gap-2 rounded-full border border-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+                  <Zap size={10} />
+                  {isFormer ? 'Alumni' : 'Team Member'}
+                </div>
+                <div className="relative h-40 w-40 overflow-hidden rounded-3xl shadow-2xl ring-4 ring-primary/10 md:h-56 md:w-56">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                    <span className="text-5xl font-bold text-primary/40">
+                      {memberInitials(researcher)}
+                    </span>
+                  </div>
+                  {researcher.image_url && (
+                    <img
+                      src={researcher.image_url}
+                      alt={name}
+                      className="relative h-full w-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  )}
+                </div>
+              </motion.div>
+
+              {/* Column 2: Core Info */}
+              <motion.div variants={itemVariants} className="space-y-6 lg:pt-10">
+                <div className="space-y-3">
+                  <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground md:text-5xl">
+                    {name}
+                  </h1>
+                  {researcher.occupation && (
+                    <p className="text-xl font-semibold tracking-tight text-primary/90 md:text-2xl">
+                      {researcher.occupation}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-3 text-sm text-muted-foreground/80 md:text-base">
+                  {researcher.workplace && (
+                    <div className="flex items-center gap-3">
+                      <Briefcase size={18} className="shrink-0 text-primary/60" />
+                      <span>{researcher.workplace}</span>
+                    </div>
+                  )}
+                  {researcher.country && (
+                    <div className="flex items-center gap-3">
+                      <MapPin size={18} className="shrink-0 text-primary/60" />
+                      <span>{researcher.country}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-3 pt-6">
+                  {links.map(({ href, label, icon: Icon }) => (
+                    <Button
+                      key={label}
+                      size="sm"
+                      variant="outline"
+                      className="h-10 gap-2 rounded-full border-primary/20 px-6 hover:bg-primary/5"
+                      asChild
+                    >
+                      <a
+                        href={href}
+                        {...(href.startsWith('mailto:')
+                          ? {}
+                          : { target: '_blank', rel: 'noopener noreferrer' })}
+                      >
+                        <Icon size={14} />
+                        {label}
+                      </a>
+                    </Button>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Column 3: Quick Insights */}
+              <motion.div
+                variants={itemVariants}
+                className="space-y-8 self-start rounded-3xl border border-primary/10 bg-primary/[0.02] p-6 md:p-8"
+              >
+                {researcher.research_areas.length > 0 && (
+                  <div className="space-y-4">
+                    <InsightHeading icon={Zap}>Research Areas</InsightHeading>
+                    <div className="space-y-3">
+                      {researcher.research_areas.map((area) => (
+                        <div key={area} className="flex gap-3">
+                          <div className="h-auto w-1 shrink-0 rounded-full bg-primary/20" />
+                          <p className="text-[12px] leading-relaxed text-foreground/80">{area}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {researcher.educational_background &&
+                  researcher.educational_background.length > 0 && (
+                    <div className="space-y-4 border-t border-primary/5 pt-4">
+                      <InsightHeading icon={GraduationCap}>Education</InsightHeading>
+                      <div className="flex flex-wrap gap-1.5">
+                        {researcher.educational_background.map((ed) => (
+                          <Badge
+                            key={ed.id}
+                            variant="secondary"
+                            className="border-border/50 bg-background/80 px-2 py-0.5 text-[10px] hover:bg-primary/5"
+                          >
+                            {ed.degree}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {researcher.ongoing_research && researcher.ongoing_research.length > 0 && (
+                  <div className="space-y-4 border-t border-primary/5 pt-4">
+                    <InsightHeading icon={Zap}>Ongoing Research</InsightHeading>
+                    <div className="space-y-3">
+                      {researcher.ongoing_research.map((res) => (
+                        <div key={res.id} className="flex gap-3">
+                          <div className="h-auto w-1 shrink-0 rounded-full bg-primary/20" />
+                          <p className="line-clamp-2 text-[11px] italic leading-relaxed text-foreground/80">
+                            {res.title}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
             </div>
-            <p className="text-base leading-relaxed text-neutral-600 dark:text-neutral-400">
-              {researcher.bio}
-            </p>
           </motion.div>
-        </Section>
+        </div>
+      </section>
+
+      {/* ── Bio Section ───────────────────────────────────────── */}
+      {researcher.bio && (
+        <section className="relative px-4 py-12 md:px-8 md:py-20">
+          <div className="container mx-auto max-w-4xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+            >
+              <div className="mb-8 flex items-center gap-3 border-b border-border/40 pb-4">
+                <div className="rounded-xl bg-primary/10 p-2">
+                  <Search size={20} className="text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold">Biography & Research Statement</h2>
+              </div>
+              <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
+                {researcher.bio}
+              </p>
+            </motion.div>
+          </div>
+        </section>
       )}
 
-      <CTASection
-        compact
-        title="Explore the entire research group."
-        actions={[{ label: 'Meet More Researchers', to: '/team', icon: <Users size={14} /> }]}
-      />
+      {/* ── Footer Link ───────────────────────────────────────── */}
+      <section className="border-t border-border/40 py-20">
+        <div className="container mx-auto px-4 text-center">
+          <Link to="/team">
+            <Button
+              variant="ghost"
+              className="group gap-2 rounded-full px-8 text-primary hover:bg-primary/5"
+            >
+              <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
+              Meet More Researchers
+            </Button>
+          </Link>
+        </div>
+      </section>
     </div>
   );
 };

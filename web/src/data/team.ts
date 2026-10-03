@@ -29,7 +29,7 @@ export const researchers: Researcher[] = [
     country: 'Sri Lanka',
     image_url: '/assets/images/mahima-weerasinghe.jpeg',
     bio: 'Researcher and Lead for Neuroinformatics at BrAIN Labs and SLIIT.',
-    occupation: 'Researcher / Lead – Neuroinformatics',
+    occupation: 'Researcher / Lead - Neuroinformatics',
     workplace: 'Sri Lanka Institute of Information Technology',
     status: 'current',
     research_areas: [
@@ -70,7 +70,7 @@ export const researchers: Researcher[] = [
     country: 'Sri Lanka',
     image_url: '/assets/images/kapila_dissanayaka.jpeg',
     bio: 'Researcher and Lead for Explainable AI focusing on optical sensing, laser applications, and deep learning.',
-    occupation: 'Researcher / Lead – Explainable AI',
+    occupation: 'Researcher / Lead - Explainable AI',
     workplace: 'Sri Lanka Institute of Information Technology',
     status: 'current',
     research_areas: [
@@ -139,7 +139,7 @@ export const researchers: Researcher[] = [
     country: 'USA',
     image_url: '/assets/images/dinuka-sahabandu.jpeg',
     bio: 'Researcher and Lead for Efficient AI at University of Washington focusing on optimization, reinforcement learning, and AI ethics.',
-    occupation: 'Researcher / Lead – Efficient AI',
+    occupation: 'Researcher / Lead - Efficient AI',
     workplace: 'University of Washington',
     status: 'current',
     research_areas: [

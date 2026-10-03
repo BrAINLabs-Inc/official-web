@@ -1,7 +1,38 @@
-import * as Icons from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import {
+  Activity,
+  Brain,
+  Building2,
+  Cpu,
+  Globe,
+  GraduationCap,
+  Handshake,
+  Lightbulb,
+  Microscope,
+  Rocket,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  Users,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
 
-const iconMap = Icons as unknown as Record<string, LucideIcon>;
-
-export const getLucideIcon = (name: string, fallback: LucideIcon): LucideIcon =>
-  iconMap[name] || fallback;
+// Icons that data files refer to by name. Importing them explicitly (instead of
+// `import * as Icons`) keeps the rest of lucide-react out of the bundle.
+export const iconMap: Record<string, LucideIcon | undefined> = {
+  Activity,
+  Brain,
+  Building2,
+  Cpu,
+  Globe,
+  GraduationCap,
+  Handshake,
+  Lightbulb,
+  Microscope,
+  Rocket,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  Users,
+  Zap,
+};

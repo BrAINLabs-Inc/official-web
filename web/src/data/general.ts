@@ -94,7 +94,7 @@ export const careersBenefits = [
 export const careersFaqs = [
   {
     q: 'Do you offer internships?',
-    a: 'Yes, we regularly accept interns for 3–6 month research projects. Check this page for current openings or send us your CV and research interests.',
+    a: 'Yes, we regularly accept interns for 3-6 month research projects. Check this page for current openings or send us your CV and research interests.',
   },
   {
     q: 'What qualifications are required?',

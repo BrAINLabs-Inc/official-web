@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { CursorEffect } from '@/components/ui/CursorEffect';
-import { ProfessionalBackground } from '@/components/ui/ProfessionalBackground';
+import { NeuralBackground } from '@/components/ui/NeuralBackground';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 
-export const PageLayout: React.FC = () => {
+export const PageLayout = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -14,11 +13,12 @@ export const PageLayout: React.FC = () => {
 
   return (
     <div className="relative flex min-h-screen flex-col bg-background text-foreground">
-      <CursorEffect />
-      <ProfessionalBackground />
+      <NeuralBackground />
       <Navbar />
       <main className="relative z-10 flex-1">
-        <Outlet />
+        <Suspense fallback={<div className="min-h-screen" />}>
+          <Outlet />
+        </Suspense>
       </main>
       <Footer />
     </div>

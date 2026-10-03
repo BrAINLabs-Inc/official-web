@@ -1,132 +1,170 @@
-import { ExternalLink, BookOpen, FileText, Calendar } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { AcademicPaperIcon } from '@/components/ui/PageIcons';
+import { ExternalLink, FileText, Calendar, BookOpen } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { SEO } from '@/components/shared/SEO';
-import { Section } from '@/components/sections/Section';
-import { PageHero } from '@/components/sections/PageHero';
-import { Tag } from '@/components/ui/Tag';
+import { PageHero } from '@/components/shared/PageHero';
 import { publications, type Publication } from '@/data/publications';
 
-export const Publications = () => {
-  const publicationsByYear = publications.reduce(
-    (acc, pub) => {
-      if (!acc[pub.year]) acc[pub.year] = [];
-      acc[pub.year].push(pub);
-      return acc;
-    },
-    {} as Record<number, Publication[]>
-  );
+const publicationsByYear = publications.reduce(
+  (acc, pub) => {
+    (acc[pub.year] ??= []).push(pub);
+    return acc;
+  },
+  {} as Record<number, Publication[]>
+);
 
-  const years = Object.keys(publicationsByYear)
-    .map(Number)
-    .sort((a, b) => b - a);
+const years = Object.keys(publicationsByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
 
-  let globalIndex = 0;
-  const citationMap = new Map<number, number>();
-  years.forEach((year) => {
-    publicationsByYear[year].forEach((pub) => {
-      globalIndex++;
-      citationMap.set(pub.id, globalIndex);
-    });
-  });
+const citationMap = new Map<number, number>(
+  years.flatMap((year) => publicationsByYear[year]).map((pub, i) => [pub.id, i + 1])
+);
 
-  return (
-    <div className="bg-transparent transition-colors">
-      <SEO
-        title="Publications - Research Output"
-        description="Peer-reviewed research papers and scholarly contributions from BrAIN Labs researchers."
-        keywords={[
-          'Research Publications',
-          'AI Papers',
-          'Neuroscience Research',
-          'Academic Publications',
-          'SNN Publications',
-        ]}
-      />
+export const Publications = () => (
+  <div className="min-h-screen">
+    <SEO
+      title="Publications"
+      description="Browse peer-reviewed research papers and scholarly contributions from BrAIN Labs researchers."
+      keywords={[
+        'Research Publications',
+        'AI Papers',
+        'Neuroscience Research',
+        'Academic Publications',
+        'SNN Publications',
+      ]}
+    />
 
-      <PageHero
-        eyebrow="RESEARCH OUTPUT"
-        icon={<FileText size={13} className="text-indigo-600 dark:text-indigo-400" />}
-        title="Peer-reviewed papers & scholarly contributions."
-        description="Peer-reviewed research papers and scholarly contributions from BrAIN Labs researchers."
-        stats={[
-          { value: publications.length, label: 'Publications', accent: true },
-          { value: years.length, label: 'Years of Output' },
-        ]}
-      />
+    <PageHero
+      icon={<AcademicPaperIcon size={14} />}
+      eyebrow="Publications"
+      title="Research"
+      highlight="Output"
+      description="Peer-reviewed research papers and scholarly contributions from BrAIN Labs researchers."
+      stats={[
+        { value: publications.length, label: 'Publications' },
+        { value: years.length, label: 'Years of Output' },
+      ]}
+    />
 
-      <Section className="py-12 md:py-16">
-        <div className="space-y-16">
-          {years.map((year) => (
-            <div key={year} className="space-y-6">
-              <div className="flex items-center gap-4 border-b border-neutral-200 pb-3 dark:border-neutral-800">
-                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                  <Calendar size={18} />
-                  <span className="font-display text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
-                    {year}
-                  </span>
+    {/* ── Body ─────────────────────────────────────────────── */}
+    <section className="py-8 md:py-12">
+      <div className="container mx-auto px-4">
+        <div className="mx-auto max-w-4xl space-y-14">
+          {years.map((year, yearIdx) => (
+            <motion.div
+              key={year}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: yearIdx * 0.1, duration: 0.6 }}
+              className="space-y-5"
+            >
+              {/* Year Header */}
+              <div className="sticky top-20 z-10 -mx-2 flex items-center gap-4 rounded-lg bg-background/80 px-2 py-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="rounded-lg border border-primary/15 bg-primary/10 p-1.5">
+                    <Calendar size={16} className="text-primary" />
+                  </div>
+                  <span className="text-2xl font-bold tracking-tight text-primary">{year}</span>
                 </div>
-                <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
-                <span className="font-mono text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                  {publicationsByYear[year].length}{' '}
-                  {publicationsByYear[year].length === 1 ? 'paper' : 'papers'}
-                </span>
+                <div className="h-px flex-1 bg-gradient-to-r from-border/80 to-transparent" />
+                <Badge
+                  variant="secondary"
+                  className="bg-primary/8 rounded-full border border-primary/15 px-2.5 text-[10px] font-semibold tabular-nums text-primary"
+                >
+                  {publicationsByYear[year].length} paper
+                  {publicationsByYear[year].length !== 1 ? 's' : ''}
+                </Badge>
               </div>
 
-              <div className="grid grid-cols-1 border-l border-t border-neutral-200 dark:border-neutral-800">
-                {publicationsByYear[year].map((pub) => {
-                  const citeNum = citationMap.get(pub.id) ?? 1;
-                  return (
-                    <div
-                      key={pub.id}
-                      className="group border-b border-r border-neutral-200 bg-slate-50/70 p-6 transition-colors hover:bg-indigo-50/30 dark:border-neutral-800 dark:bg-neutral-900/50 dark:hover:bg-indigo-950/30 md:p-8"
-                    >
-                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                        <div className="flex items-start gap-4">
-                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-neutral-200 bg-neutral-100 font-mono text-sm font-bold text-neutral-900 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white">
-                            0{citeNum}
-                          </span>
-                          <div className="space-y-2">
-                            <h3 className="font-display text-lg font-bold leading-snug text-neutral-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
-                              {pub.title}
-                            </h3>
-                            <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-                              {pub.authors}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-3 pt-2">
-                              <Tag tone="indigo" className="inline-flex items-center gap-1.5 py-1">
-                                <BookOpen size={12} />
+              {/* Publications */}
+              <div className="space-y-4">
+                {publicationsByYear[year].map((pub, idx) => (
+                  <motion.div
+                    key={pub.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.08, duration: 0.5 }}
+                  >
+                    <Card className="group border-border/50 bg-card/80 transition-all duration-300 hover:border-primary/30 hover:shadow-md">
+                      <CardContent className="p-5 md:p-6">
+                        <div className="flex flex-col items-start gap-4 md:flex-row md:gap-5">
+                          {/* Citation number */}
+                          <div className="bg-primary/8 hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/15 text-sm font-bold text-primary transition-all duration-300 group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground md:flex">
+                            {citationMap.get(pub.id)}
+                          </div>
+
+                          <div className="min-w-0 flex-1 space-y-3">
+                            <div>
+                              <h3 className="mb-2 text-base font-semibold leading-snug transition-colors group-hover:text-primary">
+                                {pub.title}
+                              </h3>
+                              <p className="text-sm leading-relaxed text-muted-foreground">
+                                {pub.authors}
+                              </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3">
+                              <Badge
+                                variant="outline"
+                                className="rounded-full border-primary/20 bg-primary/5 font-medium text-primary transition-colors hover:bg-primary/10"
+                              >
+                                <BookOpen size={11} className="mr-1.5" />
                                 {pub.venue}
-                              </Tag>
+                              </Badge>
+                              <Badge
+                                variant="secondary"
+                                className="rounded-full text-[10px] font-medium text-muted-foreground"
+                              >
+                                {pub.type}
+                              </Badge>
                               {pub.doi && (
-                                <span className="font-mono text-[11px] text-neutral-500">
+                                <span className="font-mono text-[11px] text-muted-foreground opacity-60">
                                   {pub.doi}
                                 </span>
                               )}
                             </div>
                           </div>
-                        </div>
 
-                        {pub.link && (
-                          <div className="shrink-0 pt-2 md:pt-0">
-                            <a
-                              href={pub.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-neutral-900 transition-colors hover:border-indigo-600 hover:bg-indigo-600 hover:text-white dark:border-neutral-700 dark:text-white dark:hover:border-indigo-600 dark:hover:bg-indigo-600"
-                            >
-                              <span>View Paper</span>
-                              <ExternalLink size={12} />
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                          {pub.link && (
+                            <div className="shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="group/btn hover:bg-primary/8 h-8 rounded-lg px-3 text-muted-foreground hover:text-primary"
+                                asChild
+                              >
+                                <a
+                                  href={pub.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1.5"
+                                >
+                                  <FileText size={13} />
+                                  <span className="text-xs font-medium">View Paper</span>
+                                  <ExternalLink
+                                    className="transition-transform group-hover/btn:-translate-y-0.5 group-hover/btn:translate-x-0.5"
+                                    size={11}
+                                  />
+                                </a>
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </Section>
-    </div>
-  );
-};
+      </div>
+    </section>
+  </div>
+);

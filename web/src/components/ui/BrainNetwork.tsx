@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react';
 const PARTICLE_COUNT = 150;
 const CONNECTION_DISTANCE = 110;
 const ROTATION_SPEED = 0.002;
-const BASE_COLOR = 'rgba(165, 180, 252, 0.35)';
-const PULSE_COLOR = '#38bdf8';
+const BASE_COLOR = 'rgba(0, 0, 0, 0.2)';
+const PULSE_COLOR = '#bebebeff';
 
 interface Point {
   x: number;
@@ -105,7 +105,7 @@ export const BrainNetwork = () => {
         const { width, height } = entry.contentRect;
         if (width === 0 || height === 0) continue;
 
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = width * dpr;
         canvas.height = height * dpr;
         ctx.resetTransform();
@@ -115,13 +115,27 @@ export const BrainNetwork = () => {
 
     resizeObserver.observe(canvas);
 
+    // Only animate while the canvas is on screen (it is also display:none on mobile)
+    let visible = false;
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible && animationRef.current === null) render();
+    });
+    visibilityObserver.observe(canvas);
+
     const render = () => {
+      if (!visible) {
+        animationRef.current = null;
+        return;
+      }
+
       // Use canvas.width/height to clear full buffer correctly
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Get logical size for centering
-      const width = canvas.width / (window.devicePixelRatio || 1);
-      const height = canvas.height / (window.devicePixelRatio || 1);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const width = canvas.width / dpr;
+      const height = canvas.height / dpr;
       const centerX = width / 2;
       const centerY = height / 2;
 
@@ -163,7 +177,7 @@ export const BrainNetwork = () => {
       });
 
       // Draw Connections
-      ctx.lineWidth = 0.6;
+      ctx.lineWidth = 1;
       pointsRef.current.forEach((p, i) => {
         const pp1 = projectedPoints[i];
         if (pp1.alpha < 0.1) return;
@@ -173,22 +187,12 @@ export const BrainNetwork = () => {
           if (pp2.alpha < 0.1) return;
 
           ctx.strokeStyle = BASE_COLOR;
-          ctx.globalAlpha = Math.min(pp1.alpha, pp2.alpha) * 0.6;
+          ctx.globalAlpha = Math.min(pp1.alpha, pp2.alpha) * 0.5;
           ctx.beginPath();
           ctx.moveTo(pp1.x, pp1.y);
           ctx.lineTo(pp2.x, pp2.y);
           ctx.stroke();
         });
-      });
-
-      // Draw Point Nodes
-      projectedPoints.forEach((pp) => {
-        if (pp.alpha < 0.15) return;
-        ctx.globalAlpha = pp.alpha * 0.85;
-        ctx.fillStyle = '#a5b4fc';
-        ctx.beginPath();
-        ctx.arc(pp.x, pp.y, 1.8, 0, Math.PI * 2);
-        ctx.fill();
       });
 
       // Spawn Pulses
@@ -233,13 +237,13 @@ export const BrainNetwork = () => {
         ctx.fill();
 
         // Glow ring 1
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.fillStyle = 'rgba(190, 190, 190, 0.4)';
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
         ctx.fill();
 
         // Glow ring 2
-        ctx.fillStyle = 'rgba(99, 102, 241, 0.2)';
+        ctx.fillStyle = 'rgba(190, 190, 190, 0.15)';
         ctx.beginPath();
         ctx.arc(x, y, 8, 0, Math.PI * 2);
         ctx.fill();
@@ -249,11 +253,11 @@ export const BrainNetwork = () => {
       animationRef.current = requestAnimationFrame(render);
     };
 
-    render();
-
     return () => {
       resizeObserver.disconnect();
+      visibilityObserver.disconnect();
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
     };
   }, []);
 
@@ -261,6 +265,7 @@ export const BrainNetwork = () => {
     <canvas
       ref={canvasRef}
       className="h-full w-full cursor-grab active:cursor-grabbing"
+      style={{ minHeight: '500px' }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

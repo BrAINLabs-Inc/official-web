@@ -1,289 +1,402 @@
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { WorkshopCalendarIcon } from '@/components/ui/PageIcons';
 import {
-  Calendar,
-  MapPin,
-  ExternalLink,
-  Sparkles,
-  FolderGit2,
-  CheckCircle2,
-  Users,
-  BookOpen,
-  Code2,
   Award,
+  BookOpen,
+  Calendar,
+  CheckCircle2,
+  Code2,
+  ExternalLink,
   FileText,
+  FolderGit2,
+  MapPin,
+  Sparkles,
+  Users,
 } from 'lucide-react';
 import { SEO } from '@/components/shared/SEO';
-import { Section } from '@/components/sections/Section';
-import { PageHero } from '@/components/sections/PageHero';
-import { LinkButton } from '@/components/ui/LinkButton';
-import { Tag } from '@/components/ui/Tag';
-import { eventsData, tinyMLWorkshopInfo } from '@/data/events';
+import { PageHero } from '@/components/shared/PageHero';
+import { eventsData, tinyMLWorkshopInfo, type EventItem } from '@/data/events';
 
-export const Events = () => {
-  return (
-    <div className="bg-transparent transition-colors">
-      <SEO
-        title="Events & Workshops | BrAIN Labs"
-        description="Explore workshop materials, Google Colab notebooks, session slides, and GitHub repositories from BrAIN Labs research workshops."
-        keywords={[
-          'AI Workshops',
-          'TinyML Workshop',
-          'Spiking Neural Networks Workshop',
-          'Curriculum Learning Workshop',
-          'ICAC 2024',
-          'MERCon 2026',
-          'SICET 2025',
-        ]}
+const upcomingEvents = eventsData.filter((e) => e.upcoming);
+const pastEvents = eventsData.filter((e) => !e.upcoming);
+
+export const Events = () => (
+  <div className="min-h-screen">
+    <SEO
+      title="Events & Workshops"
+      description="Explore workshop materials, Google Colab notebooks, session slides, and GitHub repositories from BrAIN Labs research workshops."
+      keywords={[
+        'AI Workshops',
+        'TinyML Workshop',
+        'Spiking Neural Networks Workshop',
+        'Curriculum Learning Workshop',
+        'ICAC 2024',
+        'MERCon 2026',
+        'SICET 2025',
+      ]}
+    />
+
+    <PageHero
+      icon={<WorkshopCalendarIcon size={14} />}
+      eyebrow="Events & Workshops"
+      title="Events &"
+      highlight="Workshops"
+      description="Hands-on workshop materials, Google Colab notebooks, presentation slides, and open-source code from BrAIN Labs conference workshops."
+      stats={[
+        ...(upcomingEvents.length > 0 ? [{ value: upcomingEvents.length, label: 'Upcoming' }] : []),
+        { value: eventsData.length, label: 'Workshops & Events' },
+        { value: '100%', label: 'Open Source Code & Colabs' },
+      ]}
+    />
+
+    {/* ── Upcoming Events ───────────────────────────────────── */}
+    {upcomingEvents.length > 0 && (
+      <EventGroup
+        title="Upcoming Events"
+        subtitle="Don't miss our upcoming workshops and seminars."
+        events={upcomingEvents}
+        upcoming
       />
+    )}
 
-      <PageHero
-        eyebrow="EVENTS & WORKSHOPS"
-        icon={<Calendar size={13} className="text-indigo-600 dark:text-indigo-400" />}
-        title="Workshops, seminars & open research resources."
-        description="Hands-on workshop materials, Google Colab notebooks, presentation slides, and open-source code from BrAIN Labs conference workshops."
-        stats={[
-          { value: eventsData.length, label: 'Workshops & Events', accent: true },
-          { value: '100%', label: 'Open Source Code & Colabs' },
-        ]}
+    {/* ── Past Events ───────────────────────────────────────── */}
+    {pastEvents.length > 0 && (
+      <EventGroup
+        title="Past Events"
+        subtitle="Explore our previous workshops and their open resources."
+        events={pastEvents}
+        className={upcomingEvents.length > 0 ? 'border-t border-border/40 bg-muted/20' : ''}
       />
+    )}
 
-      <Section className="py-12 md:py-16">
-        <div className="space-y-16">
-          {eventsData.map((event) => (
-            <div
-              key={event.id}
-              className="border border-neutral-200 bg-white/90 p-6 shadow-xl dark:border-neutral-800 dark:bg-neutral-900/90 md:p-10"
-            >
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 pb-4 dark:border-neutral-800">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Tag tone="indigo" className="py-1 font-mono text-[11px] font-bold uppercase tracking-wider">
-                    {event.type}
-                  </Tag>
-                  <span className="text-xs font-semibold text-neutral-500">
-                    {event.date}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                  <MapPin size={14} className="text-indigo-600 dark:text-indigo-400" />
-                  <span>{event.conference}</span>
-                </div>
-              </div>
-
-              <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
-                <div className="space-y-6 lg:col-span-7">
-                  <h2 className="font-display text-2xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-3xl">
-                    {event.title}
-                  </h2>
-
-                  {event.description && (
-                    <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
-                      {event.description}
-                    </p>
-                  )}
-
-                  {event.grantInfo && (
-                    <div className="flex items-start gap-2.5 rounded-none border border-amber-200 bg-amber-50/70 p-3 text-xs font-medium text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
-                      <Award size={16} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                      <span>{event.grantInfo}</span>
-                    </div>
-                  )}
-
-                  {event.highlights && event.highlights.length > 0 && (
-                    <div className="space-y-3 rounded-none border border-neutral-200/80 bg-slate-50/70 p-4 dark:border-neutral-800/80 dark:bg-neutral-950/60">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                        Key Topics &amp; Highlights:
-                      </h4>
-                      <ul className="space-y-2 text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                        {event.highlights.map((item, idx) => (
-                          <li key={idx} className="flex items-start gap-2.5">
-                            <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-indigo-600 dark:text-indigo-400" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Hands-On Sessions Table if available (e.g. SNN24) */}
-                  {event.sessions && event.sessions.length > 0 && (
-                    <div className="space-y-3 border-t border-neutral-200 pt-4 dark:border-neutral-800">
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
-                        <Code2 size={14} className="text-indigo-600 dark:text-indigo-400" />
-                        <span>Hands-On Notebook Sessions</span>
-                      </div>
-                      <div className="overflow-x-auto border border-neutral-200 dark:border-neutral-800">
-                        <table className="w-full text-left font-mono text-xs">
-                          <thead className="bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-                            <tr>
-                              <th className="p-2.5">Session</th>
-                              <th className="p-2.5">Description</th>
-                              <th className="p-2.5 text-right">Notebook</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                            {event.sessions.map((sess, idx) => (
-                              <tr key={idx} className="hover:bg-indigo-50/20 dark:hover:bg-neutral-800/40">
-                                <td className="p-2.5 font-bold text-indigo-600 dark:text-indigo-400">{sess.session}</td>
-                                <td className="p-2.5 text-neutral-600 dark:text-neutral-300">{sess.description}</td>
-                                <td className="p-2.5 text-right">
-                                  {sess.notebookUrl && (
-                                    <a
-                                      href={sess.notebookUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 border border-indigo-600/40 bg-indigo-50/80 px-2 py-1 text-[11px] font-semibold text-indigo-600 transition-colors hover:bg-indigo-600 hover:text-white dark:border-indigo-400/40 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-500 dark:hover:text-white"
-                                    >
-                                      <span>{sess.notebookLabel || 'Open Colab'}</span>
-                                      <ExternalLink size={10} />
-                                    </a>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tutorial Resources Table if available (e.g. MERCon26) */}
-                  {event.resources && event.resources.length > 0 && (
-                    <div className="space-y-3 border-t border-neutral-200 pt-4 dark:border-neutral-800">
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
-                        <FileText size={14} className="text-indigo-600 dark:text-indigo-400" />
-                        <span>Tutorial Resources &amp; Slides</span>
-                      </div>
-                      <div className="overflow-x-auto border border-neutral-200 dark:border-neutral-800">
-                        <table className="w-full text-left font-mono text-xs">
-                          <thead className="bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-                            <tr>
-                              <th className="p-2.5">Type</th>
-                              <th className="p-2.5">Description</th>
-                              <th className="p-2.5 text-right">Link</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                            {event.resources.map((res, idx) => (
-                              <tr key={idx} className="hover:bg-indigo-50/20 dark:hover:bg-neutral-800/40">
-                                <td className="p-2.5 font-bold text-neutral-900 dark:text-white">{res.type}</td>
-                                <td className="p-2.5 text-neutral-600 dark:text-neutral-300">{res.description}</td>
-                                <td className="p-2.5 text-right">
-                                  <a
-                                    href={res.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 border border-neutral-300 px-2 py-1 text-[11px] font-semibold text-neutral-800 transition-colors hover:border-indigo-600 hover:text-indigo-600 dark:border-neutral-700 dark:text-neutral-200 dark:hover:border-indigo-400 dark:hover:text-indigo-400"
-                                  >
-                                    <span>View</span>
-                                    <ExternalLink size={10} />
-                                  </a>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Facilitators */}
-                  {event.facilitators && event.facilitators.length > 0 && (
-                    <div className="space-y-2 border-t border-neutral-200 pt-4 dark:border-neutral-800">
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-500">
-                        <Users size={14} className="text-indigo-600 dark:text-indigo-400" />
-                        <span>Facilitators</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {event.facilitators.map((name, idx) => (
-                          <span
-                            key={idx}
-                            className="rounded-none border border-neutral-300 bg-neutral-100/80 px-2.5 py-1 font-mono text-[11px] font-medium text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
-                          >
-                            {name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Organizers */}
-                  {event.organizers && event.organizers.length > 0 && (
-                    <div className="space-y-2 border-t border-neutral-200 pt-3 dark:border-neutral-800">
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-500">
-                        <BookOpen size={14} className="text-indigo-600 dark:text-indigo-400" />
-                        <span>Organizers</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {event.organizers.map((name, idx) => (
-                          <span
-                            key={idx}
-                            className="rounded-none border border-indigo-200 bg-indigo-50/50 px-2.5 py-1 font-mono text-[11px] font-medium text-indigo-700 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-300"
-                          >
-                            {name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {event.license && (
-                    <div className="text-[11px] font-mono text-neutral-500 pt-1">
-                      License: {event.license}
-                    </div>
-                  )}
-
-                  <div className="pt-2">
-                    <LinkButton
-                      href={event.repoUrl || event.detailsUrl}
-                      icon={<FolderGit2 size={15} />}
-                    >
-                      Explore GitHub Repository
-                    </LinkButton>
-                  </div>
-                </div>
-
-                {event.imageUrl && (
-                  <div className="lg:col-span-5">
-                    <div className="group relative overflow-hidden rounded-none border border-neutral-200 bg-neutral-950 shadow-lg dark:border-neutral-800">
-                      <img
-                        src={event.imageUrl}
-                        alt={event.title}
-                        className="w-full h-auto object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/50 via-transparent to-transparent pointer-events-none" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="relative mt-14 overflow-hidden border border-neutral-800 bg-gradient-to-br from-neutral-950 via-neutral-900 to-indigo-950/40 p-8 text-white md:p-12">
+    {/* ── Resources banner ──────────────────────────────────── */}
+    <section className="pb-20 pt-6">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 md:p-12"
+        >
           <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="max-w-2xl space-y-2">
-              <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400">
+              <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-primary">
                 <Sparkles size={14} />
-                <span>{tinyMLWorkshopInfo.title}</span>
+                {tinyMLWorkshopInfo.title}
               </div>
-              <h3 className="font-display text-2xl font-bold text-white">
-                Open Source Workshop Materials &amp; Repositories
+              <h3 className="text-2xl font-bold tracking-tight">
+                Open Source Workshop Materials & Repositories
               </h3>
-              <p className="text-sm leading-relaxed text-neutral-400">
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 {tinyMLWorkshopInfo.description}
               </p>
             </div>
-            <div className="shrink-0">
-              <LinkButton
-                href={tinyMLWorkshopInfo.resourcesUrl}
-                variant="onDark"
-                icon={<ExternalLink size={14} />}
-              >
+            <a
+              href={tinyMLWorkshopInfo.resourcesUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0"
+            >
+              <Button className="gap-2 rounded-full px-6">
                 {tinyMLWorkshopInfo.buttonText}
-              </LinkButton>
-            </div>
+                <ExternalLink size={14} />
+              </Button>
+            </a>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  </div>
+);
+
+// ── Event group ────────────────────────────────────────────────────────────────
+
+const EventGroup = ({
+  title,
+  subtitle,
+  events,
+  upcoming = false,
+  className = '',
+}: {
+  title: string;
+  subtitle: string;
+  events: EventItem[];
+  upcoming?: boolean;
+  className?: string;
+}) => (
+  <section className={`py-10 md:py-14 ${className}`}>
+    <div className="container mx-auto px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="mb-8"
+      >
+        <div className="mb-1 flex items-center gap-3">
+          <div
+            className={`h-2 w-2 rounded-full ${upcoming ? 'animate-pulse bg-primary' : 'bg-muted-foreground/40'}`}
+          />
+          <h2 className="text-xl font-bold tracking-tight md:text-2xl">{title}</h2>
+        </div>
+        <p className="ml-5 text-sm text-muted-foreground">{subtitle}</p>
+      </motion.div>
+
+      <div className="mx-auto max-w-5xl space-y-8">
+        {events.map((event, idx) => (
+          <EventCard key={event.id} event={event} index={idx} upcoming={upcoming} />
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+// ── Event card ─────────────────────────────────────────────────────────────────
+
+const SubHeading = ({ icon: Icon, children }: { icon: typeof Users; children: string }) => (
+  <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-foreground/80">
+    <Icon size={14} className="text-primary/70" />
+    {children}
+  </div>
+);
+
+const ResourceTable = ({
+  heading,
+  rows,
+}: {
+  heading: [string, string, string];
+  rows: { key: string; first: string; second: string; href?: string; label: string }[];
+}) => (
+  <div className="overflow-x-auto rounded-xl border border-border/50">
+    <table className="w-full text-left text-xs">
+      <thead className="bg-muted/50 text-muted-foreground">
+        <tr>
+          <th className="p-3 font-semibold">{heading[0]}</th>
+          <th className="p-3 font-semibold">{heading[1]}</th>
+          <th className="p-3 text-right font-semibold">{heading[2]}</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-border/50">
+        {rows.map((row) => (
+          <tr key={row.key} className="transition-colors hover:bg-muted/30">
+            <td className="whitespace-nowrap p-3 font-semibold text-foreground">{row.first}</td>
+            <td className="p-3 text-muted-foreground">{row.second}</td>
+            <td className="p-3 text-right">
+              {row.href && (
+                <a
+                  href={row.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-primary/8 inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-primary/15 px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
+                  {row.label}
+                  <ExternalLink size={10} />
+                </a>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
+const PeopleList = ({ names, highlight = false }: { names: string[]; highlight?: boolean }) => (
+  <div className="flex flex-wrap gap-2">
+    {names.map((name) => (
+      <span
+        key={name}
+        className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
+          highlight
+            ? 'bg-primary/8 border-primary/15 text-primary'
+            : 'border-border/60 bg-muted/40 text-muted-foreground'
+        }`}
+      >
+        {name}
+      </span>
+    ))}
+  </div>
+);
+
+const EventCard = ({
+  event,
+  index,
+  upcoming,
+}: {
+  event: EventItem;
+  index: number;
+  upcoming: boolean;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ delay: index * 0.09, duration: 0.5 }}
+  >
+    <Card
+      className={`group overflow-hidden transition-all duration-300 hover:shadow-md ${
+        upcoming
+          ? 'bg-primary/4 border-primary/30 hover:border-primary/50'
+          : 'border-border/50 bg-card/80 hover:border-primary/30'
+      }`}
+    >
+      <CardHeader className="space-y-4 border-b border-border/50 pb-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant="secondary"
+              className="rounded-full border border-primary/25 bg-primary/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary"
+            >
+              {event.type}
+            </Badge>
+            {upcoming && (
+              <Badge className="rounded-full bg-primary px-2 py-0.5 text-[10px] text-primary-foreground">
+                Upcoming
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Calendar size={13} className="text-primary/60" />
+              {event.date}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <MapPin size={13} className="text-primary/60" />
+              {event.conference}
+            </span>
           </div>
         </div>
-      </Section>
-    </div>
-  );
-};
+        <CardTitle className="text-xl font-bold leading-snug transition-colors group-hover:text-primary md:text-2xl">
+          {event.title}
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent className="pt-6">
+        <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
+          <div className="space-y-6 lg:col-span-7">
+            {event.description && (
+              <p className="text-sm leading-relaxed text-muted-foreground">{event.description}</p>
+            )}
+
+            {event.grantInfo && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/50 bg-amber-50/60 p-3 text-xs font-medium text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+                <Award size={15} className="mt-0.5 shrink-0" />
+                <span>{event.grantInfo}</span>
+              </div>
+            )}
+
+            {event.highlights && event.highlights.length > 0 && (
+              <div className="rounded-xl border border-border/50 bg-muted/30 p-4">
+                <SubHeading icon={CheckCircle2}>Key Topics & Highlights</SubHeading>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  {event.highlights.map((item) => (
+                    <li key={item} className="flex items-start gap-2.5">
+                      <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {event.facilitators && event.facilitators.length > 0 && (
+              <div>
+                <SubHeading icon={Users}>Facilitators</SubHeading>
+                <PeopleList names={event.facilitators} />
+              </div>
+            )}
+
+            {event.organizers && event.organizers.length > 0 && (
+              <div>
+                <SubHeading icon={BookOpen}>Organizers</SubHeading>
+                <PeopleList names={event.organizers} highlight />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-5 lg:col-span-5">
+            {event.imageUrl && (
+              <div className="overflow-hidden rounded-xl border border-border/50 bg-muted shadow-sm">
+                <img
+                  src={event.imageUrl}
+                  alt={event.title}
+                  className="h-auto w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                />
+              </div>
+            )}
+            <a href={event.repoUrl || event.detailsUrl} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="w-full gap-2 rounded-full">
+                <FolderGit2 size={15} />
+                Explore GitHub Repository
+              </Button>
+            </a>
+            {event.license && (
+              <p className="text-center text-[11px] text-muted-foreground/70">
+                License: {event.license}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {event.sessions && event.sessions.length > 0 && (
+          <div className="mt-8 border-t border-border/50 pt-6">
+            <SubHeading icon={Code2}>Hands-On Notebook Sessions</SubHeading>
+            <ResourceTable
+              heading={['Session', 'Description', 'Notebook']}
+              rows={event.sessions.map((s) => ({
+                key: s.session,
+                first: s.session,
+                second: s.description,
+                href: s.notebookUrl,
+                label: s.notebookLabel || 'Open Colab',
+              }))}
+            />
+          </div>
+        )}
+
+        {event.resources && event.resources.length > 0 && (
+          <div className="mt-8 border-t border-border/50 pt-6">
+            <SubHeading icon={FileText}>Tutorial Resources & Slides</SubHeading>
+            <ResourceTable
+              heading={['Type', 'Description', 'Link']}
+              rows={event.resources.map((r) => ({
+                key: r.description,
+                first: r.type,
+                second: r.description,
+                href: r.link,
+                label: 'View',
+              }))}
+            />
+          </div>
+        )}
+
+        {event.documentation && event.documentation.length > 0 && (
+          <div className="mt-8 border-t border-border/50 pt-6">
+            <SubHeading icon={FileText}>Documentation</SubHeading>
+            <ul className="grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
+              {event.documentation.map((doc) => (
+                <li key={doc} className="flex items-start gap-2.5">
+                  <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-primary/60" />
+                  {doc}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {event.references && event.references.length > 0 && (
+          <div className="mt-8 border-t border-border/50 pt-6">
+            <SubHeading icon={BookOpen}>References</SubHeading>
+            <ol className="list-decimal space-y-1.5 pl-5 text-sm text-muted-foreground marker:text-primary/60">
+              {event.references.map((ref) => (
+                <li key={ref}>{ref}</li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  </motion.div>
+);
