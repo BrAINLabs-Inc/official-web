@@ -26,7 +26,7 @@ import { careersBenefits, careersFaqs, contact } from '@/data/general';
 import { iconMap } from '@/lib/icons';
 import { fadeUp, fadeUpAt } from '@/lib/motion';
 
-const contactAddress = contact.email.replace(/^mailto:/, '');
+const contactAddress = contact.careersEmail.replace(/^mailto:/, '');
 
 const applySteps: { title: string; description: string; icon: LucideIcon }[] = [
   {
@@ -163,7 +163,7 @@ export const Careers = () => (
         </div>
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
           <a
-            href={`${contact.email}?subject=${encodeURIComponent('Open Application')}`}
+            href={`${contact.careersEmail}?subject=${encodeURIComponent('Open Application')}`}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
             Send Your CV
