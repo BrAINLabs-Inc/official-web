@@ -44,13 +44,13 @@ export const Navbar = () => {
         scrolled ? 'border-border shadow-sm' : 'border-border/60'
       )}
     >
-      <nav className="container mx-auto flex h-16 items-center justify-between px-4">
+      <nav className="container mx-auto flex h-20 items-center justify-between px-4">
         {/* ── Logo ─────────────────────────────────────────────── */}
         <Link to="/" className="flex shrink-0 items-center gap-2.5" aria-label="BrAIN Labs Home">
-          <img src="/icon.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
-          <div className="flex flex-col leading-none">
-            <span className="text-sm font-bold tracking-tight text-foreground">BrAIN Labs</span>
-            <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+          <img src="/icon.png" alt="" width={40} height={40} className="h-10 w-10 object-contain" />
+          <div className="flex flex-col gap-0.5 leading-none">
+            <span className="text-base font-bold tracking-tight text-foreground">BrAIN Labs</span>
+            <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
               AI &amp; Neuroinformatics
             </span>
           </div>
@@ -66,7 +66,7 @@ export const Navbar = () => {
                 to={link.path}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'rounded-md px-3 py-2 text-[13px] font-medium transition-colors duration-150',
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150',
                   active
                     ? 'bg-secondary text-foreground'
                     : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
@@ -78,9 +78,9 @@ export const Navbar = () => {
           })}
           <Link
             to="/contact"
-            className="ml-3 inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-[13px] font-medium text-background transition-opacity duration-150 hover:opacity-85"
+            className="ml-3 inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity duration-150 hover:opacity-85"
           >
-            <Send size={14} />
+            <Send size={15} />
             Get in Touch
           </Link>
         </div>
@@ -91,9 +91,9 @@ export const Navbar = () => {
           onClick={() => setIsOpen((open) => !open)}
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={isOpen}
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-secondary lg:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-secondary lg:hidden"
         >
-          {isOpen ? <X size={18} /> : <Menu size={18} />}
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </nav>
 
