@@ -10,7 +10,6 @@ const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, n
 
 const Projects = page(() => import('./pages/Projects'), 'Projects');
 const Team = page(() => import('./pages/Team'), 'Team');
-const TeamMemberProfile = page(() => import('./pages/TeamMemberProfile'), 'TeamMemberProfile');
 const Publications = page(() => import('./pages/Publications'), 'Publications');
 const Events = page(() => import('./pages/Events'), 'Events');
 const About = page(() => import('./pages/About'), 'About');
@@ -36,8 +35,7 @@ function App() {
           <Route path="/" element={<PageLayout />}>
             <Route index element={<Home />} />
             <Route path="projects" element={<Projects />} />
-            <Route path="team" element={<Team />} />
-            <Route path="team/:slug" element={<TeamMemberProfile />} />
+            <Route path="team/:slug?" element={<Team />} />
             <Route path="publications" element={<Publications />} />
             <Route path="events" element={<Events />} />
             <Route path="about" element={<About />} />

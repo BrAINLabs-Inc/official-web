@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { NeuralBackground } from '@/components/ui/NeuralBackground';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
@@ -8,8 +8,13 @@ import { Footer } from './Footer';
 export const PageLayout = () => {
   const { pathname } = useLocation();
 
+  const previousPath = useRef(pathname);
+
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Opening / closing a team member (/team <-> /team/:slug) keeps the scroll position
+    const withinTeam = previousPath.current.startsWith('/team') && pathname.startsWith('/team');
+    previousPath.current = pathname;
+    if (!withinTeam) window.scrollTo({ top: 0, behavior: 'instant' });
   }, [pathname]);
 
   return (

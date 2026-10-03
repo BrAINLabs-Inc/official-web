@@ -53,11 +53,14 @@ export const normalizeCredentialId = (id: string) => id.trim().toUpperCase();
 export const badgePath = (b: Pick<BadgeRecipient, 'credentialId'>) =>
   `/badges/${b.credentialId.toLowerCase()}`;
 export const badgeUrl = (b: Pick<BadgeRecipient, 'credentialId'>) => `${SITE_URL}${badgePath(b)}`;
-/** Personalised share card (1200x627) generated at build time. */
+/** LinkedIn preview image (badge artwork, 1200x627) generated at build time. */
 export const badgeCardPath = (b: Pick<BadgeRecipient, 'credentialId'>) => `${badgePath(b)}.png`;
 /** The badge artwork itself, served from public/. */
 export const designImagePath = (design: Pick<BadgeDesign, 'id'>) =>
   `/badges/designs/${design.id}.webp`;
+/** Full-resolution badge artwork (transparent PNG) for downloading. */
+export const designDownloadPath = (design: Pick<BadgeDesign, 'id'>) =>
+  `/badges/designs/${design.id}.png`;
 
 export const formatBadgeDate = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', {

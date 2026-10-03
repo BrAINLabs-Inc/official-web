@@ -18,9 +18,9 @@ import { SEO } from '@/components/shared/SEO';
 import { TierDot } from '@/components/ui/TierDot';
 import {
   ISSUER_NAME,
-  badgeCardPath,
   badgeTitle,
   badgeUrl,
+  designDownloadPath,
   designImagePath,
   findBadge,
   formatBadgeDate,
@@ -131,17 +131,27 @@ export const BadgeVerify = () => {
             </Link>
 
             <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-              <motion.img
-                key={badge.credentialId}
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                src={designImagePath(badge.design)}
-                alt={`${badgeTitle(badge)} badge`}
-                width={720}
-                height={714}
-                className="mx-auto h-auto w-full max-w-md drop-shadow-xl"
-              />
+              <div className="flex flex-col items-center gap-5">
+                <motion.img
+                  key={badge.credentialId}
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  src={designImagePath(badge.design)}
+                  alt={`${badgeTitle(badge)} badge`}
+                  width={720}
+                  height={714}
+                  className="mx-auto h-auto w-full max-w-md drop-shadow-xl"
+                />
+                <a
+                  href={designDownloadPath(badge.design)}
+                  download={`${badge.credentialId}-${badge.design.id}.png`}
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-background px-5 text-sm font-medium transition-colors hover:bg-secondary"
+                >
+                  <Download size={14} />
+                  Download Badge
+                </a>
+              </div>
 
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
@@ -182,7 +192,7 @@ export const BadgeVerify = () => {
       {/* ── Share ─────────────────────────────────────────────── */}
       <section className="py-14 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="mx-auto grid max-w-6xl items-start gap-10 lg:grid-cols-[1fr_1.2fr]">
+          <div className="mx-auto max-w-xl">
             <div className="space-y-4">
               <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
                 <Linkedin size={20} />
@@ -193,8 +203,7 @@ export const BadgeVerify = () => {
                 LinkedIn's Licenses &amp; Certifications form, pre-filled with this credential and
                 its verification link.{' '}
                 <strong className="font-medium text-foreground">Share as post</strong> shares this
-                page with your badge card as the preview image. Paste the copied text as your
-                caption.
+                page with your badge as the preview image. Paste the copied text as your caption.
               </p>
               <Button
                 asChild
@@ -240,30 +249,6 @@ export const BadgeVerify = () => {
                   View {badge.name.split(' ')[0]}'s LinkedIn profile
                 </a>
               )}
-            </div>
-
-            <div className="space-y-3">
-              <div className="overflow-hidden rounded-2xl border border-border shadow-lg">
-                <img
-                  src={badgeCardPath(badge)}
-                  alt={`Badge card for ${badge.name}`}
-                  width={1200}
-                  height={627}
-                  loading="lazy"
-                  className="h-auto w-full"
-                />
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-muted-foreground">
-                  Share card used as the LinkedIn preview.
-                </p>
-                <Button variant="outline" size="sm" className="gap-2 rounded-full" asChild>
-                  <a href={badgeCardPath(badge)} download={`${badge.credentialId}.png`}>
-                    <Download size={14} />
-                    Download
-                  </a>
-                </Button>
-              </div>
             </div>
           </div>
         </div>

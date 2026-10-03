@@ -4,7 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CollaborationIcon } from '@/components/ui/PageIcons';
 import { Globe, Linkedin, Mail, MapPin, UserPlus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useCallback } from 'react';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { MemberModal } from '@/components/team/MemberModal';
 import { SEO } from '@/components/shared/SEO';
 import { PageHero } from '@/components/shared/PageHero';
 import { researchers, type Researcher } from '@/data/team';
@@ -32,6 +34,7 @@ const MemberCard = ({ researcher, idx }: { researcher: Researcher; idx: number }
           to={`/team/${researcher.member.slug}`}
           className="absolute inset-0 z-0 rounded-[inherit]"
           aria-label={`View ${name}'s profile`}
+          aria-haspopup="dialog"
         />
 
         <CardHeader className="px-6 pb-3 pt-6">
@@ -198,79 +201,107 @@ const GroupHeading = ({
 );
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-export const Team = () => (
-  <div className="min-h-screen">
-    <SEO
-      title="Our Team"
-      description="Meet the multidisciplinary team of experts pushing the boundaries of AI and neuroscience research at BrAIN Labs."
-      keywords={['AI Researchers', 'Neuroscience Team', 'BrAIN Labs Team', 'Research Scientists']}
-    />
+/** Members in display order (current, then former), used for next / previous in the modal. */
+const orderedMembers = [...currentMembers, ...formerMembers];
 
-    <PageHero
-      icon={<CollaborationIcon size={14} />}
-      eyebrow="Our Team"
-      title="Meet the"
-      highlight="Researchers"
-      description="A multidisciplinary team of experts pushing the boundaries of AI and neuroscience research."
-      stats={[
-        { value: currentMembers.length, label: 'Current Members' },
-        { value: formerMembers.length, label: 'Former Members' },
-      ]}
-    />
+export const Team = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const index = slug ? orderedMembers.findIndex((r) => r.member.slug === slug) : -1;
+  const selected = index >= 0 ? orderedMembers[index] : undefined;
 
-    {/* ── Current members ───────────────────────────────────── */}
-    <section className="py-8 md:py-14">
-      <div className="container mx-auto px-4">
-        <GroupHeading title="Current Members" count={currentMembers.length} active />
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {currentMembers.map((researcher, idx) => (
-            <MemberCard key={researcher.member_id} researcher={researcher} idx={idx} />
-          ))}
-        </div>
-      </div>
-    </section>
+  const closeModal = useCallback(() => navigate('/team'), [navigate]);
+  const showMember = useCallback(
+    (i: number) => navigate(`/team/${orderedMembers[i].member.slug}`, { replace: true }),
+    [navigate]
+  );
 
-    {/* ── Former members ────────────────────────────────────── */}
-    {formerMembers.length > 0 && (
-      <section className="border-t border-border/40 bg-muted/20 py-8 md:py-14">
+  // Unknown member in the URL: fall back to the team list
+  if (slug && !selected) return <Navigate to="/team" replace />;
+
+  return (
+    <div className="min-h-screen">
+      <SEO
+        title="Our Team"
+        description="Meet the multidisciplinary team of experts pushing the boundaries of AI and neuroscience research at BrAIN Labs."
+        keywords={['AI Researchers', 'Neuroscience Team', 'BrAIN Labs Team', 'Research Scientists']}
+      />
+
+      <PageHero
+        icon={<CollaborationIcon size={14} />}
+        eyebrow="Our Team"
+        title="Meet the"
+        highlight="Researchers"
+        description="A multidisciplinary team of experts pushing the boundaries of AI and neuroscience research."
+        stats={[
+          { value: currentMembers.length, label: 'Current Members' },
+          { value: formerMembers.length, label: 'Former Members' },
+        ]}
+      />
+
+      {/* ── Current members ───────────────────────────────────── */}
+      <section className="py-8 md:py-14">
         <div className="container mx-auto px-4">
-          <GroupHeading title="Former Members" count={formerMembers.length} />
+          <GroupHeading title="Current Members" count={currentMembers.length} active />
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {formerMembers.map((researcher, idx) => (
+            {currentMembers.map((researcher, idx) => (
               <MemberCard key={researcher.member_id} researcher={researcher} idx={idx} />
             ))}
           </div>
         </div>
       </section>
-    )}
 
-    {/* ── CTA ──────────────────────────────────────────────── */}
-    <section className="relative overflow-hidden bg-foreground py-20 text-background md:py-24">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
-      <div className="container relative mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mx-auto max-w-2xl space-y-6 text-center"
-        >
-          <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-background/20 bg-background/10">
-            <UserPlus size={24} />
+      {/* ── Former members ────────────────────────────────────── */}
+      {formerMembers.length > 0 && (
+        <section className="border-t border-border/40 bg-muted/20 py-8 md:py-14">
+          <div className="container mx-auto px-4">
+            <GroupHeading title="Former Members" count={formerMembers.length} />
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {formerMembers.map((researcher, idx) => (
+                <MemberCard key={researcher.member_id} researcher={researcher} idx={idx} />
+              ))}
+            </div>
           </div>
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Join Our Team</h2>
-          <p className="mx-auto max-w-lg text-base leading-relaxed text-background/70">
-            We regularly accept interns and PhD candidates. Check out our open positions or get in
-            touch regarding opportunities.
-          </p>
-          <Link to="/contact">
-            <Button className="h-11 rounded-full bg-background px-7 text-sm text-foreground transition-opacity hover:bg-background hover:opacity-90">
-              <Mail className="mr-2" size={15} />
-              Contact Us
-            </Button>
-          </Link>
-        </motion.div>
-      </div>
-    </section>
-  </div>
-);
+        </section>
+      )}
+
+      {/* ── CTA ──────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-foreground py-20 text-background md:py-24">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
+        <div className="container relative mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mx-auto max-w-2xl space-y-6 text-center"
+          >
+            <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-background/20 bg-background/10">
+              <UserPlus size={24} />
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Join Our Team</h2>
+            <p className="mx-auto max-w-lg text-base leading-relaxed text-background/70">
+              We regularly accept interns and PhD candidates. Check out our open positions or get in
+              touch regarding opportunities.
+            </p>
+            <Link to="/contact">
+              <Button className="h-11 rounded-full bg-background px-7 text-sm text-foreground transition-opacity hover:bg-background hover:opacity-90">
+                <Mail className="mr-2" size={15} />
+                Contact Us
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {selected && (
+        <MemberModal
+          researcher={selected}
+          onClose={closeModal}
+          onPrev={index > 0 ? () => showMember(index - 1) : undefined}
+          onNext={index < orderedMembers.length - 1 ? () => showMember(index + 1) : undefined}
+        />
+      )}
+    </div>
+  );
+};
