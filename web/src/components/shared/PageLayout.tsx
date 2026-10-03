@@ -1,26 +1,33 @@
-import React, { useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { CursorEffect } from '@/components/ui/CursorEffect';
-import { ProfessionalBackground } from '@/components/ui/ProfessionalBackground';
+import { NeuralBackground } from '@/components/ui/NeuralBackground';
+import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 
-export const PageLayout: React.FC = () => {
+export const PageLayout = () => {
   const { pathname } = useLocation();
 
+  const previousPath = useRef(pathname);
+
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Opening / closing a team member (/team <-> /team/:slug) keeps the scroll position
+    const withinTeam = previousPath.current.startsWith('/team') && pathname.startsWith('/team');
+    previousPath.current = pathname;
+    if (!withinTeam) window.scrollTo({ top: 0, behavior: 'instant' });
   }, [pathname]);
 
   return (
     <div className="relative flex min-h-screen flex-col bg-background text-foreground">
-      <CursorEffect />
-      <ProfessionalBackground />
+      <NeuralBackground />
       <Navbar />
       <main className="relative z-10 flex-1">
-        <Outlet />
+        <Suspense fallback={<div className="min-h-screen" />}>
+          <Outlet />
+        </Suspense>
       </main>
       <Footer />
+      <ScrollToTop />
     </div>
   );
 };

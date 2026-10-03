@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { intro } from '@/data/general';
-import { ArrowRight, Brain, Sparkles, Award, BookOpen, Users, Loader2 } from 'lucide-react';
+import { ArrowRight, Award, BookOpen, Brain, Cpu, Sparkles, Users, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DataUnavailable } from '@/components/ui/DataUnavailable';
 import { BrainNetwork } from '@/components/ui/BrainNetwork';
 import { SEO } from '@/components/shared/SEO';
-import { api, type PublicGrant, type PublicStats } from '@/lib/api';
+import { grants, statsData as stats } from '@/data/grants';
+import { methodology, paradigm, researchAreas } from '@/data/home';
+import { iconMap } from '@/lib/icons';
 
 const containerVariants: Variants = {
   hidden: {},
@@ -21,25 +21,6 @@ const itemVariants: Variants = {
 };
 
 export const Home = () => {
-  const [stats, setStats] = useState<PublicStats | null>(null);
-  const [grants, setGrants] = useState<PublicGrant[]>([]);
-  const [loadingGrants, setLoadingGrants] = useState(true);
-  const [statsError, setStatsError] = useState<string | null>(null);
-  const [grantsError, setGrantsError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.stats
-      .get()
-      .then(setStats)
-      .catch((e) => setStatsError(e.message));
-
-    api.grants
-      .list()
-      .then(setGrants)
-      .catch((e) => setGrantsError(e.message))
-      .finally(() => setLoadingGrants(false));
-  }, []);
-
   return (
     <div className="relative">
       <SEO />
@@ -50,33 +31,6 @@ export const Home = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/[0.03]" />
 
         {/* Animated gradient orbs */}
-        <motion.div
-          animate={{
-            x: [0, 30, -20, 0],
-            y: [0, -20, 30, 0],
-            scale: [1, 1.1, 0.95, 1],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-          className="bg-primary/8 absolute right-10 top-1/4 h-[36rem] w-[36rem] rounded-full opacity-60 blur-[100px]"
-        />
-        <motion.div
-          animate={{
-            x: [0, -25, 15, 0],
-            y: [0, 25, -15, 0],
-            scale: [1, 0.9, 1.05, 1],
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-          className="bg-foreground/4 absolute bottom-1/4 left-10 h-[44rem] w-[44rem] rounded-full opacity-40 blur-[120px]"
-        />
-        <motion.div
-          animate={{
-            x: [0, 15, -30, 0],
-            y: [0, -15, 20, 0],
-            scale: [1, 1.05, 0.95, 1],
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
-          className="absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 opacity-50 blur-[80px]"
-        />
 
         {/* Subtle grid pattern overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[length:32px_32px] opacity-40" />
@@ -133,27 +87,18 @@ export const Home = () => {
                 variants={itemVariants}
                 className="flex min-h-[60px] flex-wrap gap-6 border-t border-border/40 pt-4"
               >
-                {statsError ? (
-                  <p className="text-sm text-destructive">Unable to load stats.</p>
-                ) : stats ? (
-                  [
-                    { value: stats.researchers, label: 'Researchers' },
-                    { value: stats.projects, label: 'Active Projects' },
-                    { value: stats.publications, label: 'Publications' },
-                  ].map((s, i) => (
-                    <div key={i} className="flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-foreground">{s.value}</span>
-                      <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                        {s.label}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 size={16} className="animate-spin" />
-                    <span className="text-sm">Loading stats...</span>
+                {[
+                  { value: stats.researchers, label: 'Researchers' },
+                  { value: stats.projects, label: 'Active Projects' },
+                  { value: stats.publications, label: 'Publications' },
+                ].map((s, i) => (
+                  <div key={i} className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-foreground">{s.value}</span>
+                    <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {s.label}
+                    </span>
                   </div>
-                )}
+                ))}
               </motion.div>
             </motion.div>
 
@@ -165,7 +110,6 @@ export const Home = () => {
               className="relative hidden h-full w-full items-center justify-center lg:flex"
             >
               <div className="relative flex h-[520px] w-full max-w-lg items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary/10 to-transparent blur-3xl" />
                 <div className="absolute inset-8 rounded-full border border-border/30" />
                 <div className="absolute inset-16 rounded-full border border-border/20" />
                 <div className="relative z-10 h-full w-full">
@@ -188,43 +132,39 @@ export const Home = () => {
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
               Scroll
             </span>
-            <motion.div
-              animate={{ y: [0, 6, 0] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-              className="h-12 w-px bg-gradient-to-b from-primary/50 to-transparent"
-            />
+            <div className="h-12 w-px bg-gradient-to-b from-primary/50 to-transparent" />
           </div>
         </motion.div>
       </section>
 
       {/* ── Stats ────────────────────────────────────────────── */}
-      <section className="border-y border-border/50 bg-card/60 py-20 backdrop-blur-sm">
+      <section className="border-y border-border/50 bg-card/60 py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 md:grid-cols-4">
             {[
               {
-                value: stats ? String(stats.researchers) : '-',
+                value: String(stats.researchers),
                 label: 'Researchers',
                 icon: Users,
-                description: 'Multidisciplinary experts',
+                description: 'Across AI & Neuroscience',
               },
               {
-                value: stats ? String(stats.projects) : '-',
+                value: String(stats.projects),
                 label: 'Active Projects',
-                icon: Sparkles,
-                description: 'Ongoing research',
+                icon: Cpu,
+                description: 'LLMs & Neuromorphic',
               },
               {
-                value: stats ? String(stats.publications) : '-',
+                value: String(stats.publications),
                 label: 'Publications',
                 icon: BookOpen,
-                description: 'Peer-reviewed papers',
+                description: 'Peer-Reviewed Output',
               },
               {
-                value: '2+',
+                value: '2',
                 label: 'Research Areas',
                 icon: Brain,
-                description: 'LLMs & Neuromorphic',
+                description: 'LLMs & Spiking Neural Networks',
               },
             ].map((stat, idx) => (
               <motion.div
@@ -258,10 +198,156 @@ export const Home = () => {
         </div>
       </section>
 
+      {/* ── Paradigm Shift ───────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-foreground py-24 text-background">
+        <div className="container relative z-10 mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mx-auto mb-14 max-w-3xl text-center"
+          >
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-background/20 bg-background/10 px-3 py-1.5">
+              <Zap size={15} />
+              <span className="text-xs font-medium uppercase tracking-wide">
+                {paradigm.eyebrow}
+              </span>
+            </div>
+            <h2 className="text-3xl font-bold leading-tight tracking-tight md:text-4xl">
+              {paradigm.titleLines[0]}
+              <br className="hidden md:inline" />{' '}
+              <span className="text-background/60">{paradigm.titleLines[1]}</span>
+            </h2>
+          </motion.div>
+
+          <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-3">
+            {paradigm.items.map((item, idx) => {
+              const Icon = iconMap[item.iconName] ?? Sparkles;
+              return (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.12, duration: 0.5 }}
+                  className="flex min-h-[220px] flex-col rounded-2xl border border-background/10 bg-background/5 p-7 transition-colors hover:border-background/25 hover:bg-background/10"
+                >
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-background/15 bg-background/10">
+                    <Icon size={20} />
+                  </div>
+                  <div className="mt-auto pt-8">
+                    <h3 className="text-lg font-semibold">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-background/60">{item.desc}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Research Areas ───────────────────────────────────── */}
+      <section className="relative overflow-hidden py-24">
+        <div className="container relative z-10 mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mx-auto mb-14 max-w-2xl text-center"
+          >
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-primary">
+              <Brain size={15} />
+              <span className="text-xs font-medium uppercase tracking-wide">
+                {researchAreas.eyebrow}
+              </span>
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">{researchAreas.title}</h2>
+          </motion.div>
+
+          <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {researchAreas.items.map((area, idx) => {
+              const Icon = iconMap[area.iconName] ?? Sparkles;
+              return (
+                <motion.div
+                  key={area.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.08, duration: 0.5 }}
+                >
+                  <Card className="group h-full border-border/50 bg-card/80 transition-all duration-300 hover:border-primary/40 hover:shadow-md">
+                    <CardHeader className="pb-2">
+                      <div className="bg-primary/8 group-hover:bg-primary/12 mb-3 inline-flex w-fit rounded-xl border border-primary/15 p-2.5 transition-colors">
+                        <Icon size={20} className="text-primary" />
+                      </div>
+                      <CardTitle className="text-base font-semibold leading-snug transition-colors group-hover:text-primary">
+                        {area.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{area.desc}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Methodology ──────────────────────────────────────── */}
+      <section className="relative border-y border-zinc-300/70 bg-zinc-200/70 py-24">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mx-auto mb-12 max-w-5xl"
+          >
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-primary">
+              <Sparkles size={15} />
+              <span className="text-xs font-medium uppercase tracking-wide">
+                {methodology.eyebrow}
+              </span>
+            </div>
+            <h2 className="max-w-2xl text-3xl font-bold tracking-tight md:text-4xl">
+              {methodology.title}
+            </h2>
+          </motion.div>
+
+          <div className="mx-auto max-w-5xl divide-y divide-zinc-300 border-y border-zinc-300">
+            {methodology.steps.map((step, idx) => (
+              <motion.div
+                key={step.num}
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.08, duration: 0.5 }}
+                className="group grid grid-cols-[auto_1fr] items-start gap-6 py-7 md:gap-10"
+              >
+                <span className="text-4xl font-bold leading-none text-zinc-400 transition-colors duration-300 group-hover:text-primary md:text-5xl">
+                  {step.num}
+                </span>
+                <div className="md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] md:items-baseline md:gap-12">
+                  <h3 className="text-lg font-semibold transition-colors group-hover:text-primary md:text-xl">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:mt-0 md:text-[15px]">
+                    {step.desc}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Grants ───────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-background py-24">
         {/* background accent */}
-        <div className="bg-primary/4 absolute right-0 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full blur-3xl" />
 
         <div className="container relative z-10 mx-auto px-4">
           <motion.div
@@ -283,15 +369,7 @@ export const Home = () => {
             </p>
           </motion.div>
 
-          {loadingGrants ? (
-            <div className="flex justify-center py-10">
-              <Loader2 size={24} className="animate-spin text-primary" />
-            </div>
-          ) : grantsError ? (
-            <div className="mx-auto max-w-2xl">
-              <DataUnavailable title="Unable to load grants" />
-            </div>
-          ) : grants.length === 0 ? (
+          {grants.length === 0 ? (
             <div className="py-10 text-center text-muted-foreground">
               No grants publicly available yet.
             </div>
@@ -304,7 +382,6 @@ export const Home = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.12, duration: 0.5 }}
-                  whileHover={{ y: -3 }}
                 >
                   <Card className="group h-full border-border/50 bg-card/80 transition-all duration-300 hover:border-primary/30 hover:shadow-lg">
                     <CardHeader>
@@ -318,18 +395,10 @@ export const Home = () => {
                           </span>
                         )}
                       </div>
-                      {grant.member && (
-                        <div className="flex items-center gap-2 pt-1">
-                          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                          <span className="text-sm font-semibold text-primary">
-                            {grant.member.first_name} {grant.member.second_name}
-                          </span>
-                        </div>
-                      )}
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm leading-relaxed text-muted-foreground">
-                        {grant.description || 'No description provided.'}
+                        {grant.description}
                       </p>
                     </CardContent>
                   </Card>
@@ -341,9 +410,8 @@ export const Home = () => {
       </section>
 
       {/* ── CTA ──────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden py-24">
-        <div className="from-primary/8 to-primary/4 absolute inset-0 bg-gradient-to-br via-background" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
+      <section className="relative overflow-hidden bg-foreground py-24 text-background">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(hsl(var(--background)/0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
 
         <div className="container relative z-10 mx-auto px-4">
           <motion.div
@@ -353,18 +421,16 @@ export const Home = () => {
             transition={{ duration: 0.8 }}
             className="mx-auto max-w-3xl space-y-8 text-center"
           >
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-4 py-1.5 backdrop-blur-sm">
-              <Sparkles size={14} className="text-primary" />
-              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Get involved
-              </span>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-background/20 bg-background/10 px-4 py-1.5">
+              <Sparkles size={14} />
+              <span className="text-xs font-medium uppercase tracking-wider">Get involved</span>
             </div>
             <h2 className="text-3xl font-bold leading-tight tracking-tight md:text-4xl lg:text-5xl">
               Ready to explore the
               <br />
-              <span className="text-muted-foreground">future of AI?</span>
+              <span className="text-background/60">future of AI?</span>
             </h2>
-            <p className="mx-auto max-w-xl text-lg text-muted-foreground">
+            <p className="mx-auto max-w-xl text-lg text-background/70">
               Discover our cutting-edge research and join us in pushing the boundaries of artificial
               intelligence.
             </p>
@@ -372,7 +438,7 @@ export const Home = () => {
               <Link to="/team">
                 <Button
                   size="lg"
-                  className="h-12 rounded-full bg-foreground px-8 text-sm font-medium text-background shadow-lg transition-all hover:bg-foreground/90 hover:shadow-xl"
+                  className="h-12 rounded-full bg-background px-8 text-sm font-medium text-foreground transition-opacity hover:bg-background hover:opacity-90"
                 >
                   Meet the Team
                   <ArrowRight className="ml-2" size={16} />
@@ -382,7 +448,7 @@ export const Home = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-12 rounded-full border-border px-8 text-sm font-medium transition-colors hover:border-primary/30 hover:bg-secondary"
+                  className="h-12 rounded-full border-background/30 bg-transparent px-8 text-sm font-medium text-background transition-colors hover:bg-background/10 hover:text-background"
                 >
                   Get in Touch
                 </Button>

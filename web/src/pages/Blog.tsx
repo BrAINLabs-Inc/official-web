@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, ArrowRight, BookOpen, Loader2 } from 'lucide-react';
+import { Calendar, ArrowRight, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SEO } from '@/components/shared/SEO';
+import { PageHero } from '@/components/shared/PageHero';
 import { Badge } from '@/components/ui/badge';
-import { DataUnavailable } from '@/components/ui/DataUnavailable';
-import { api, type PublicBlog } from '@/lib/api';
+import { blogPosts as posts } from '@/data/blogs';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=640&q=80';
 
@@ -25,18 +24,6 @@ const itemVariants: Variants = {
 };
 
 export const Blog = () => {
-  const [posts, setPosts] = useState<PublicBlog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.blogs
-      .list()
-      .then(setPosts)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
-
   return (
     <div className="min-h-screen">
       <SEO
@@ -44,71 +31,34 @@ export const Blog = () => {
         description="Explore our latest research perspectives and insights at the intersection of AI and Neuroscience."
       />
 
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pb-16 pt-24 md:pt-32">
-        <div className="from-primary/6 absolute inset-0 bg-gradient-to-br via-background to-background" />
-        <div className="absolute left-1/3 top-0 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-
-        <div className="container relative z-10 mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="max-w-3xl lg:pl-4"
-          >
-            <div className="bg-primary/8 mb-5 inline-flex items-center gap-2 rounded-full border border-primary/15 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-primary">
-              <BookOpen size={14} />
-              Research Blog
-            </div>
-
-            <h1 className="mb-5 text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
-              Latest{' '}
-              <span className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
-                Perspectives
-              </span>
-            </h1>
-
-            <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              Insights and deep dives into the frontiers of Brain-Inspired Intelligence and
-              Neuromorphic systems.
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      <PageHero
+        icon={<BookOpen size={14} />}
+        eyebrow="Research Blog"
+        title="Latest"
+        highlight="Perspectives"
+        description="Insights and deep dives into the frontiers of Brain-Inspired Intelligence and Neuromorphic systems."
+      />
 
       {/* ── Blog Cards ───────────────────────────────────────── */}
       <section className="py-8 md:py-12">
-        <div className="container mx-auto px-4 lg:pl-8">
-          {loading && (
-            <div className="flex items-center justify-center gap-3 py-20 text-muted-foreground">
-              <Loader2 size={20} className="animate-spin text-primary" />
-              <span className="text-sm">Loading articles…</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="mx-auto max-w-2xl">
-              <DataUnavailable />
-            </div>
-          )}
-
-          {!loading && !error && posts.length === 0 && (
+        <div className="container mx-auto px-4">
+          {posts.length === 0 && (
             <div className="py-20 text-center">
               <BookOpen size={40} className="mx-auto mb-4 text-muted-foreground/30" />
               <p className="text-sm text-muted-foreground">No blog posts available yet.</p>
             </div>
           )}
 
-          {!loading && !error && posts.length > 0 && (
+          {posts.length > 0 && (
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+              className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
             >
               {posts.map((post) => {
-                const imageUrl = post.blog_image[0]?.image_url || FALLBACK_IMAGE;
-                const tags = post.blog_keyword.map((k) => k.keyword);
+                const imageUrl = post.imageUrl || FALLBACK_IMAGE;
+                const tags = post.keywords;
                 return (
                   <motion.div key={post.id} variants={itemVariants}>
                     <Card className="group flex h-full flex-col overflow-hidden border-border/50 bg-card/80 transition-all duration-300 hover:border-primary/30 hover:shadow-xl">

@@ -4,7 +4,6 @@ import {
   Mail,
   Github,
   Linkedin,
-  Twitter,
   MapPin,
   Phone,
   Send,
@@ -14,6 +13,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { SEO } from '@/components/shared/SEO';
+import { PageHero } from '@/components/shared/PageHero';
 import { contact } from '@/data/general';
 
 const inputCls =
@@ -23,7 +23,7 @@ const channels = [
   {
     icon: Mail,
     label: 'Email',
-    value: 'mahima.w@sliit.lk',
+    value: contact.email.replace('mailto:', ''),
     href: contact.email,
     description: 'Reach us directly for collaborations or inquiries.',
   },
@@ -37,16 +37,9 @@ const channels = [
   {
     icon: Linkedin,
     label: 'LinkedIn',
-    value: 'BrAIN Labs',
+    value: 'BrAIN Labs Inc.',
     href: contact.linkedin,
     description: 'Connect with us professionally and follow updates.',
-  },
-  {
-    icon: Twitter,
-    label: 'Twitter / X',
-    value: '@brainlabs',
-    href: contact.twitter,
-    description: 'Latest news, threads, and research highlights.',
   },
 ];
 
@@ -86,37 +79,15 @@ export const Contact = () => {
         ]}
       />
 
-      {/* ── Hero ──────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pb-16 pt-24 md:pt-32">
-        <div className="from-primary/6 absolute inset-0 bg-gradient-to-br via-background to-background" />
-        <div className="bg-primary/4 absolute right-0 top-0 h-[28rem] w-[28rem] rounded-full blur-3xl" />
-
-        <div className="container relative z-10 mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="max-w-3xl lg:pl-4"
-          >
-            <div className="bg-primary/8 mb-5 inline-flex items-center gap-2 rounded-full border border-primary/15 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-primary">
-              <MessageSquare size={14} />
-              Get in Touch
-            </div>
-
-            <h1 className="mb-5 text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
-              Let's Start a{' '}
-              <span className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
-                Conversation
-              </span>
-            </h1>
-
-            <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              Whether you're looking to collaborate, partner, or simply learn more about our
-              research; we're always happy to connect.
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      <PageHero
+        icon={<MessageSquare size={14} />}
+        eyebrow="Get in Touch"
+        title={"Let's Start a"}
+        highlight="Conversation"
+        description={
+          "Whether you're looking to collaborate, partner, or simply learn more about our research, we're always happy to connect."
+        }
+      />
 
       {/* ── Get in Touch ────────────────────────────────────────── */}
       <section className="py-16 md:py-24">
@@ -127,7 +98,7 @@ export const Contact = () => {
             viewport={{ once: true }}
             className="mx-auto max-w-6xl"
           >
-            <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 shadow-lg backdrop-blur-sm">
+            <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 shadow-lg">
               <div className="grid divide-y divide-border/40 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
                 {/* Left: Reach Us Directly */}
                 <motion.div
@@ -144,7 +115,7 @@ export const Contact = () => {
                     <div>
                       <h2 className="text-lg font-bold tracking-tight">Reach Us Directly</h2>
                       <p className="text-xs text-muted-foreground">
-                        We respond within 3–5 business days
+                        We respond within 3-5 business days
                       </p>
                     </div>
                   </div>
@@ -201,7 +172,7 @@ export const Contact = () => {
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <Clock size={13} className="shrink-0 text-primary/70" />
-                      <span>Reply within 3–5 business days</span>
+                      <span>Reply within 3-5 business days</span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <Phone size={13} className="shrink-0 text-primary/70" />
@@ -240,7 +211,7 @@ export const Contact = () => {
                       <h3 className="text-base font-bold">Message Sent!</h3>
                       <p className="max-w-[240px] text-xs text-muted-foreground">
                         Thank you for reaching out. We'll review your message and get back to you
-                        within 3–5 business days.
+                        within 3-5 business days.
                       </p>
                       <button
                         onClick={() => {

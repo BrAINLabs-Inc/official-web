@@ -1,15 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Twitter, Github, Mail, Linkedin } from 'lucide-react';
+import { Github, Mail, Linkedin } from 'lucide-react';
 import { contact } from '@/data/general';
 import { BrainLabsLogoIcon } from '@/components/ui/BrainLabsLogo';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="relative mt-auto overflow-hidden border-t border-border/50 bg-card/30 backdrop-blur-sm">
+    <footer className="relative mt-auto overflow-hidden border-t border-border/50 bg-card/30">
       {/* Subtle decorative gradient */}
-      <div className="absolute bottom-0 left-0 h-80 w-80 -translate-x-1/2 translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
-      <div className="bg-primary/3 absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/2 rounded-full blur-[100px]" />
 
       <div className="container relative z-10 mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
@@ -30,15 +28,6 @@ export const Footer: React.FC = () => {
               Neuroscience. Developing intelligent systems through brain-inspired approaches.
             </p>
             <div className="flex gap-2">
-              <a
-                href={contact.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg border border-border/50 p-2.5 text-muted-foreground transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
-                aria-label="Twitter"
-              >
-                <Twitter size={16} />
-              </a>
               <a
                 href={contact.github}
                 target="_blank"
@@ -135,6 +124,12 @@ export const Footer: React.FC = () => {
                 className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
               >
                 Contact
+              </Link>
+              <Link
+                to="/badges"
+                className="text-sm text-muted-foreground transition-all duration-200 hover:translate-x-0.5 hover:text-primary"
+              >
+                Verify a Badge
               </Link>
             </div>
           </div>

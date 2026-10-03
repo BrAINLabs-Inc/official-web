@@ -105,7 +105,7 @@ export const BrainNetwork = () => {
         const { width, height } = entry.contentRect;
         if (width === 0 || height === 0) continue;
 
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = width * dpr;
         canvas.height = height * dpr;
         ctx.resetTransform();
@@ -115,13 +115,27 @@ export const BrainNetwork = () => {
 
     resizeObserver.observe(canvas);
 
+    // Only animate while the canvas is on screen (it is also display:none on mobile)
+    let visible = false;
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible && animationRef.current === null) render();
+    });
+    visibilityObserver.observe(canvas);
+
     const render = () => {
+      if (!visible) {
+        animationRef.current = null;
+        return;
+      }
+
       // Use canvas.width/height to clear full buffer correctly
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Get logical size for centering
-      const width = canvas.width / (window.devicePixelRatio || 1);
-      const height = canvas.height / (window.devicePixelRatio || 1);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const width = canvas.width / dpr;
+      const height = canvas.height / dpr;
       const centerX = width / 2;
       const centerY = height / 2;
 
@@ -139,7 +153,7 @@ export const BrainNetwork = () => {
       const projectedPoints = pointsRef.current.map((p) => {
         // Rotation Matrix Application
         // 1. Rotate around Y (horizontal spin)
-        let x = p.x * cosY - p.z * sinY;
+        const x = p.x * cosY - p.z * sinY;
         let z = p.x * sinY + p.z * cosY;
         let y = p.y;
 
@@ -239,11 +253,11 @@ export const BrainNetwork = () => {
       animationRef.current = requestAnimationFrame(render);
     };
 
-    render();
-
     return () => {
       resizeObserver.disconnect();
+      visibilityObserver.disconnect();
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
     };
   }, []);
 

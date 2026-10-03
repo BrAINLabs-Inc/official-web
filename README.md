@@ -1,4 +1,4 @@
-# BrAIN Labs Inc. — Official Website
+# BrAIN Labs Inc. - Official Website
 
 Welcome to the official public website repository for **BrAIN Labs Inc.** This project powers our public web presence, showcasing our research team, publications, projects, events, blogs, and other initiatives.
 
@@ -42,7 +42,7 @@ official-web/
 
 ---
 
-## ⚡ Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 - [Node.js](https://nodejs.org/) v20+
@@ -102,3 +102,27 @@ To enable deployment, configure the following secrets in your GitHub Repository 
 ---
 
 © 2026 BrAIN Labs Inc. All rights reserved.
+
+---
+
+## Verified Achievement Badges (LinkedIn)
+
+Badges are issued and verified at `/badges`. All badge data lives in `web/src/data/badges.ts`.
+
+1. **Badge designs** (`badgeDesigns`): one entry per artwork, e.g. *Contribution to Community Research (Gold)*.
+   Add the artwork to `web/public/badges/designs/` twice: `<id>.png` (download and LinkedIn preview,
+   about 900px, transparent background) and `<id>.webp` (shown on the site, about 720px).
+2. **Programmes** (`badgeEvents`): the event or programme the badges were awarded in.
+3. **Recipients** (`badgeRecipients`): one entry per person with a unique, permanent `credentialId`.
+   Replace the test entries before deploying.
+
+For each recipient the build generates:
+
+- `/badges/<id>`: verification page with **Add to LinkedIn Profile** and **Share on LinkedIn** buttons
+- `/badges/<id>.png`: 1200x627 image of the badge, used as the LinkedIn link preview
+- `/badges/<id>.html`: per-badge OpenGraph tags so LinkedIn shows a rich preview
+
+Optionally set `LINKEDIN_ORGANIZATION_ID` in `web/src/lib/badges.ts` so the certification links to the
+BrAIN Labs company page on LinkedIn. Preview images are rendered at build time by `web/badges/`
+(Vite plugin + resvg). LinkedIn's "Add to profile" link cannot attach an image; LinkedIn shows the
+badge through the credential URL's preview instead.

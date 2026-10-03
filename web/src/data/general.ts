@@ -59,10 +59,9 @@ export const faq = [
 ];
 
 export const contact = {
-  twitter: '#',
   github: 'https://github.com/BrAINLabs-Inc',
-  linkedin: '#',
-  email: 'mailto:mahima.w@sliit.lk',
+  linkedin: 'https://www.linkedin.com/company/brainlabs-inc',
+  email: 'mailto:contact@brainlabs.inc',
 };
 
 export const careersBenefits = [
@@ -95,7 +94,7 @@ export const careersBenefits = [
 export const careersFaqs = [
   {
     q: 'Do you offer internships?',
-    a: 'Yes, we regularly accept interns for 3–6 month research projects. Check this page for current openings or send us your CV and research interests.',
+    a: 'Yes, we regularly accept interns for 3-6 month research projects. Check this page for current openings or send us your CV and research interests.',
   },
   {
     q: 'What qualifications are required?',
@@ -107,6 +106,6 @@ export const careersFaqs = [
   },
   {
     q: 'How do I apply?',
-    a: 'Send your CV and a brief cover letter or research statement to mahima.w@sliit.lk with the position title in the subject line.',
+    a: 'Send your CV and a brief cover letter or research statement to contact@brainlabs.inc with the position title in the subject line.',
   },
 ];
