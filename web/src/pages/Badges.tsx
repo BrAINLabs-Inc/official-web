@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -12,22 +12,21 @@ import {
   MapPin,
   Search,
   ShieldCheck,
-  Users,
   type LucideIcon,
 } from 'lucide-react';
 import { SEO } from '@/components/shared/SEO';
 import { PageHero } from '@/components/shared/PageHero';
 import { SectionLabel } from '@/components/shared/SectionLabel';
 import { TierDot } from '@/components/ui/TierDot';
-import { badgeDesigns, badgeEvents } from '@/data/badges';
+import { badgeDesigns, badgeEvents, type BadgeEventType } from '@/data/badges';
 import {
   badgePath,
   badges,
   designImagePath,
   findBadge,
-  formatBadgeDate,
+  eventTypeLabel,
+  formatEventDates,
   levelLabel,
-  levelRank,
 } from '@/lib/badges';
 import { fadeUp, fadeUpAt } from '@/lib/motion';
 
@@ -37,13 +36,22 @@ const issuedCount = badges.reduce(
   new Map<string, number>()
 );
 
+/** Number of badges issued per event id. */
+const issuedByEvent = badges.reduce(
+  (m, b) => m.set(b.eventId, (m.get(b.eventId) ?? 0) + 1),
+  new Map<string, number>()
+);
+
 const eventsNewestFirst = [...badgeEvents].sort((a, b) => b.date.localeCompare(a.date));
+
+/** Activity types that have at least one entry, in first-seen order. */
+const eventTypes = [...new Set(eventsNewestFirst.map((e) => e.type))];
 
 const steps: { title: string; description: string; icon: LucideIcon }[] = [
   {
     title: 'Earn a badge',
     description:
-      'Badges are awarded for completing BrAIN Labs programmes and contributing to our research.',
+      'Badges are awarded for taking part in BrAIN Labs programmes, workshops, events and research.',
     icon: Award,
   },
   {
@@ -63,6 +71,7 @@ const steps: { title: string; description: string; icon: LucideIcon }[] = [
 export const Badges = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const [eventType, setEventType] = useState<BadgeEventType | null>(null);
   const [notFound, setNotFound] = useState(false);
 
   const verify = (e: FormEvent) => {
@@ -92,7 +101,7 @@ export const Badges = () => {
                 { value: badges.length, label: 'Badges Issued' },
                 {
                   value: badgeEvents.length,
-                  label: badgeEvents.length === 1 ? 'Programme' : 'Programmes',
+                  label: badgeEvents.length === 1 ? 'Activity' : 'Activities',
                 },
               ]
             : undefined
@@ -231,15 +240,44 @@ export const Badges = () => {
         </div>
       </section>
 
-      {/* ── Recipients by programme ──────────────────────────── */}
+      {/* ── Activities ───────────────────────────────────────── */}
       <section className="border-t border-border/60 py-16 md:py-20">
         <div className="container mx-auto px-4">
           <motion.div {...fadeUp} className="mb-10 max-w-3xl">
-            <SectionLabel icon={Users}>Recipients</SectionLabel>
+            <SectionLabel icon={Calendar}>Activities</SectionLabel>
             <h2 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
-              Badges issued by programme.
+              Where our badges were earned.
             </h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+              Programmes, workshops, events and research collaborations that awarded badges.
+              Recipient details stay private: each badge can only be viewed with its credential ID
+              or the link shared by its holder.
+            </p>
           </motion.div>
+
+          {eventTypes.length > 1 && (
+            <div
+              role="group"
+              aria-label="Filter by activity type"
+              className="mb-6 flex flex-wrap gap-2"
+            >
+              {[null, ...eventTypes].map((t) => (
+                <button
+                  key={t ?? 'all'}
+                  type="button"
+                  onClick={() => setEventType(t)}
+                  aria-pressed={eventType === t}
+                  className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                    eventType === t
+                      ? 'border-foreground bg-foreground text-background'
+                      : 'border-border bg-background text-foreground/80 hover:border-foreground/40'
+                  }`}
+                >
+                  {t ? eventTypeLabel(t) : 'All'}
+                </button>
+              ))}
+            </div>
+          )}
 
           {eventsNewestFirst.length === 0 ? (
             <motion.div
@@ -251,83 +289,47 @@ export const Badges = () => {
               </div>
               <p className="font-semibold">No badges issued yet</p>
               <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                Recipients will be listed here once the first badges are awarded.
+                Activities will appear here once the first badges are awarded.
               </p>
             </motion.div>
           ) : (
-            <div className="space-y-8">
-              {eventsNewestFirst.map((event) => {
-                const recipients = badges
-                  .filter((b) => b.eventId === event.id)
-                  .sort((a, b) => levelRank(a.design.level) - levelRank(b.design.level));
-                return (
-                  <motion.article
-                    key={event.id}
-                    {...fadeUp}
-                    className="overflow-hidden rounded-2xl border border-border bg-card"
-                  >
-                    <div className="border-b border-border p-6 sm:p-8">
+            <div className="grid gap-4 md:grid-cols-2">
+              {eventsNewestFirst
+                .filter((e) => !eventType || e.type === eventType)
+                .map((event, idx) => {
+                  const issued = issuedByEvent.get(event.id) ?? 0;
+                  return (
+                    <motion.article
+                      key={event.id}
+                      {...fadeUpAt(idx)}
+                      className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 transition-colors hover:border-foreground/25 sm:p-7"
+                    >
                       <div className="flex flex-wrap items-center gap-2">
-                        <MetaPill icon={Calendar}>{formatBadgeDate(event.date)}</MetaPill>
+                        <span className="rounded-full bg-foreground px-3 py-1 text-xs font-medium text-background">
+                          {eventTypeLabel(event.type)}
+                        </span>
+                        <MetaPill icon={Calendar}>{formatEventDates(event)}</MetaPill>
                         {event.location && <MetaPill icon={MapPin}>{event.location}</MetaPill>}
-                        <MetaPill icon={Award}>
-                          {`${recipients.length} ${recipients.length === 1 ? 'badge' : 'badges'}`}
-                        </MetaPill>
                       </div>
-                      <h3 className="mt-4 text-xl font-bold leading-snug tracking-tight md:text-2xl">
+                      <h3 className="mt-4 text-lg font-bold leading-snug tracking-tight md:text-xl">
                         {event.name}
                       </h3>
                       {event.description && (
-                        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                           {event.description}
                         </p>
                       )}
-                    </div>
-
-                    <ul className="divide-y divide-border">
-                      {recipients.map((b) => {
-                        const level = levelLabel(b.design.level);
-                        return (
-                          <li key={b.credentialId}>
-                            <Link
-                              to={badgePath(b)}
-                              className="group flex items-center gap-4 px-6 py-4 transition-colors hover:bg-secondary/50 sm:px-8"
-                            >
-                              <img
-                                src={designImagePath(b.design)}
-                                alt=""
-                                width={48}
-                                height={48}
-                                loading="lazy"
-                                className="h-12 w-12 shrink-0 object-contain"
-                              />
-                              <div className="min-w-0 flex-1">
-                                <p className="font-semibold">{b.name}</p>
-                                <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                                  {b.design.title}
-                                  {level && (
-                                    <span className="inline-flex items-center gap-1.5 font-semibold uppercase tracking-wider">
-                                      <TierDot level={b.design.level} />
-                                      {level}
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                              <span className="hidden font-mono text-[11px] text-muted-foreground sm:block">
-                                {b.credentialId}
-                              </span>
-                              <ArrowRight
-                                size={15}
-                                className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
-                              />
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </motion.article>
-                );
-              })}
+                      <div className="mt-auto pt-5">
+                        <div className="flex items-baseline gap-2 border-t border-border pt-4">
+                          <span className="text-2xl font-bold tabular-nums">{issued}</span>
+                          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                            {issued === 1 ? 'Badge issued' : 'Badges issued'}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.article>
+                  );
+                })}
             </div>
           )}
         </div>

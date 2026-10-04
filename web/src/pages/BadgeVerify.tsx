@@ -23,6 +23,7 @@ import {
   designDownloadPath,
   designImagePath,
   findBadge,
+  eventTypeLabel,
   formatBadgeDate,
   levelLabel,
   linkedInAddToProfileUrl,
@@ -88,7 +89,7 @@ export const BadgeVerify = () => {
         ]
       : []),
     [
-      'Programme',
+      eventTypeLabel(badge.event.type),
       badge.event.url ? (
         <a
           href={badge.event.url}

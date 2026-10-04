@@ -61,7 +61,8 @@ export const faq = [
 export const contact = {
   github: 'https://github.com/BrAINLabs-Inc',
   linkedin: 'https://www.linkedin.com/company/brainlabs-inc',
-  email: 'mailto:contact@brainlabs.inc',
+  email: 'mailto:contact@brainlabsinc.org',
+  careersEmail: 'mailto:careers@brainlabsinc.org',
 };
 
 export const careersBenefits = [
@@ -106,6 +107,6 @@ export const careersFaqs = [
   },
   {
     q: 'How do I apply?',
-    a: 'Send your CV and a brief cover letter or research statement to contact@brainlabs.inc with the position title in the subject line.',
+    a: 'Send your CV and a brief cover letter or research statement to careers@brainlabsinc.org with the position title in the subject line.',
   },
 ];

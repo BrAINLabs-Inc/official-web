@@ -3,7 +3,7 @@
 // To issue badges:
 //   1. Make sure the badge artwork exists in `badgeDesigns` (artwork files live in
 //      web/badges/designs/<id>.png and web/public/badges/designs/<id>.webp).
-//   2. Add the event or programme to `badgeEvents`.
+//   2. Add the activity (programme, event, workshop, research project...) to `badgeEvents`.
 //   3. Add one entry per person to `badgeRecipients`. Give every recipient a unique
 //      `credentialId` and never change or reuse it: it is the permanent verification URL
 //      https://brainlabsinc.org/badges/<credentialId>
@@ -25,15 +25,21 @@ export interface BadgeDesign {
   issuers: string[];
 }
 
+/** Kind of activity a badge was earned through. */
+export type BadgeEventType = 'programme' | 'event' | 'workshop' | 'research' | 'competition';
+
 export interface BadgeEvent {
   /** Short slug, referenced by recipients. */
   id: string;
-  /** Event or programme name. */
+  type: BadgeEventType;
+  /** Activity name, e.g. a programme, workshop or research project. */
   name: string;
-  /** Who organised the event. */
+  /** Who organised the activity. */
   organizer: string;
-  /** Date the badges were awarded, YYYY-MM-DD. */
+  /** Date the badges were awarded (or the activity started), YYYY-MM-DD. */
   date: string;
+  /** Optional last day for activities that span a period, YYYY-MM-DD. */
+  endDate?: string;
   location?: string;
   description?: string;
   /** Optional link to the event page or announcement. */
